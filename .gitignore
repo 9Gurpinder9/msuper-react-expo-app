@@ -1,0 +1,39 @@
+# ─── Node dependencies ───────────────────────────────
+**/node_modules/
+**/package-lock.json
+**/yarn.lock
+
+# ─── Expo / React Native caches & builds ────────────
+.expo/
+.expo-shared/
+web-build/           # Expo web output
+dist/                # any generic dist/ folders
+build/               # if you add custom builds
+
+# If you ever prebuild / eject:
+android/
+ios/
+
+# ─── Environment and secrets ────────────────────────
+# dotenv files (commit only .env.example if you have one)
+*.env
+*.env.local
+*.env.*.local
+!.env.example
+
+# ─── Logs ────────────────────────────────────────────
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── OS generated files ─────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Editor directories & settings ──────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
