@@ -11,5 +11,8 @@ const PORT = process.env.PORT || 4000;
     await connectRedis();
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
-    });
+    })
+        .on('error', (err) => {
+            console.error('Server failed to start:', err)
+        })
 })();
