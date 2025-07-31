@@ -1,0 +1,16 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@theme": ["src/theme/index.ts"],
+      "@config": ["config/index.ts"],
+      "@super-admin/*": ["src/super-admin/*"],
+      "@company/*": ["src/company/*"]
+    },
+    "jsx": "react-native", // for RN apps
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true // helps avoid odd errors in any 3rd-party types
+  }
+}
