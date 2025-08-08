@@ -1,3 +1,4 @@
+// frontend/tsconfig.json
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
@@ -6,11 +7,21 @@
       "@theme": ["src/theme/index.ts"],
       "@config": ["config/index.ts"],
       "@super-admin/*": ["src/super-admin/*"],
-      "@company/*": ["src/company/*"]
+      "@utils/*": ["src/utils/*"]
     },
-    "jsx": "react-native", // for RN apps
+    "jsx": "react-native",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "skipLibCheck": true // helps avoid odd errors in any 3rd-party types
-  }
+    "skipLibCheck": true
+  },
+  "include": [
+    "app", // <- your Expo-Router pages
+    "src",
+    "config"
+  ],
+  "exclude": [
+    "node_modules", // don’t ever try to parse deps’ tsconfigs
+    "**/__tests__/*",
+    "**/*.spec.ts"
+  ]
 }

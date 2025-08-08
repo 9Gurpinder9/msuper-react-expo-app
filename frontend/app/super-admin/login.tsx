@@ -1,5 +1,4 @@
-// frontend/src/super-admin/screens/LoginScreen.tsx
-
+// frontend/app/super-admin/login.tsx
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -17,20 +16,16 @@ import {
   useTheme,
   MD3Theme,
 } from "react-native-paper";
-// expo/vector-icons import
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { MaterialDesignIcons } from "@react-native-vector-icons/material-design-icons";
-import { useNavigation } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useRouter } from "expo-router";
 
-import TopAppBar from "../components/TopAppBar";
-import { SuperAdminStackParamList } from "../navigation";
+import TopAppBar from "@super-admin/components/TopAppBar";
+import { useToast } from "@utils/toast";
 import { API_BASE_URL } from "@config";
 
-type NavProp = NativeStackNavigationProp<SuperAdminStackParamList, "Login">;
-
-export default function LoginScreen() {
-  const navigation = useNavigation<NavProp>();
+export default function Login() {
+  const router = useRouter();
+  const { showToast } = useToast();
   const theme = useTheme();
   const styles = makeStyles(theme);
 
@@ -64,12 +59,10 @@ export default function LoginScreen() {
       setEmailErr("Enter a valid email");
       ok = false;
     } else setEmailErr("");
-
     if (!password) {
       setPasswordErr("Password is required");
       ok = false;
     } else setPasswordErr("");
-
     return ok;
   };
 
@@ -85,13 +78,12 @@ export default function LoginScreen() {
       });
       const body = await res.json();
       if (!res.ok) {
-        if (body.errors) {
-          setEmailErr(body.errors.email ?? "");
-          setPasswordErr(body.errors.password ?? "");
-        }
-        if (body.message) setGeneralErr(body.message);
+        body.errors && setEmailErr(body.errors.email || "");
+        body.errors && setPasswordErr(body.errors.password || "");
+        body.message && setGeneralErr(body.message);
       } else {
-        navigation.replace("Dashboard");
+        showToast(body.message || "OTP sent!", "success");
+        router.replace("/super-admin/otp-verify");
       }
     } catch {
       setGeneralErr("Network error, please try again");
@@ -101,13 +93,15 @@ export default function LoginScreen() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <TouchableWithoutFeedback
+      onPress={Keyboard.dismiss}
+      disabled={Platform.OS === "web"}
+    >
       <KeyboardAvoidingView
         style={styles.wrapper}
         behavior={Platform.select({ ios: "padding" })}
       >
         <TopAppBar title="Login" />
-
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
@@ -116,37 +110,30 @@ export default function LoginScreen() {
           <Card style={styles.card}>
             <Card.Title
               title="Super-Admin Login"
-              left={
-                // props only contains `size`
-                (props) => (
-                  <MaterialDesignIcons
-                    name="shield-account"
-                    size={props.size}
-                    // pick a color from your theme instead
-                    color={theme.colors.onSurface}
-                  />
-                )
-              }
+              left={(props) => (
+                <MaterialCommunityIcons
+                  name="shield-account"
+                  size={props.size}
+                  color={theme.colors.onSurface}
+                />
+              )}
             />
-
             <Card.Content>
-              {generalErr !== "" && (
+              {!!generalErr && (
                 <HelperText type="error" style={styles.helperText}>
                   {generalErr}
                 </HelperText>
               )}
-
               <TextInput
                 label="Email"
                 value={email}
                 onChangeText={setEmail}
                 mode="outlined"
                 error={!!emailErr}
-                // wrap your vector‐icon in the Paper Icon component:
                 left={
                   <TextInput.Icon
                     icon={({ size, color }) => (
-                      <MaterialDesignIcons
+                      <MaterialCommunityIcons
                         name="email"
                         size={size}
                         color={color}
@@ -156,23 +143,22 @@ export default function LoginScreen() {
                 }
                 style={styles.input}
               />
-
-              {emailErr !== "" && (
+              {!!emailErr && (
                 <HelperText type="error" style={styles.helperText}>
                   {emailErr}
                 </HelperText>
               )}
-
               <TextInput
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
                 mode="outlined"
                 secureTextEntry
+                error={!!passwordErr}
                 left={
                   <TextInput.Icon
                     icon={({ size, color }) => (
-                      <MaterialDesignIcons
+                      <MaterialCommunityIcons
                         name="lock"
                         size={size}
                         color={color}
@@ -182,13 +168,11 @@ export default function LoginScreen() {
                 }
                 style={styles.input}
               />
-
-              {passwordErr !== "" && (
+              {!!passwordErr && (
                 <HelperText type="error" style={styles.helperText}>
                   {passwordErr}
                 </HelperText>
               )}
-
               <Button
                 mode="contained"
                 onPress={handleLogin}
@@ -215,10 +199,7 @@ export default function LoginScreen() {
 
 const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
-    wrapper: {
-      flex: 1,
-      backgroundColor: theme.colors.surfaceVariant,
-    },
+    wrapper: { flex: 1, backgroundColor: theme.colors.surfaceVariant },
     scrollContainer: {
       flexGrow: 1,
       justifyContent: "flex-start",
