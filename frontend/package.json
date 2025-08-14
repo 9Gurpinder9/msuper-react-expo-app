@@ -28,7 +28,7 @@
     "expo": "~53.0.20",
     "expo-blur": "~14.1.5",
     "expo-constants": "^17.1.7",
-    "expo-file-system": "^18.1.10",
+    "expo-file-system": "~18.1.11",
     "expo-font": "~13.3.1",
     "expo-haptics": "~14.1.4",
     "expo-image": "~2.3.0",
@@ -74,7 +74,10 @@
     "typescript": "~5.8.3"
   },
   "private": true,
-   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": ["eslint --fix", "git add"]
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "git add"
+    ]
   }
 }

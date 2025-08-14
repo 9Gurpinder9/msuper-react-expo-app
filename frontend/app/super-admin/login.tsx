@@ -1,4 +1,3 @@
-// frontend/app/super-admin/login.tsx
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -15,27 +14,35 @@ import {
   HelperText,
   useTheme,
   MD3Theme,
+  ProgressBar,
+  Portal,
 } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import TopAppBar from "@super-admin/components/TopAppBar";
 import { useToast } from "@utils/toast";
 import { API_BASE_URL } from "@config";
+
+import { logger } from "@utils/logger";
+import { fetchJson } from "@utils/network";
 
 export default function Login() {
   const router = useRouter();
   const { showToast } = useToast();
   const theme = useTheme();
   const styles = makeStyles(theme);
+  const insets = useSafeAreaInsets();
 
   const [kbVisible, setKbVisible] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener("keyboardDidShow", () =>
-      setKbVisible(true)
+      setKbVisible(true),
     );
     const hide = Keyboard.addListener("keyboardDidHide", () =>
-      setKbVisible(false)
+      setKbVisible(false),
     );
     return () => {
       show.remove();
@@ -70,23 +77,43 @@ export default function Login() {
     if (!validate()) return;
     setLoading(true);
     setGeneralErr("");
+
+    const url = `${API_BASE_URL}/super-admin/login`;
+
     try {
-      const res = await fetch(`${API_BASE_URL}/super-admin/login`, {
+      const res = await fetchJson(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const body = await res.json();
+
+      const body: any = res.data ?? {};
+
       if (!res.ok) {
-        body.errors && setEmailErr(body.errors.email || "");
-        body.errors && setPasswordErr(body.errors.password || "");
-        body.message && setGeneralErr(body.message);
-      } else {
-        showToast(body.message || "OTP sent!", "success");
-        router.replace("/super-admin/otp-verify");
+        if (body?.errors) {
+          setEmailErr(body.errors.email ?? "");
+          setPasswordErr(body.errors.password ?? "");
+        }
+        if (body?.message) setGeneralErr(body.message);
+        else setGeneralErr(`Login failed (HTTP ${res.status})`);
+        return;
       }
-    } catch {
-      setGeneralErr("Network error, please try again");
+
+      // Save email for OTP screen (backend expects email + otp)
+      try {
+        await AsyncStorage.setItem("loginEmail", email);
+      } catch (e) {
+        console.warn("Failed to store email for OTP verification", e);
+      }
+
+      showToast(body?.message || "OTP sent!", "success");
+      router.replace("/super-admin/otp-verify");
+    } catch (err: any) {
+      const msg = err?.message || "Network error";
+      setGeneralErr(
+        `${msg}${Platform.OS === "web" ? " (check CORS & URL)" : " (use LAN IP for API_BASE_URL on device)"}`,
+      );
+      logger.error("Login network exception", { message: msg, url });
     } finally {
       setLoading(false);
     }
@@ -102,6 +129,18 @@ export default function Login() {
         behavior={Platform.select({ ios: "padding" })}
       >
         <TopAppBar title="Login" />
+
+        {/* Thin top indeterminate progress while loading */}
+        <Portal>
+          {loading && (
+            <ProgressBar
+              indeterminate
+              style={[styles.topProgress, { top: insets.top }]}
+              color={theme.colors.primary}
+            />
+          )}
+        </Portal>
+
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
@@ -177,6 +216,7 @@ export default function Login() {
                 mode="contained"
                 onPress={handleLogin}
                 loading={loading}
+                disabled={loading}              // prevent double submit
                 style={styles.button}
                 contentStyle={styles.buttonContent}
                 icon={({ size, color }) => (
@@ -206,6 +246,13 @@ const makeStyles = (theme: MD3Theme) =>
       alignItems: "center",
       paddingHorizontal: 16,
       paddingTop: 24,
+    },
+    topProgress: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      height: 3,
+      zIndex: 1000,
     },
     card: {
       width: "90%",
