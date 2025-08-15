@@ -56,8 +56,8 @@ export default function OTPVerify() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);       // verify in-flight
-  const [verified, setVerified] = useState(false);     // for checkmark morph
+  const [loading, setLoading] = useState(false); // verify in-flight
+  const [verified, setVerified] = useState(false); // for checkmark morph
 
   // Resend state
   const [resendSeconds, setResendSeconds] = useState(RESEND_SECONDS);
@@ -152,8 +152,7 @@ export default function OTPVerify() {
     }
   };
 
-  const resendProgress =
-    (RESEND_SECONDS - resendSeconds) / RESEND_SECONDS || 0;
+  const resendProgress = (RESEND_SECONDS - resendSeconds) / RESEND_SECONDS || 0;
 
   return (
     <View style={styles.wrapper}>
@@ -228,7 +227,9 @@ export default function OTPVerify() {
                     />
                   )}
                 >
-                  {resendSeconds > 0 ? `Resend in ${resendSeconds}s` : "Resend OTP"}
+                  {resendSeconds > 0
+                    ? `Resend in ${resendSeconds}s`
+                    : "Resend OTP"}
                 </Button>
                 <View style={styles.resendProgressWrap}>
                   <ProgressBar

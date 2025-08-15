@@ -138,31 +138,33 @@ export const resendOtpHandler: RequestHandler = async (req, res, next) => {
             return res.status(400).json({
                 success: false,
                 message: 'Validation failed',
-                errors: error.details.map(d => d.message)
+                errors: error.details.map(d => d.message),
             });
         }
 
         const { email } = value;
 
-        // Rate-limit / cooldown
+        // Cooldown check (best-effort: don't fail request if Redis is down)
         const cooldownKey = `otp:cooldown:${email}`;
-        const cooling = await redis.get(cooldownKey);
-        if (cooling) {
-            // Get remaining seconds if available
-            let ttl = 0;
-            try {
-                // node-redis v4: ttl returns seconds (or -1/-2)
-                ttl = await redis.ttl(cooldownKey);
-            } catch (_) { /* ignore */ }
-            return res.status(429).json({
-                success: false,
-                message:
-                    ttl && ttl > 0
+        try {
+            const cooling = await redis.get(cooldownKey);
+            if (cooling) {
+                let ttl = 0;
+                try { ttl = await redis.ttl(cooldownKey); } catch (_) { /* ignore */ }
+                logger.warn(`Resend-OTP cooldown hit for ${email} (ttl=${ttl}s)`);
+                return res.status(429).json({
+                    success: false,
+                    message: ttl && ttl > 0
                         ? `Please wait ${ttl}s before requesting a new OTP.`
-                        : 'Please wait before requesting a new OTP.'
-            });
+                        : 'Please wait before requesting a new OTP.',
+                });
+            }
+        } catch (e: any) {
+            logger.warn(`Redis unavailable during cooldown check for ${email}: ${e.message}`);
+            // proceed without cooldown if Redis momentarily unavailable
         }
 
+        // Ensure admin exists
         const { data: admins, error: dbError } = await supabase
             .from('super_admins')
             .select('id, email, name, telegram_id')
@@ -174,27 +176,53 @@ export const resendOtpHandler: RequestHandler = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Admin not found.' });
         }
 
+        // Generate & send OTP
         const otp = generateNumericOtp();
 
-        // Send channels
-        await sendOtpEmail(email, otp);
-        if (admins[0].telegram_id) {
-            await sendOtpTelegram(admins[0].telegram_id, otp);
+        let emailOk = false;
+        let telegramOk = false;
+
+        try {
+            await sendOtpEmail(email, otp);
+            emailOk = true;
+        } catch (e: any) {
+            logger.error(`sendOtpEmail failed for ${email}: ${e.message}`);
         }
 
-        // Store OTP and reset TTL
-        await redis.set(`otp:${email}`, otp, { EX: OTP_TTL_SECONDS });
+        try {
+            const tid = admins[0].telegram_id;
+            if (tid) {
+                await sendOtpTelegram(tid, otp);
+                telegramOk = true;
+            }
+        } catch (e: any) {
+            logger.error(`sendOtpTelegram failed for ${email}: ${e.message}`);
+        }
 
-        // Set cooldown
-        await redis.set(cooldownKey, '1', { EX: RESEND_COOLDOWN_SECONDS });
+        // Store OTP & start cooldown (best-effort)
+        try {
+            await redis.set(`otp:${email}`, otp, { EX: OTP_TTL_SECONDS });
+            await redis.set(cooldownKey, '1', { EX: RESEND_COOLDOWN_SECONDS });
+        } catch (e: any) {
+            logger.warn(`Redis set failed for ${email} (otp/cooldown): ${e.message}`);
+        }
 
-        res.json({
-            success: true,
-            message: 'OTP resent to your email and Telegram.'
-        });
+        if (!emailOk && !telegramOk) {
+            logger.error(`All channels failed to send OTP for ${email}`);
+            return res
+                .status(500)
+                .json({ success: false, message: 'Could not send OTP. Please try again later.' });
+        }
+
+        const channels = [emailOk ? 'email' : null, telegramOk ? 'Telegram' : null]
+            .filter(Boolean)
+            .join(' & ');
+
+        logger.info(`OTP resent for ${email} via ${channels}`);
+        return res.json({ success: true, message: `OTP resent via ${channels}.` });
     } catch (err: any) {
         logger.error(`POST /super-admin/resend-otp - ${err.message}`);
-        next(err);
+        next(err); // your JSON error handler will format the response
     }
 };
 
