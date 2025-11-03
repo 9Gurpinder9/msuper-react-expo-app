@@ -3,63 +3,25 @@ import supabase from '../../database/supabaseClient';
 import { generateNumericOtp } from '../../utils/otpGenerator';
 import { sendOtpEmail } from '../../utils/emailSender';
 import { sendOtpTelegram } from '../../utils/telegramSender';
-import bcrypt from 'bcrypt';
 import logger from '../../utils/logger';
-import Joi from 'joi';
 import redis from '../../database/redisClient';
 import { generateJwt } from '../../utils/generateJwt';
 import { RequestHandler } from 'express';
+import { findAdminByEmail, verifyPassword, getAdminPublicByEmail } from '../services/superAdmin.service';
 
 const OTP_TTL_SECONDS = 60 * 20;       // 20 minutes
 const RESEND_COOLDOWN_SECONDS = 30;    // 30 seconds
 
-const loginSchema = Joi.object({
-    email: Joi.string().trim().lowercase().email().required().messages({
-        'string.empty': 'Email is required.',
-        'string.email': 'Email must be valid.',
-        'any.required': 'Email is required.'
-    }),
-    password: Joi.string().min(6).required().messages({
-        'string.empty': 'Password is required.',
-        'string.min': 'Password must be at least 6 characters long.',
-        'any.required': 'Password is required.'
-    })
-});
-
-const emailOnlySchema = Joi.object({
-    email: Joi.string().trim().lowercase().email().required().messages({
-        'string.empty': 'Email is required.',
-        'string.email': 'Email must be valid.',
-        'any.required': 'Email is required.'
-    })
-});
-
 export const loginHandler: RequestHandler = async (req, res, next) => {
     try {
-        const input = req.body || {};
-        const { error, value } = loginSchema.validate(input, { abortEarly: false });
-        if (error) {
-            logger.warn(`Validation failed on login: ${error.message}`);
-            return res.status(400).json({
-                success: false,
-                message: 'Validation failed',
-                errors: error.details.map(d => d.message)
-            });
-        }
-
-        const { email, password } = value;
-        const { data: admins, error: dbError } = await supabase
-            .from('super_admins')
-            .select('*')
-            .eq('email', email)
-            .limit(1);
-
-        if (dbError || !admins?.length) {
+        const { email, password } = (req.body || {}) as { email: string; password: string };
+        const admin = await findAdminByEmail(email);
+        if (!admin) {
             logger.warn(`Invalid login attempt for email: ${email}`);
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
         }
 
-        const valid = await bcrypt.compare(password, admins[0].password as string);
+        const valid = await verifyPassword(password, admin.password as string);
         if (!valid) {
             logger.warn(`Password mismatch for email: ${email}`);
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
@@ -67,8 +29,8 @@ export const loginHandler: RequestHandler = async (req, res, next) => {
 
         const otp = generateNumericOtp();
         await sendOtpEmail(email, otp);
-        if (admins[0].telegram_id) {
-            await sendOtpTelegram(admins[0].telegram_id, otp);
+        if ((admin as any).telegram_id) {
+            await sendOtpTelegram((admin as any).telegram_id, otp);
         }
 
         await redis.set(`otp:${email}`, otp, { EX: OTP_TTL_SECONDS });
@@ -84,10 +46,7 @@ export const loginHandler: RequestHandler = async (req, res, next) => {
 
 export const verifyOtpHandler: RequestHandler = async (req, res, next) => {
     try {
-        const { email, otp } = req.body || {};
-        if (!email || !otp) {
-            return res.status(400).json({ success: false, message: 'Email and OTP are required.' });
-        }
+        const { email, otp } = (req.body || {}) as { email: string; otp: string };
 
         const storedOtp = await redis.get(`otp:${email}`);
         if (!storedOtp) {
@@ -99,19 +58,14 @@ export const verifyOtpHandler: RequestHandler = async (req, res, next) => {
 
         await redis.del(`otp:${email}`);
 
-        const { data: admins, error } = await supabase
-            .from('super_admins')
-            .select('id, email, name')
-            .eq('email', email)
-            .limit(1);
-
-        if (error || !admins?.length) {
+        const admin = await getAdminPublicByEmail(email);
+        if (!admin) {
             return res.status(401).json({ success: false, message: 'Admin not found.' });
         }
 
         const token = generateJwt({
-            id: admins[0].id,
-            email: admins[0].email,
+            id: (admin as any).id,
+            email: (admin as any).email,
             role: 'SUPER_ADMIN'
         });
 
@@ -131,18 +85,7 @@ export const verifyOtpHandler: RequestHandler = async (req, res, next) => {
  */
 export const resendOtpHandler: RequestHandler = async (req, res, next) => {
     try {
-        const input = req.body || {};
-        const { error, value } = emailOnlySchema.validate(input, { abortEarly: false });
-        if (error) {
-            logger.warn(`Validation failed on resend-otp: ${error.message}`);
-            return res.status(400).json({
-                success: false,
-                message: 'Validation failed',
-                errors: error.details.map(d => d.message),
-            });
-        }
-
-        const { email } = value;
+        const { email } = (req.body || {}) as { email: string };
 
         // Cooldown check (best-effort: don't fail request if Redis is down)
         const cooldownKey = `otp:cooldown:${email}`;

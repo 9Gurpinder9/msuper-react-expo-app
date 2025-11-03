@@ -7,6 +7,8 @@ module.exports = {
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
   ],
   parserOptions: { ecmaFeatures: { jsx: true } },
   settings: { react: { version: "detect" } },

@@ -6,18 +6,22 @@ import { Slot } from 'expo-router';
 import { getTheme } from '@theme';
 import { ToastProvider } from '../src/utils/ToastProvider';
 import { installGlobalErrorHandlers } from '../src/utils/logger';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 installGlobalErrorHandlers();
 
 export default function RootLayout() {
   const scheme = useColorScheme() ?? 'light';
   const theme = getTheme(scheme);
+  const [client] = React.useState(() => new QueryClient());
 
   return (
     <PaperProvider theme={theme}>
-      <ToastProvider>
-        <Slot />
-      </ToastProvider>
+      <QueryClientProvider client={client}>
+        <ToastProvider>
+          <Slot />
+        </ToastProvider>
+      </QueryClientProvider>
     </PaperProvider>
   );
 }

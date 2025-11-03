@@ -1,3 +1,7 @@
+# End OTP Endpoint
+
+(Imported from root file: 'end-otp endpoint'.)
+
 [1mdiff --git a/.gitignore b/.gitignore[m
 [1mindex 55b2961..2cce4eb 100644[m
 [1m--- a/.gitignore[m
