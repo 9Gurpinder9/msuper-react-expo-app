@@ -2,6 +2,7 @@
 const { getDefaultConfig } = require("@expo/metro-config");
 const path = require("path");
 const fs = require("fs");
+const { resolve } = require("metro-resolver");
 
 const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
@@ -19,6 +20,20 @@ config.resolver.extraNodeModules = {
   '@config': path.resolve(projectRoot, 'config'),
   '@theme': path.resolve(projectRoot, 'src/theme'),
   '@utils': path.resolve(projectRoot, 'src/utils'),
+};
+
+const previousResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === "pretty-format") {
+    return {
+      type: "sourceFile",
+      filePath: path.resolve(projectRoot, "polyfills/pretty-format.js"),
+    };
+  }
+  if (typeof previousResolveRequest === "function") {
+    return previousResolveRequest(context, moduleName, platform);
+  }
+  return resolve(context, moduleName, platform);
 };
 
 // --- DEV log sink on Metro: POST /dev-logs ---
