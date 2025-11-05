@@ -9,11 +9,17 @@ import { config } from './config';
 const PORT = config.port || 4000;
 
 (async () => {
+  try {
     await connectRedis();
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+  } catch (err: any) {
+    console.warn('Redis unavailable, starting server anyway:', err?.message || err);
+  }
+
+  app
+    .listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     })
-        .on('error', (err) => {
-            console.error('Server failed to start:', err)
-        })
+    .on('error', (err) => {
+      console.error('Server failed to start:', err);
+    });
 })();

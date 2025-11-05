@@ -10,10 +10,15 @@ const config = getDefaultConfig(projectRoot);
 config.watchFolders = [path.resolve(projectRoot, "src")];
 config.resolver = config.resolver || {};
 config.resolver.extraNodeModules = {
-  "@super-admin": path.resolve(projectRoot, "src/super-admin"),
-  "@config": path.resolve(projectRoot, "config"),
-  "@theme": path.resolve(projectRoot, "src/theme"),
-  "@utils": path.resolve(projectRoot, "src/utils"),
+  // Ensure single React across the app to avoid version mismatches
+  react: path.resolve(projectRoot, 'node_modules/react'),
+  'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
+  'react-native-web': path.resolve(projectRoot, 'node_modules/react-native-web'),
+  // Project aliases
+  '@super-admin': path.resolve(projectRoot, 'src/super-admin'),
+  '@config': path.resolve(projectRoot, 'config'),
+  '@theme': path.resolve(projectRoot, 'src/theme'),
+  '@utils': path.resolve(projectRoot, 'src/utils'),
 };
 
 // --- DEV log sink on Metro: POST /dev-logs ---
