@@ -10,6 +10,7 @@ const config = getDefaultConfig(projectRoot);
 config.watchFolders = [path.resolve(projectRoot, "src")];
 config.resolver = config.resolver || {};
 config.resolver.extraNodeModules = {
+  ...(config.resolver.extraNodeModules || {}),
   // Ensure single React across the app to avoid version mismatches
   react: path.resolve(projectRoot, 'node_modules/react'),
   'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
