@@ -10,6 +10,7 @@ const config = getDefaultConfig(projectRoot);
 config.watchFolders = [path.resolve(projectRoot, "src")];
 config.resolver = config.resolver || {};
 config.resolver.extraNodeModules = {
+  ...(config.resolver.extraNodeModules || {}),
   // Ensure single React across the app to avoid version mismatches
   react: path.resolve(projectRoot, 'node_modules/react'),
   'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
@@ -19,6 +20,9 @@ config.resolver.extraNodeModules = {
   '@config': path.resolve(projectRoot, 'config'),
   '@theme': path.resolve(projectRoot, 'src/theme'),
   '@utils': path.resolve(projectRoot, 'src/utils'),
+  // Expo web bundles Jest's pretty-format when rendering error overlays. Metro
+  // expects a CommonJS module, so point to our shimmed entry.
+  'pretty-format': path.resolve(projectRoot, 'polyfills/pretty-format'),
 };
 
 // --- DEV log sink on Metro: POST /dev-logs ---
