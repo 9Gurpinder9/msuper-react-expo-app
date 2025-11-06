@@ -3,13 +3,36 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const redis = createClient({ url: process.env.REDIS_URL });
+const url = process.env.REDIS_URL;
 
-redis.on('error', (err) => console.error('❌ Redis Client Error', err));
+let redis: any;
 
-// Don't use top-level await
+if (url) {
+  const client = createClient({ url });
+  client.on('error', (err) => console.error('❌ Redis Client Error', err));
+  redis = client as any;
+} else {
+  const noop = async () => {};
+  const zero = async () => 0 as number;
+  const nil = async () => null as unknown as string | null;
+  redis = {
+    isOpen: false,
+    // best-effort no-op implementations for local dev without Redis
+    get: nil as any,
+    set: noop as any,
+    del: noop as any,
+    ttl: zero as any,
+  } as any;
+}
+
 export async function connectRedis() {
-    if (!redis.isOpen) await redis.connect();
+  if (!url) {
+    console.warn('Redis URL not set; skipping Redis connection.');
+    return;
+  }
+  if (!redis.isOpen && typeof redis.connect === 'function') {
+    await redis.connect();
+  }
 }
 
 export default redis;

@@ -216,9 +216,10 @@ export default function Login() {
                 mode="contained"
                 onPress={handleLogin}
                 loading={loading}
-                disabled={loading}              // prevent double submit
+                disabled={loading || !email || !password}              // prevent submit when invalid
                 style={styles.button}
                 contentStyle={styles.buttonContent}
+                testID="login-button"
                 icon={({ size, color }) => (
                   <MaterialCommunityIcons
                     name="login"

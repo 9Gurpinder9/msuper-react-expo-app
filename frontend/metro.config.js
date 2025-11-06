@@ -5,6 +5,9 @@ const fs = require("fs");
 
 const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
+const { resolve: metroResolve } = require('metro-resolver');
+
+const PRETTY_FORMAT_SHIM = path.resolve(projectRoot, 'polyfills/pretty-format/index.js');
 
 // --- existing customizations ---
 config.watchFolders = [path.resolve(projectRoot, "src")];
@@ -21,8 +24,25 @@ config.resolver.extraNodeModules = {
   '@theme': path.resolve(projectRoot, 'src/theme'),
   '@utils': path.resolve(projectRoot, 'src/utils'),
   // Expo web bundles Jest's pretty-format when rendering error overlays. Metro
-  // expects a CommonJS module, so point to our shimmed entry.
-  'pretty-format': path.resolve(projectRoot, 'polyfills/pretty-format'),
+  // expects a CommonJS module, so point to our shimmed entry file explicitly
+  // (resolving to the directory can fall back to the package export again).
+  'pretty-format': PRETTY_FORMAT_SHIM,
+};
+
+const previousResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, realModuleName, platform, moduleName) => {
+  if (moduleName === 'pretty-format' || realModuleName === 'pretty-format') {
+    return {
+      type: 'sourceFile',
+      filePath: PRETTY_FORMAT_SHIM,
+    };
+  }
+
+  if (typeof previousResolveRequest === 'function') {
+    return previousResolveRequest(context, realModuleName, platform, moduleName);
+  }
+
+  return metroResolve(context, realModuleName, platform, moduleName);
 };
 
 // --- DEV log sink on Metro: POST /dev-logs ---
