@@ -2,7 +2,7 @@ import Joi from 'joi';
 
 const envSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
-  PORT: Joi.number().integer().positive().default(4000),
+  PORT: Joi.number().integer().positive().default(4001),
   SUPABASE_URL: Joi.string().uri().required(),
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().min(10).required(),
   REDIS_URL: Joi.string().uri().optional(),

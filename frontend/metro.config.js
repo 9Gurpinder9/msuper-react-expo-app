@@ -7,7 +7,6 @@ const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
 const { resolve: metroResolve } = require('metro-resolver');
 
-const PRETTY_FORMAT_SHIM = path.resolve(projectRoot, 'polyfills/pretty-format/index.js');
 
 // --- existing customizations ---
 config.watchFolders = [path.resolve(projectRoot, "src")];
@@ -23,27 +22,16 @@ config.resolver.extraNodeModules = {
   '@config': path.resolve(projectRoot, 'config'),
   '@theme': path.resolve(projectRoot, 'src/theme'),
   '@utils': path.resolve(projectRoot, 'src/utils'),
-  // Expo web bundles Jest's pretty-format when rendering error overlays. Metro
-  // expects a CommonJS module, so point to our shimmed entry file explicitly
-  // (resolving to the directory can fall back to the package export again).
-  'pretty-format': PRETTY_FORMAT_SHIM,
+  // No special aliasing for pretty-format; use package defaults
 };
 
-const previousResolveRequest = config.resolver.resolveRequest;
-config.resolver.resolveRequest = (context, realModuleName, platform, moduleName) => {
-  if (moduleName === 'pretty-format' || realModuleName === 'pretty-format') {
-    return {
-      type: 'sourceFile',
-      filePath: PRETTY_FORMAT_SHIM,
-    };
-  }
-
-  if (typeof previousResolveRequest === 'function') {
-    return previousResolveRequest(context, realModuleName, platform, moduleName);
-  }
-
-  return metroResolve(context, realModuleName, platform, moduleName);
-};
+// Keep resolver simple and avoid breaking package resolution on web.
+// Only map the bare 'pretty-format' specifier via extraNodeModules above.
+// Do not override resolveRequest; Metro default handles the rest.
+// (If you need deeper control later, implement with the 3-arg signature:
+//   (context, moduleName, platform) => metroResolve(context, moduleName, platform)
+// )
+delete config.resolver.resolveRequest;
 
 // --- DEV log sink on Metro: POST /dev-logs ---
 const LOG_DIR = path.join(projectRoot+'/src/', "utils", "logs");
@@ -115,3 +103,18 @@ config.server.enhanceMiddleware = (middleware /*, server */) => {
 };
 
 module.exports = config;
+// Configure Metro symbolicator to avoid trying to read pseudo-files like "<anonymous>"
+config.symbolicator = config.symbolicator || {};
+config.symbolicator.customizeFrame = async (frame) => {
+  try {
+    const file = typeof frame.file === 'string' ? frame.file : '';
+    if (!file || file === '<anonymous>' || file.startsWith('eval') || file.includes('Debugger eval code')) {
+      return { collapse: true };
+    }
+  } catch {}
+  return {};
+};
+config.symbolicator.customizeStack = async (stack /*, extraData */) => {
+  // no-op passthrough; required to keep type shape
+  return stack;
+};

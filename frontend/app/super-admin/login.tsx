@@ -23,6 +23,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import TopAppBar from "@super-admin/components/TopAppBar";
+import StatusBanner from "../../src/components/StatusBanner";
 import { useToast } from "@utils/toast";
 import { API_BASE_URL } from "@config";
 
@@ -136,7 +137,7 @@ export default function Login() {
             <ProgressBar
               indeterminate
               style={[styles.topProgress, { top: insets.top }]}
-              color={theme.colors.primary}
+              color={(theme as any).colors.info}
             />
           )}
         </Portal>
@@ -159,9 +160,7 @@ export default function Login() {
             />
             <Card.Content>
               {!!generalErr && (
-                <HelperText type="error" style={styles.helperText}>
-                  {generalErr}
-                </HelperText>
+                <StatusBanner status="error" message={generalErr} />
               )}
               <TextInput
                 label="Email"
@@ -240,7 +239,7 @@ export default function Login() {
 
 const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
-    wrapper: { flex: 1, backgroundColor: theme.colors.surfaceVariant },
+    wrapper: { flex: 1, backgroundColor: theme.colors.background },
     scrollContainer: {
       flexGrow: 1,
       justifyContent: "flex-start",
