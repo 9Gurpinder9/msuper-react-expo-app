@@ -9,7 +9,10 @@
     "dev": "concurrently \"npm:dev --workspace backend\" \"npm:start --workspace frontend\"",
     "lint": "npm run lint -ws --if-present",
     "typecheck": "npm run typecheck -ws --if-present",
-    "test": "npm run test -ws --if-present"
+    "test": "npm run test -ws --if-present",
+    "web": "npm run web --workspace frontend",
+    "start:web": "npm run start:web --workspace frontend",
+    "sync:agents": "node scripts/sync-agents.js"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",
@@ -17,4 +20,3 @@
     "prettier": "^3.3.3"
   }
 }
-

@@ -1,6 +1,6 @@
 // frontend/app/index.tsx
-import React from "react";
-import { Redirect } from "expo-router";
+import { Redirect } from 'expo-router';
+import React from 'react';
 
 export default function Index() {
   return <Redirect href="/super-admin/login" />;

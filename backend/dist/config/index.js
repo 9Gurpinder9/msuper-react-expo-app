@@ -7,7 +7,7 @@ exports.config = void 0;
 const joi_1 = __importDefault(require("joi"));
 const envSchema = joi_1.default.object({
     NODE_ENV: joi_1.default.string().valid('development', 'test', 'production').default('development'),
-    PORT: joi_1.default.number().integer().positive().default(4000),
+    PORT: joi_1.default.number().integer().positive().default(4001),
     SUPABASE_URL: joi_1.default.string().uri().required(),
     SUPABASE_SERVICE_ROLE_KEY: joi_1.default.string().min(10).required(),
     REDIS_URL: joi_1.default.string().uri().optional(),

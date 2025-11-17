@@ -8,7 +8,7 @@ exports.verifyJwt = verifyJwt;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const secret = process.env.JWT_SECRET;
+const secret = (process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-secret' : undefined));
 const expiry = process.env.JWT_EXPIRY || '1d';
 /**
  * Create a signed JWT

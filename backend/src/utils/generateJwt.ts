@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const secret = process.env.JWT_SECRET! as jwt.Secret;
+const secret = (process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-secret' : undefined)) as jwt.Secret;
 const expiry = (process.env.JWT_EXPIRY as jwt.SignOptions['expiresIn']) || '1d';
 
 export interface JwtPayload {

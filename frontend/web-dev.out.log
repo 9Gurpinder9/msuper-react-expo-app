@@ -1,0 +1,20 @@
+
+> frontend@1.0.0 web
+> expo start --web --port 19006
+
+env: load .env
+env: export API_BASE_URL
+Starting project at C:\Users\coder-i-am\Desktop\React-App\msuper-react-expo-app\frontend
+Starting Metro Bundler
+Waiting on http://localhost:19006
+Logs for your project will appear below.
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 2797ms node_modules\expo-router\entry.js (987 modules)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 2635ms node_modules\expo-router\entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 7761ms node_modules\expo-router\entry.js (1 module)
+Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+ LOG  [web] Logs will appear in the browser console

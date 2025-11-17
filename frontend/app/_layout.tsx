@@ -1,25 +1,28 @@
-// app/_layout.tsx
+// app/_layout.tsx - Restored providers layout
 import React from 'react';
-import { useColorScheme } from 'react-native';
 import { Slot } from 'expo-router';
-import { ThemeModeProvider } from '@theme';
-import { ToastProvider } from '../src/utils/ToastProvider';
-import { installGlobalErrorHandlers } from '../src/utils/logger';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeModeProvider } from '../src/theme/ThemeModeProvider';
+import { ToastProvider } from '../src/utils/ToastProvider';
+import { installGlobalErrorHandlers, logger } from '../src/utils/logger';
 
-installGlobalErrorHandlers();
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  // Keep hook to re-render on system changes so the provider can pick them up
-  useColorScheme();
-  const [client] = React.useState(() => new QueryClient());
+  React.useEffect(() => {
+    installGlobalErrorHandlers();
+    logger.info('GlobalErrorHandlersInstalled');
+  }, []);
 
   return (
     <ThemeModeProvider>
-      <QueryClientProvider client={client}>
-        <ToastProvider>
-          <Slot />
-        </ToastProvider>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <ToastProvider>
+            <Slot />
+          </ToastProvider>
+        </SafeAreaProvider>
       </QueryClientProvider>
     </ThemeModeProvider>
   );

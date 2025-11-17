@@ -29,14 +29,37 @@ const loginHandler = async (req, res, next) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
         }
         const otp = (0, otpGenerator_1.generateNumericOtp)();
-        await (0, emailSender_1.sendOtpEmail)(email, otp);
-        if (admin.telegram_id) {
-            await (0, telegramSender_1.sendOtpTelegram)(admin.telegram_id, otp);
+        let emailOk = false;
+        let telegramOk = false;
+        try {
+            await (0, emailSender_1.sendOtpEmail)(email, otp);
+            emailOk = true;
+        }
+        catch (e) {
+            logger_1.default.warn(`sendOtpEmail failed for ${email}: ${e?.message || e}`);
+        }
+        try {
+            if (admin.telegram_id) {
+                await (0, telegramSender_1.sendOtpTelegram)(admin.telegram_id, otp);
+                telegramOk = true;
+            }
+        }
+        catch (e) {
+            logger_1.default.warn(`sendOtpTelegram failed for ${email}: ${e?.message || e}`);
+        }
+        if (!emailOk && !telegramOk) {
+            // In dev, allow flow to continue and log the OTP to console
+            if (process.env.NODE_ENV !== 'production') {
+                logger_1.default.info(`DEV ONLY: OTP for ${email} is ${otp}`);
+            }
+            else {
+                return res.status(500).json({ success: false, message: 'Could not send OTP. Please try again later.' });
+            }
         }
         await redisClient_1.default.set(`otp:${email}`, otp, { EX: OTP_TTL_SECONDS });
         // set an initial cooldown so the user cannot instantly spam resend
         await redisClient_1.default.set(`otp:cooldown:${email}`, '1', { EX: RESEND_COOLDOWN_SECONDS });
-        res.json({ success: true, message: 'OTP sent to your email and Telegram.' });
+        res.json({ success: true, message: 'OTP sent to your email and/or Telegram.' });
     }
     catch (err) {
         logger_1.default.error(`POST /super-admin/login - ${err.message}`);

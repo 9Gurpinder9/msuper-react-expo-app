@@ -1,9 +1,10 @@
 // frontend/src/theme/ThemeModeProvider.tsx
 import React from 'react';
-import { ColorSchemeName, useColorScheme } from 'react-native';
+import { ColorSchemeName, useColorScheme, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { getTheme } from './core';
+import * as SystemUI from 'expo-system-ui';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -17,7 +18,7 @@ const ThemeModeContext = React.createContext<ThemeModeContextValue | undefined>(
 
 const STORAGE_KEY = 'app.theme.mode';
 
-export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeModeProvider({ children }: { children?: React.ReactNode }) {
   // Default to system until we load a saved preference
   const [mode, setModeState] = React.useState<ThemeMode>('system');
   const systemScheme = useColorScheme() ?? 'light';
@@ -47,9 +48,20 @@ export function ThemeModeProvider({ children }: { children: React.ReactNode }) {
     [mode, setMode, effectiveScheme]
   );
 
+  // Align OS/window background with theme background for polish
+  React.useEffect(() => {
+    const bg = (theme.colors as any).background as string;
+    try {
+      SystemUI.setBackgroundColorAsync(bg);
+    } catch {}
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      try { (document.body as any).style.backgroundColor = bg; } catch {}
+    }
+  }, [theme.colors.background]);
+
   return (
     <ThemeModeContext.Provider value={value}>
-      <PaperProvider theme={theme}>{children}</PaperProvider>
+      <PaperProvider theme={theme}>{children as any}</PaperProvider>
     </ThemeModeContext.Provider>
   );
 }

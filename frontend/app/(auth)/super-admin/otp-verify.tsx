@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   KeyboardAvoidingView,
@@ -25,14 +25,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 import TopAppBar from "@super-admin/components/TopAppBar";
 import { useToast } from "@utils/toast";
 import { API_BASE_URL } from "@config";
 
-const RESEND_SECONDS = 30;
+const RESEND_SECONDS = 60;
 
-export default function OTPVerify() {
+ export default function OTPVerify() {
   const [kbVisible, setKbVisible] = useState(false);
   useEffect(() => {
     const show = Keyboard.addListener("keyboardDidShow", () =>
@@ -48,7 +49,7 @@ export default function OTPVerify() {
   }, []);
 
   const router = useRouter();
-  const { showToast } = useToast();
+  const { showToast, showError, showSuccess } = useToast();
   const theme = useTheme();
   const styles = makeStyles(theme);
   const insets = useSafeAreaInsets();
@@ -95,7 +96,10 @@ export default function OTPVerify() {
   };
 
   const handleVerify = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      showError("Please enter the OTP code.");
+      return;
+    }
     if (loading) return; // guard double tap
     setLoading(true);
     try {
@@ -109,10 +113,10 @@ export default function OTPVerify() {
         await Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Warning,
         );
-        showToast(body.message || "Invalid OTP", "error");
+        showError(body.message || "Invalid OTP");
       } else {
         if (body.token) await AsyncStorage.setItem("authToken", body.token);
-        showToast(body.message || "Verified!", "success");
+        showSuccess(body.message || "Verified!");
         setVerified(true); // morph button icon to check
         await Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Success,
@@ -123,7 +127,7 @@ export default function OTPVerify() {
       }
     } catch {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showToast("Network error, please try again", "error");
+      showError("Network error, please try again");
     } finally {
       setLoading(false);
     }
@@ -140,13 +144,13 @@ export default function OTPVerify() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        showToast(body?.message || "Failed to resend OTP", "error");
+        showError(body?.message || "Failed to resend OTP");
       } else {
-        showToast(body?.message || "OTP resent", "success");
+        showSuccess(body?.message || "OTP resent");
         setResendSeconds(RESEND_SECONDS); // restart timer
       }
     } catch {
-      showToast("Network error while resending OTP", "error");
+      showError("Network error while resending OTP");
     } finally {
       setResending(false);
     }
@@ -156,6 +160,13 @@ export default function OTPVerify() {
 
   return (
     <View style={styles.wrapper}>
+      {/* Subtle gradient background */}
+      <LinearGradient
+        colors={[theme.colors.primary, (theme as any).colors.surfaceVariant]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
       {/* Background-only tap to dismiss keyboard (doesn't wrap the input) */}
       <Pressable
         onPress={Keyboard.dismiss}
@@ -169,7 +180,7 @@ export default function OTPVerify() {
           <ProgressBar
             indeterminate
             style={[styles.topProgress, { top: insets.top }]}
-            color={theme.colors.primary}
+            color={(theme as any).colors.info}
           />
         )}
       </Portal>
@@ -186,6 +197,7 @@ export default function OTPVerify() {
         >
           <Card style={styles.card}>
             <Card.Content>
+              <Text style={{ marginBottom: 8, opacity: 0.8 }}>Enter the 6-digit code we sent to your email.</Text>
               <TextInput
                 label="OTP"
                 value={otp}
@@ -198,6 +210,8 @@ export default function OTPVerify() {
                 returnKeyType="done"
                 onSubmitEditing={handleVerify}
                 editable={!loading && !resending}
+                textContentType="oneTimeCode"
+                autoComplete="one-time-code"
                 left={
                   <TextInput.Icon
                     icon={({ size, color }) => (
@@ -235,21 +249,18 @@ export default function OTPVerify() {
                   <ProgressBar
                     progress={resendProgress}
                     style={styles.resendProgress}
+                    color={(theme as any).colors.info}
                   />
                 </View>
               </View>
 
-              {!!error && (
-                <HelperText type="error" style={styles.helperText}>
-                  {error}
-                </HelperText>
-              )}
+              {/* Validation feedback is surfaced via toast; no inline banner */}
 
               {/* Inline verifying status */}
               {loading && (
                 <View style={styles.statusRow}>
-                  <ActivityIndicator animating size="small" />
-                  <Text style={styles.statusText}>Verifying OTP…</Text>
+                  <ActivityIndicator animating size="small" color={(theme as any).colors.info} />
+                  <Text style={styles.statusText}>Verifying OTP...</Text>
                 </View>
               )}
 
@@ -257,7 +268,7 @@ export default function OTPVerify() {
                 mode="contained"
                 onPress={handleVerify}
                 loading={loading}
-                disabled={loading || resending} // block while any request running
+                disabled={loading}
                 style={styles.button}
                 contentStyle={styles.buttonContent}
                 icon={
@@ -284,7 +295,7 @@ export default function OTPVerify() {
 
 const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
-    wrapper: { flex: 1, backgroundColor: theme.colors.surfaceVariant },
+    wrapper: { flex: 1, backgroundColor: theme.colors.background },
     scrollContainer: {
       flexGrow: 1,
       justifyContent: "flex-start",
@@ -306,11 +317,7 @@ const makeStyles = (theme: MD3Theme) =>
       borderRadius: 12,
       padding: 8,
       backgroundColor: theme.colors.surface,
-      elevation: 8,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
+      elevation: 2,
     },
     input: { marginBottom: 8 },
     helperText: { marginBottom: 8 },
@@ -333,3 +340,8 @@ const makeStyles = (theme: MD3Theme) =>
     button: { marginTop: 12 },
     buttonContent: { height: 48 },
   });
+
+
+
+
+

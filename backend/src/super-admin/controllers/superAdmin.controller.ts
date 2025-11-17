@@ -28,16 +28,36 @@ export const loginHandler: RequestHandler = async (req, res, next) => {
         }
 
         const otp = generateNumericOtp();
-        await sendOtpEmail(email, otp);
-        if ((admin as any).telegram_id) {
-            await sendOtpTelegram((admin as any).telegram_id, otp);
+        let emailOk = false;
+        let telegramOk = false;
+        try {
+            await sendOtpEmail(email, otp);
+            emailOk = true;
+        } catch (e: any) {
+            logger.warn(`sendOtpEmail failed for ${email}: ${e?.message || e}`);
+        }
+        try {
+            if ((admin as any).telegram_id) {
+                await sendOtpTelegram((admin as any).telegram_id, otp);
+                telegramOk = true;
+            }
+        } catch (e: any) {
+            logger.warn(`sendOtpTelegram failed for ${email}: ${e?.message || e}`);
+        }
+        if (!emailOk && !telegramOk) {
+            // In dev, allow flow to continue and log the OTP to console
+            if (process.env.NODE_ENV !== 'production') {
+                logger.info(`DEV ONLY: OTP for ${email} is ${otp}`);
+            } else {
+                return res.status(500).json({ success: false, message: 'Could not send OTP. Please try again later.' });
+            }
         }
 
         await redis.set(`otp:${email}`, otp, { EX: OTP_TTL_SECONDS });
         // set an initial cooldown so the user cannot instantly spam resend
         await redis.set(`otp:cooldown:${email}`, '1', { EX: RESEND_COOLDOWN_SECONDS });
 
-        res.json({ success: true, message: 'OTP sent to your email and Telegram.' });
+        res.json({ success: true, message: 'OTP sent to your email and/or Telegram.' });
     } catch (err: any) {
         logger.error(`POST /super-admin/login - ${err.message}`);
         next(err);
