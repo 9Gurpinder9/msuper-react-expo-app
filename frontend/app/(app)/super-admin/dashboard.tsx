@@ -9,10 +9,10 @@ import {
   Card,
   Button,
   Surface,
+  IconButton,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const { width } = useWindowDimensions();
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
@@ -121,18 +122,16 @@ export default function Dashboard() {
 
   return (
     <View style={styles.wrapper}>
-      <LinearGradient
-        colors={[theme.colors.primary, (theme as any).colors.surfaceVariant]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-
       <TopAppBar title="Super-Admin Dashboard" showMenu onMenuPress={() => setDrawerOpen(true)} />
 
-      {/* Drawer overlay */}
+      {/* Drawer overlay (captures outside clicks) */}
       {drawerOpen && (
-        <Pressable style={[StyleSheet.absoluteFillObject]} onPress={() => setDrawerOpen(false)}>
+        <Pressable
+          style={styles.overlayHitArea}
+          pointerEvents="auto"
+          onPress={() => setDrawerOpen(false)}
+          accessibilityLabel="Close drawer by clicking outside"
+        >
           <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} />
         </Pressable>
       )}
@@ -141,14 +140,22 @@ export default function Dashboard() {
       >
         <Surface elevation={2} style={StyleSheet.absoluteFill}>
           <View style={styles.drawerHeader}>
-            <MaterialCommunityIcons
-              name="shield-account"
-              size={24}
-              color={theme.colors.onSurface}
+            <View style={styles.drawerHeaderLeft}>
+              <MaterialCommunityIcons
+                name="shield-account"
+                size={24}
+                color={theme.colors.onSurface}
+              />
+              <Text variant="titleMedium" style={{ marginLeft: 8 }}>
+                Menu
+              </Text>
+            </View>
+            <IconButton
+              icon={(p) => <MaterialCommunityIcons name="close" size={p.size} color={p.color} />}
+              size={20}
+              onPress={() => setDrawerOpen(false)}
+              accessibilityLabel="Close menu"
             />
-            <Text variant="titleMedium" style={{ marginLeft: 8 }}>
-              Menu
-            </Text>
           </View>
           <View style={styles.drawerItems}>
             <Button
@@ -198,40 +205,58 @@ export default function Dashboard() {
           Welcome, Super-Admin!
         </Text>
         <View style={styles.grid}>
-          {widgets.map((w) => (
-            <Card key={w.key} style={styles.widget} onPress={() => w.to && router.push(w.to)}>
-              <LinearGradient
-                colors={[w.color, theme.colors.surface]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <Card.Content style={styles.widgetContent}>
-                <View style={styles.widgetIconWrap}>
-                  <MaterialCommunityIcons
-                    name={w.icon as any}
-                    size={28}
-                    color={theme.colors.onPrimary}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
-                    {w.title}
-                  </Text>
-                  {!!w.subtitle && (
-                    <Text variant="bodySmall" style={{ opacity: 0.75 }}>
-                      {w.subtitle}
-                    </Text>
-                  )}
-                </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={theme.colors.onSurface}
-                />
-              </Card.Content>
-            </Card>
-          ))}
+          {widgets.map((w) => {
+            const isHovered = hoverKey === w.key;
+            return (
+              <Pressable
+                key={w.key}
+                onHoverIn={() => setHoverKey(w.key)}
+                onHoverOut={() => setHoverKey((k) => (k === w.key ? null : k))}
+                style={{ width: '100%', maxWidth: 360 }}
+              >
+                <Card
+                  mode="elevated"
+                  elevation={isHovered ? 5 : 2}
+                  style={[
+                    styles.widget,
+                    isHovered && styles.widgetHover,
+                    { backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF' },
+                  ]}
+                  onPress={() => w.to && router.push(w.to)}
+                >
+                  <Card.Content style={styles.widgetContent}>
+                    <View
+                      style={[
+                        styles.widgetIconWrap,
+                        { backgroundColor: (theme as any).colors.primaryContainer },
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name={w.icon as any}
+                        size={26}
+                        color={(theme as any).colors.onPrimaryContainer || theme.colors.primary}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
+                        {w.title}
+                      </Text>
+                      {!!w.subtitle && (
+                        <Text variant="bodySmall" style={{ opacity: 0.8 }}>
+                          {w.subtitle}
+                        </Text>
+                      )}
+                    </View>
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={22}
+                      color={theme.colors.onSurface}
+                    />
+                  </Card.Content>
+                </Card>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
     </View>
@@ -240,7 +265,10 @@ export default function Dashboard() {
 
 const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
-    wrapper: { flex: 1, backgroundColor: theme.colors.background },
+    wrapper: {
+      flex: 1,
+      backgroundColor: (theme as any).dark ? (theme as any).colors.surfaceVariant : '#F3F4F6',
+    },
     container: {
       flex: 1,
       padding: 16,
@@ -256,10 +284,12 @@ const makeStyles = (theme: MD3Theme) =>
       gap: 12,
     },
     widget: {
-      width: '100%',
-      maxWidth: 360,
       minHeight: 88,
       overflow: 'hidden',
+      borderRadius: 12,
+    },
+    widgetHover: {
+      transform: [{ translateY: -1 }],
     },
     widgetContent: {
       flexDirection: 'row',
@@ -272,7 +302,6 @@ const makeStyles = (theme: MD3Theme) =>
       borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.primary,
       marginRight: 4,
     },
     drawer: {
@@ -287,13 +316,24 @@ const makeStyles = (theme: MD3Theme) =>
     overlay: {
       ...StyleSheet.absoluteFillObject,
       backgroundColor: '#000',
+      zIndex: 900,
+    },
+    overlayHitArea: {
+      ...StyleSheet.absoluteFillObject,
+      zIndex: 900,
     },
     drawerHeader: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       padding: 16,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: (theme as any).colors.outlineVariant || '#00000022',
+    },
+    drawerHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexShrink: 1,
     },
     drawerItems: {
       paddingVertical: 8,

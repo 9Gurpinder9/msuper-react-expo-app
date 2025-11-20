@@ -53,3 +53,6 @@
 [2025-11-17 10:04:59] WARN: JWT verification failed: jwt expired
 [2025-11-17 10:05:20] WARN: JWT verification failed: jwt expired
 [2025-11-17 10:05:20] WARN: JWT verification failed: jwt expired
+[2025-11-17 10:06:17] WARN: JWT verification failed: jwt expired
+[2025-11-17 10:06:19] WARN: JWT verification failed: jwt malformed
+[2025-11-17 10:06:19] WARN: JWT verification failed: jwt malformed
