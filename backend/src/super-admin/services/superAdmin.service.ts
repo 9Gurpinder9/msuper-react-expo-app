@@ -25,3 +25,14 @@ export async function getAdminPublicByEmail(email: string) {
   return data?.[0] ?? null;
 }
 
+export async function updateAdminPassword(email: string, passwordHash: string) {
+  const { data, error } = await supabase
+    .from('super_admins')
+    .update({ password: passwordHash })
+    .eq('email', email)
+    .select('id')
+    .order('id', { ascending: true })
+    .limit(1);
+  if (error) throw error;
+  return data?.[0] ?? null;
+}

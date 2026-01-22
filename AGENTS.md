@@ -1,8 +1,23 @@
-NOTE: This file is auto-synced from .github/copilot-instructions.md. Edit that file and run `npm run sync:agents` to regenerate.
-
-# Copilot instructions for msuper-react-expo-app (for agents)
+# Copilot instructions for msuper-react-expo-app
 
 These instructions help AI agents work productively in this monorepo (frontend: Expo React Native, backend: Express + Supabase). Keep answers concrete and aligned to the codebase patterns below.
+
+## Skill triggers (use installed skills when prompts match)
+
+- frontend-design: Use for any UI or visual build request (design, layout, styling, landing page, dashboard, component polish, "make it look nice", "improve UI/UX").
+- ui-ux-pro-max: Use for UX reviews, design systems, typography/color/spacing guidance, or "design/optimize/check UI/UX".
+- react-best-practices: Use when reading or writing React components, hooks, effects, or performance fixes.
+- react-native-architecture: Use for Expo/React Native navigation, native modules, offline sync, device APIs, or mobile app architecture.
+- threejs-fundamentals: Use for basic Three.js scene setup, cameras, renderer, transforms.
+- threejs-geometry: Use when creating or optimizing geometries/meshes or instancing.
+- threejs-materials: Use for material selection, PBR settings, textures on materials.
+- threejs-lighting: Use when adding/configuring lights and shadows.
+- threejs-loaders: Use for GLTF/texture/HDR loading or asset pipelines.
+- threejs-animation: Use for keyframes, skeletal/morph animations, mixing.
+- threejs-interaction: Use for raycasting, controls, picking, input.
+- threejs-postprocessing: Use for bloom/DOF/effects composer.
+- threejs-shaders: Use for custom shader work or GLSL.
+- threejs-textures: Use for UVs, texture settings, environment maps.
 
 ## Architecture overview
 
@@ -21,6 +36,26 @@ These instructions help AI agents work productively in this monorepo (frontend: 
   - Theming: `src/theme/` with `ThemeModeProvider` and `getTheme`; `TopAppBar` exposes a mode switcher.
   - Utilities: `src/utils/logger.ts` (dev log collector + global error handlers), `src/utils/network.ts` (`fetchJson` wrapper with logging), `src/utils/ToastProvider.tsx` (Snackbar-based toasts with type icons).
   - Super-Admin screens: `app/(auth)/super-admin/login.tsx`, `app/(auth)/super-admin/otp-verify.tsx`, `app/(app)/super-admin/dashboard.tsx` using `API_BASE_URL` from `config/index.ts`.
+
+## Routing at a glance
+
+```
+app/
+  _layout.tsx
+  (auth)/
+    _layout.tsx
+    super-admin/
+      login.tsx
+      otp-verify.tsx
+  (app)/
+    _layout.tsx
+    super-admin/
+      dashboard.tsx
+```
+
+- Group names in parentheses are not part of the URL.
+- Guards live in each group's `_layout.tsx` and redirect based on `authToken` in AsyncStorage.
+- Add new public pages under `(auth)` and protected pages under `(app)` to inherit the correct guard automatically.
 
 ## Dev workflows
 
@@ -58,23 +93,28 @@ These instructions help AI agents work productively in this monorepo (frontend: 
 - Theme: Wrap screens in providers from `app/_layout.tsx`. Use `useThemeMode()` for light/dark/system toggle.
 - Auth flow example: `app/(auth)/super-admin/login.tsx` (stores email in AsyncStorage) → `app/(auth)/super-admin/otp-verify.tsx` (verifies & stores `authToken`) → `app/(app)/super-admin/dashboard.tsx` (Authorization: Bearer). Group layouts enforce redirects based on token presence.
 
-## Routing at a glance
+## Adding new features (apply these patterns)
 
+- Backend feature
+  1. Create `src/<feature>/schemas.ts`, `services/`, `controllers/`, `routes.ts` with Joi validation and minimal controller logic.
+  2. Mount router in `src/routes/index.ts` under a clear base path.
+  3. Use Supabase via `database/supabaseClient.ts`; handle permission/table errors by returning informative messages (see `testConnection.ts`).
+- Frontend feature
+  1. Add screens under `app/<feature>/` with expo-router. Use `fetchJson` and `useToast` for UX feedback.
+  2. Keep API base from `config/index.ts`. Persist small auth/session bits in AsyncStorage if needed.
+
+## Integration & troubleshooting tips
+
+- CORS/device: On devices, point `API_BASE_URL` to LAN IP; web shows clearer CORS errors. Login screen already hints this in error copy.
+- Missing Redis: backend falls back to in-memory store; OTP works but is ephemeral and single-process only.
+- Health checks: `GET /healthz`; Supabase reachability via `GET /test-database`.
+
+## Local run helper script (PowerShell)
+
+```powershell
+# Start backend (nodemon) in a new window
+Start-Process -WorkingDirectory $PWD -FilePath "npm" -ArgumentList "run","dev","--workspace","backend"
+
+# Start frontend (Expo) in a new window
+Start-Process -WorkingDirectory $PWD -FilePath "npm" -ArgumentList "start","--workspace","frontend"
 ```
-app/
-  _layout.tsx
-  (auth)/
-    _layout.tsx
-    super-admin/
-      login.tsx
-      otp-verify.tsx
-  (app)/
-    _layout.tsx
-    super-admin/
-      dashboard.tsx
-```
-
-- Group names in parentheses are not part of the URL.
-- Guards live in each group's `_layout.tsx` and redirect based on `authToken` in AsyncStorage.
-- Add new public pages under `(auth)` and protected pages under `(app)` to inherit the correct guard automatically.
-

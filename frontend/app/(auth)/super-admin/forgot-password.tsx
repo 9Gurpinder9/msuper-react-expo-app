@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   KeyboardAvoidingView,
@@ -19,22 +19,20 @@ import {
   Text,
 } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
-
-import { logger } from '@utils/logger';
 import { fetchJson } from '@utils/network';
+import { logger } from '@utils/logger';
 
-export default function Login() {
+export default function ForgotPassword() {
   const router = useRouter();
-  const { showToast, showError, showSuccess } = useToast();
+  const { showError, showSuccess } = useToast();
   const theme = useTheme();
   const styles = makeStyles(theme);
   const insets = useSafeAreaInsets();
@@ -50,12 +48,32 @@ export default function Login() {
   }, []);
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [emailErr, setEmailErr] = useState('');
-  const [passwordErr, setPasswordErr] = useState('');
   const [loading, setLoading] = useState(false);
-  const passwordRef = React.useRef<any>(null);
+
+  const resetFlow = useCallback(async () => {
+    await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage']);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          await resetFlow();
+          if (active) {
+            setEmail('');
+            setEmailErr('');
+          }
+        } catch (e) {
+          logger.warn('Failed to clear reset flow on entry', { error: String(e) });
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, [resetFlow])
+  );
 
   const validate = () => {
     let ok = true;
@@ -66,83 +84,66 @@ export default function Login() {
       setEmailErr('Enter a valid email');
       ok = false;
     } else setEmailErr('');
-    if (!password) {
-      setPasswordErr('Password is required');
-      ok = false;
-    } else setPasswordErr('');
     return ok;
   };
 
-  const handleLogin = async () => {
+  const handleSendOtp = async () => {
     if (!validate()) {
       showError('Please correct the highlighted fields.');
       return;
     }
+    if (loading) return;
     setLoading(true);
 
-    const url = `${API_BASE_URL}/super-admin/login`;
-
+    const url = `${API_BASE_URL}/super-admin/reset-password/request`;
     try {
       const res = await fetchJson(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email }),
       });
-
       const body: any = res.data ?? {};
 
       if (!res.ok) {
-        if (body?.errors) {
-          setEmailErr(body.errors.email ?? '');
-          setPasswordErr(body.errors.password ?? '');
-        }
-        const errMsg = body?.message || `Login failed (HTTP ${res.status})`;
-        showError(errMsg);
-        try {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        } catch {}
+        if (body?.errors?.email) setEmailErr(body.errors.email);
+        showError(body?.message || `Request failed (HTTP ${res.status})`);
         return;
       }
 
-      // Save email for OTP screen (backend expects email + otp)
       try {
-        await AsyncStorage.setItem('loginEmail', email);
+        await AsyncStorage.multiSet([
+          ['resetEmail', email],
+          ['resetStage', 'otp'],
+        ]);
+        await AsyncStorage.removeItem('resetToken');
       } catch (e) {
-        logger.warn('Failed to store email for OTP verification', { error: String(e) });
+        logger.warn('Failed to store reset email', { error: String(e) });
       }
 
-      showSuccess(body?.message || 'OTP sent!');
-      try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } catch {}
-      router.replace('/super-admin/otp-verify');
+      showSuccess(body?.message || 'OTP sent to your email.');
+      router.replace('/super-admin/reset-otp');
     } catch (err: any) {
       const msg = err?.message || 'Network error';
       showError(
         `${msg}${Platform.OS === 'web' ? ' (check CORS & URL)' : ' (use LAN IP for API_BASE_URL on device)'}`
       );
-      logger.error('Login network exception', { message: msg, url });
+      logger.error('Reset request network exception', { message: msg, url });
     } finally {
       setLoading(false);
     }
   };
 
-  // Keep login button enabled by default; validation will run on press
-  const validEmail = /^\S+@\S+\.\S+$/.test(email);
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} disabled={Platform.OS === 'web'}>
       <KeyboardAvoidingView style={styles.wrapper} behavior={Platform.select({ ios: 'padding' })}>
-        {/* Subtle gradient background */}
         <LinearGradient
           colors={[theme.colors.primary, (theme as any).colors.surfaceVariant]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
-        <TopAppBar title="Login" />
+        <TopAppBar title="Forgot Password" />
 
-        {/* Thin top indeterminate progress while loading */}
         <Portal>
           {loading && (
             <ProgressBar
@@ -160,10 +161,10 @@ export default function Login() {
         >
           <Card style={styles.card}>
             <Card.Title
-              title="Super-Admin Login"
+              title="Reset Your Password"
               left={(props) => (
                 <MaterialCommunityIcons
-                  name="shield-account"
+                  name="email-lock"
                   size={props.size}
                   color={theme.colors.onSurface}
                 />
@@ -171,7 +172,7 @@ export default function Login() {
             />
             <Card.Content>
               <Text variant="bodyMedium" style={{ marginBottom: 8, opacity: 0.8 }}>
-                We'll send a one-time code after successful login.
+                Enter your registered email to receive a 6-digit OTP.
               </Text>
               <TextInput
                 label="Email"
@@ -184,9 +185,8 @@ export default function Login() {
                 keyboardType="email-address"
                 textContentType="username"
                 autoComplete="email"
-                returnKeyType="next"
-                enablesReturnKeyAutomatically
-                onSubmitEditing={() => passwordRef.current?.focus()}
+                returnKeyType="done"
+                onSubmitEditing={handleSendOtp}
                 left={
                   <TextInput.Icon
                     icon={({ size, color }) => (
@@ -202,69 +202,29 @@ export default function Login() {
                   {emailErr}
                 </HelperText>
               )}
-              <TextInput
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                mode="outlined"
-                ref={passwordRef}
-                secureTextEntry={!showPassword}
-                error={!!passwordErr}
-                textContentType="password"
-                autoComplete="current-password"
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-                left={
-                  <TextInput.Icon
-                    icon={({ size, color }) => (
-                      <MaterialCommunityIcons name="lock" size={size} color={color} />
-                    )}
-                  />
-                }
-                right={
-                  password.length > 0 ? (
-                    <TextInput.Icon
-                      icon={({ size }) => (
-                        <MaterialCommunityIcons
-                          name={showPassword ? 'eye-off' : 'eye'}
-                          size={size}
-                          color={(theme as any).colors.onSurfaceVariant || theme.colors.onSurface}
-                        />
-                      )}
-                      onPress={() => setShowPassword((p) => !p)}
-                      forceTextInputFocus={false}
-                    />
-                  ) : undefined
-                }
-                editable={!loading}
-                style={styles.input}
-              />
-              {!!passwordErr && (
-                <HelperText type="error" style={styles.helperText}>
-                  {passwordErr}
-                </HelperText>
-              )}
+
               <Button
                 mode="contained"
-                onPress={handleLogin}
+                onPress={handleSendOtp}
                 loading={loading}
                 disabled={loading}
                 style={styles.button}
                 contentStyle={styles.buttonContent}
-                testID="login-button"
-                accessibilityLabel="Log in"
                 icon={({ size, color }) => (
-                  <MaterialCommunityIcons name="login" size={size} color={color} />
+                  <MaterialCommunityIcons name="send" size={size} color={color} />
                 )}
               >
-                Log in
+                Send OTP
               </Button>
               <Button
                 mode="text"
-                onPress={() => router.push('/super-admin/forgot-password')}
+                onPress={async () => {
+                  await resetFlow();
+                  router.replace('/super-admin/login');
+                }}
                 style={{ marginTop: 8 }}
               >
-                Forgot password?
+                Back to Login
               </Button>
             </Card.Content>
           </Card>

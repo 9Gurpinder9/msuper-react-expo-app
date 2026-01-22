@@ -1,16 +1,20 @@
 // backend/src/super-admin/controllers/superAdmin.controller.ts
 import supabase from '../../database/supabaseClient';
 import { generateNumericOtp } from '../../utils/otpGenerator';
-import { sendOtpEmail } from '../../utils/emailSender';
+import { sendOtpEmail, sendPasswordResetOtpEmail } from '../../utils/emailSender';
 import { sendOtpTelegram } from '../../utils/telegramSender';
 import logger from '../../utils/logger';
 import redis from '../../database/redisClient';
 import { generateJwt } from '../../utils/generateJwt';
 import { RequestHandler } from 'express';
-import { findAdminByEmail, verifyPassword, getAdminPublicByEmail } from '../services/superAdmin.service';
+import { findAdminByEmail, verifyPassword, getAdminPublicByEmail, updateAdminPassword } from '../services/superAdmin.service';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const OTP_TTL_SECONDS = 60 * 20;       // 20 minutes
 const RESEND_COOLDOWN_SECONDS = 30;    // 30 seconds
+const RESET_OTP_TTL_SECONDS = 60 * 20; // 20 minutes
+const RESET_TOKEN_TTL_SECONDS = 60 * 20; // 20 minutes
 
 export const loginHandler: RequestHandler = async (req, res, next) => {
     try {
@@ -191,4 +195,123 @@ export const resendOtpHandler: RequestHandler = async (req, res, next) => {
 
 export const dashboardHandler: RequestHandler = (_req, res) => {
     res.json({ success: true, message: 'Welcome to the super admin dashboard!' });
+};
+
+/**
+ * POST /super-admin/reset-password/request
+ * Body: { email }
+ * - Validates email exists
+ * - Sends 6-digit OTP for password reset
+ */
+export const resetPasswordRequestHandler: RequestHandler = async (req, res, next) => {
+    try {
+        const { email } = (req.body || {}) as { email: string };
+
+        const admin = await findAdminByEmail(email);
+        if (!admin) {
+            return res.status(404).json({ success: false, message: 'Email not found.' });
+        }
+
+        const cooldownKey = `reset:cooldown:${email}`;
+        try {
+            const cooling = await redis.get(cooldownKey);
+            if (cooling) {
+                let ttl = 0;
+                try { ttl = await redis.ttl(cooldownKey); } catch (_) { /* ignore */ }
+                return res.status(429).json({
+                    success: false,
+                    message: ttl && ttl > 0
+                        ? `Please wait ${ttl}s before requesting a new OTP.`
+                        : 'Please wait before requesting a new OTP.',
+                });
+            }
+        } catch (e: any) {
+            logger.warn(`Redis unavailable during reset cooldown check for ${email}: ${e.message}`);
+        }
+
+        const otp = generateNumericOtp();
+
+        try {
+            await sendPasswordResetOtpEmail(email, otp);
+        } catch (e: any) {
+            logger.error(`sendPasswordResetOtpEmail failed for ${email}: ${e.message}`);
+            return res.status(500).json({ success: false, message: 'Could not send OTP. Please try again later.' });
+        }
+
+        try {
+            await redis.set(`reset:otp:${email}`, otp, { EX: RESET_OTP_TTL_SECONDS });
+            await redis.set(cooldownKey, '1', { EX: RESEND_COOLDOWN_SECONDS });
+        } catch (e: any) {
+            logger.warn(`Redis set failed for reset otp/cooldown ${email}: ${e.message}`);
+        }
+
+        return res.json({ success: true, message: 'OTP sent to your email.' });
+    } catch (err: any) {
+        logger.error(`POST /super-admin/reset-password/request - ${err.message}`);
+        next(err);
+    }
+};
+
+/**
+ * POST /super-admin/reset-password/verify-otp
+ * Body: { email, otp }
+ * - Validates OTP and issues a short-lived reset token
+ */
+export const resetPasswordVerifyOtpHandler: RequestHandler = async (req, res, next) => {
+    try {
+        const { email, otp } = (req.body || {}) as { email: string; otp: string };
+
+        const storedOtp = await redis.get(`reset:otp:${email}`);
+        if (!storedOtp) {
+            return res.status(400).json({ success: false, message: 'OTP expired or not found.' });
+        }
+        if (storedOtp !== otp) {
+            return res.status(401).json({ success: false, message: 'Invalid OTP.' });
+        }
+
+        await redis.del(`reset:otp:${email}`);
+
+        const resetToken = crypto.randomBytes(24).toString('hex');
+        await redis.set(`reset:token:${email}`, resetToken, { EX: RESET_TOKEN_TTL_SECONDS });
+
+        return res.json({ success: true, message: 'OTP verified.', resetToken });
+    } catch (err: any) {
+        logger.error(`POST /super-admin/reset-password/verify-otp - ${err.message}`);
+        next(err);
+    }
+};
+
+/**
+ * POST /super-admin/reset-password/confirm
+ * Body: { email, resetToken, newPassword, confirmPassword }
+ * - Validates reset token and updates password
+ */
+export const resetPasswordConfirmHandler: RequestHandler = async (req, res, next) => {
+    try {
+        const { email, resetToken, newPassword } = (req.body || {}) as {
+            email: string;
+            resetToken: string;
+            newPassword: string;
+        };
+
+        const storedToken = await redis.get(`reset:token:${email}`);
+        if (!storedToken) {
+            return res.status(400).json({ success: false, message: 'Reset token expired or not found.' });
+        }
+        if (storedToken !== resetToken) {
+            return res.status(401).json({ success: false, message: 'Invalid reset token.' });
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        const updated = await updateAdminPassword(email, passwordHash);
+        if (!updated) {
+            return res.status(404).json({ success: false, message: 'Admin not found.' });
+        }
+
+        await redis.del(`reset:token:${email}`);
+        return res.json({ success: true, message: 'Password updated successfully.' });
+    } catch (err: any) {
+        logger.error(`POST /super-admin/reset-password/confirm - ${err.message}`);
+        next(err);
+    }
 };

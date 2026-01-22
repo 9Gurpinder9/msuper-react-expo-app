@@ -1,58 +1,6 @@
-[2025-11-07 10:04:16] WARN: Supabase reachable but query failed: <!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
-
-[2025-11-07 10:14:09] ERROR: POST /super-admin/login - <!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
-
-[2025-11-07 10:14:09] ERROR: POST /super-admin/login - <!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
-
-[2025-11-07 10:20:48] ERROR: POST /super-admin/login - <!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
-
-[2025-11-07 10:20:48] ERROR: POST /super-admin/login - <!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
-
-[2025-11-07 15:33:10] ERROR: POST /super-admin/login - <!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
-
-[2025-11-07 15:33:10] ERROR: POST /super-admin/login - <!doctype html><html lang="en"><head><title>Example Domain</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{background:#eee;width:60vw;margin:15vh auto;font-family:system-ui,sans-serif}h1{font-size:1.5em}div{opacity:0.8}a:link,a:visited{color:#348}</style><body><div><h1>Example Domain</h1><p>This domain is for use in documentation examples without needing permission. Avoid use in operations.<p><a href="https://iana.org/domains/example">Learn more</a></div></body></html>
-
-[2025-11-08 07:10:11] WARN: Password mismatch for email: gurpinderbrar495@gmail.com
-[2025-11-10 09:55:12] WARN: Password mismatch for email: gurpinderbrar495@gmail.com
-[2025-11-10 09:56:51] WARN: Password mismatch for email: gurpinderbrar495@gmail.com
-[2025-11-12 16:06:17] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-12 16:08:13] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-12 16:14:37] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-12 16:21:27] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-12 16:24:15] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-12 16:24:21] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-12 16:24:27] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-12 16:28:07] WARN: Invalid login attempt for email: test@gmail.com
-[2025-11-13 07:24:29] WARN: JWT verification failed: jwt malformed
-[2025-11-17 07:01:50] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:01:51] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:01:51] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:43] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:43] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:48] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:48] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:51] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:51] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:53] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:58] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:59] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:20:59] WARN: JWT verification failed: jwt expired
-[2025-11-17 07:22:11] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:03:42] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:03:43] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:03:46] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:03:47] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:03:48] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:03:49] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:03:49] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:04:19] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:04:19] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:04:24] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:04:24] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:04:59] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:04:59] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:05:20] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:05:20] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:06:17] WARN: JWT verification failed: jwt expired
-[2025-11-17 10:06:19] WARN: JWT verification failed: jwt malformed
-[2025-11-17 10:06:19] WARN: JWT verification failed: jwt malformed
+[2026-01-22 13:27:10] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
+[2026-01-22 13:27:10] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
+[2026-01-22 15:08:52] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
+[2026-01-22 15:08:52] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
+[2026-01-22 15:13:42] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
+[2026-01-22 15:13:42] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
