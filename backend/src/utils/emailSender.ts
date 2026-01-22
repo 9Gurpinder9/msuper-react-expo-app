@@ -23,7 +23,7 @@ export async function sendOtpEmail(to: string, otp: string) {
         <div style="font-size: 24px; font-weight: bold; background: #f1f1f1; padding: 10px 20px; border-radius: 6px; text-align: center; margin: 20px 0;">
           ${otp}
         </div>
-        <p>This OTP is valid for 20 minutes. Do not share it with anyone.</p>
+        <p>This OTP is valid for 3 minutes. Do not share it with anyone.</p>
         <p>Thank you,<br/>The ${appName} Team</p>
       </div>
     </div>
@@ -56,7 +56,7 @@ export async function sendPasswordResetOtpEmail(to: string, otp: string) {
         <div style="font-size: 24px; font-weight: bold; background: #f1f1f1; padding: 10px 20px; border-radius: 6px; text-align: center; margin: 20px 0;">
           ${otp}
         </div>
-        <p>This OTP expires in 20 minutes. If you did not request this, please ignore this email.</p>
+        <p>This OTP expires in 3 minutes. If you did not request this, please ignore this email.</p>
         <p>Thank you,<br/>The ${appName} Team</p>
       </div>
     </div>

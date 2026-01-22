@@ -150,7 +150,7 @@ export default function ResetPassword() {
       }
 
       try {
-        await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage']);
+        await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
       } catch (e) {
         logger.warn('Failed to clear reset session', { error: String(e) });
       }
@@ -322,7 +322,7 @@ export default function ResetPassword() {
               <Button
                 mode="text"
                 onPress={async () => {
-                  await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage']);
+                  await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
                   router.replace('/super-admin/login');
                 }}
                 style={{ marginTop: 8 }}

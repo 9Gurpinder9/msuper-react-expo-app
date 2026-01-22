@@ -11,10 +11,10 @@ import { findAdminByEmail, verifyPassword, getAdminPublicByEmail, updateAdminPas
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
-const OTP_TTL_SECONDS = 60 * 20;       // 20 minutes
+const OTP_TTL_SECONDS = 60 * 3;        // 3 minutes
 const RESEND_COOLDOWN_SECONDS = 30;    // 30 seconds
-const RESET_OTP_TTL_SECONDS = 60 * 20; // 20 minutes
-const RESET_TOKEN_TTL_SECONDS = 60 * 20; // 20 minutes
+const RESET_OTP_TTL_SECONDS = 60 * 3;  // 3 minutes
+const RESET_TOKEN_TTL_SECONDS = 60 * 3; // 3 minutes
 
 export const loginHandler: RequestHandler = async (req, res, next) => {
     try {

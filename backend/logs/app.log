@@ -4,3 +4,4 @@
 [2026-01-22 15:08:52] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
 [2026-01-22 15:13:42] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
 [2026-01-22 15:13:42] ERROR: POST /super-admin/reset-password/confirm - A 'limit' was applied without an explicit 'order'
+[2026-01-22 15:58:06] WARN: Invalid login attempt for email: test@gmail.com

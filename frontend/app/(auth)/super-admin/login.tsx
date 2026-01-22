@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   KeyboardAvoidingView,
@@ -22,7 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
@@ -56,6 +56,27 @@ export default function Login() {
   const [passwordErr, setPasswordErr] = useState('');
   const [loading, setLoading] = useState(false);
   const passwordRef = React.useRef<any>(null);
+  const OTP_EXPIRE_MS = 3 * 60 * 1000;
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          await AsyncStorage.multiRemove(['loginEmail', 'loginOtpExpiresAt']);
+          if (active) {
+            setEmail('');
+            setPassword('');
+            setEmailErr('');
+            setPasswordErr('');
+          }
+        } catch {}
+      })();
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   const validate = () => {
     let ok = true;
@@ -106,9 +127,13 @@ export default function Login() {
 
       // Save email for OTP screen (backend expects email + otp)
       try {
-        await AsyncStorage.setItem('loginEmail', email);
+        const expiresAt = String(Date.now() + OTP_EXPIRE_MS);
+        await AsyncStorage.multiSet([
+          ['loginEmail', email],
+          ['loginOtpExpiresAt', expiresAt],
+        ]);
       } catch (e) {
-        logger.warn('Failed to store email for OTP verification', { error: String(e) });
+        logger.warn('Failed to store login OTP session', { error: String(e) });
       }
 
       showSuccess(body?.message || 'OTP sent!');

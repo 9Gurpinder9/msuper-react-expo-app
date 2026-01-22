@@ -5,7 +5,6 @@ const envSchema = Joi.object({
   PORT: Joi.number().integer().positive().default(4000),
   SUPABASE_URL: Joi.string().uri().required(),
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().min(10).required(),
-  REDIS_URL: Joi.string().uri().optional(),
 }).unknown(true);
 
 const { value, error } = envSchema.validate(process.env, { abortEarly: false });
@@ -18,6 +17,5 @@ export const config = {
   port: Number(value.PORT),
   supabaseUrl: value.SUPABASE_URL as string,
   supabaseServiceRoleKey: value.SUPABASE_SERVICE_ROLE_KEY as string,
-  redisUrl: value.REDIS_URL as string | undefined,
 };
 

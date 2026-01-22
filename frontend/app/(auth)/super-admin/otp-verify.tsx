@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   KeyboardAvoidingView,
@@ -22,7 +22,7 @@ import {
 } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -32,6 +32,7 @@ import { useToast } from "@utils/toast";
 import { API_BASE_URL } from "@config";
 
 const RESEND_SECONDS = 60;
+const OTP_EXPIRE_MS = 3 * 60 * 1000;
 
  export default function OTPVerify() {
   const [kbVisible, setKbVisible] = useState(false);
@@ -59,19 +60,62 @@ const RESEND_SECONDS = 60;
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false); // verify in-flight
   const [verified, setVerified] = useState(false); // for checkmark morph
+  const [expiresIn, setExpiresIn] = useState<number | null>(null);
+  const expireTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Resend state
   const [resendSeconds, setResendSeconds] = useState(RESEND_SECONDS);
   const [resending, setResending] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load stored email
+  // Load stored email + OTP expiry
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        const [storedEmail, expiresAtRaw] = await Promise.all([
+          AsyncStorage.getItem("loginEmail"),
+          AsyncStorage.getItem("loginOtpExpiresAt"),
+        ]);
+        if (!active) return;
+        if (!storedEmail || !expiresAtRaw) {
+          showError("OTP session expired. Please log in again.");
+          router.replace("/super-admin/login");
+          return;
+        }
+        const expiresAt = Number(expiresAtRaw);
+        if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) {
+          await AsyncStorage.multiRemove(["loginEmail", "loginOtpExpiresAt"]);
+          showError("OTP expired. Please log in again.");
+          router.replace("/super-admin/login");
+          return;
+        }
+        setEmail(storedEmail);
+        setExpiresIn(Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)));
+      })();
+      return () => {
+        active = false;
+      };
+    }, [router, showError])
+  );
+
   useEffect(() => {
-    (async () => {
-      const storedEmail = await AsyncStorage.getItem("loginEmail");
-      if (storedEmail) setEmail(storedEmail);
-    })();
-  }, []);
+    if (expiresIn === null) return;
+    if (expiresIn <= 0) {
+      AsyncStorage.multiRemove(["loginEmail", "loginOtpExpiresAt"]).catch(() => {});
+      showError("OTP expired. Please log in again.");
+      router.replace("/super-admin/login");
+      return;
+    }
+    expireTimerRef.current && clearTimeout(expireTimerRef.current);
+    expireTimerRef.current = setTimeout(
+      () => setExpiresIn((s) => (s === null ? null : Math.max(0, s - 1))),
+      1000,
+    );
+    return () => {
+      expireTimerRef.current && clearTimeout(expireTimerRef.current);
+    };
+  }, [expiresIn, router, showError]);
 
   // Countdown for resend
   useEffect(() => {
@@ -116,6 +160,7 @@ const RESEND_SECONDS = 60;
         showError(body.message || "Invalid OTP");
       } else {
         if (body.token) await AsyncStorage.setItem("authToken", body.token);
+        await AsyncStorage.multiRemove(["loginEmail", "loginOtpExpiresAt"]);
         showSuccess(body.message || "Verified!");
         setVerified(true); // morph button icon to check
         await Haptics.notificationAsync(
@@ -147,6 +192,9 @@ const RESEND_SECONDS = 60;
         showError(body?.message || "Failed to resend OTP");
       } else {
         showSuccess(body?.message || "OTP resent");
+        const expiresAt = String(Date.now() + OTP_EXPIRE_MS);
+        await AsyncStorage.setItem("loginOtpExpiresAt", expiresAt);
+        setExpiresIn(Math.ceil(OTP_EXPIRE_MS / 1000));
         setResendSeconds(RESEND_SECONDS); // restart timer
       }
     } catch {
@@ -157,6 +205,11 @@ const RESEND_SECONDS = 60;
   };
 
   const resendProgress = (RESEND_SECONDS - resendSeconds) / RESEND_SECONDS || 0;
+  const formatRemaining = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = String(s % 60).padStart(2, "0");
+    return `${m}:${sec}`;
+  };
 
   return (
     <View style={styles.wrapper}>
@@ -225,6 +278,11 @@ const RESEND_SECONDS = 60;
                 }
                 style={styles.input}
               />
+              {expiresIn !== null && (
+                <Text style={{ marginBottom: 8, opacity: 0.8 }}>
+                  OTP expires in {formatRemaining(expiresIn)}
+                </Text>
+              )}
 
               {/* Resend timer + progress */}
               <View style={styles.resendRow}>

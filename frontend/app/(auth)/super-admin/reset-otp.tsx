@@ -31,6 +31,7 @@ import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
 
 const RESEND_SECONDS = 60;
+const OTP_EXPIRE_MS = 3 * 60 * 1000;
 
 export default function ResetOtp() {
   const [kbVisible, setKbVisible] = useState(false);
@@ -53,6 +54,8 @@ export default function ResetOtp() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [expiresIn, setExpiresIn] = useState<number | null>(null);
+  const expireTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [resendSeconds, setResendSeconds] = useState(RESEND_SECONDS);
   const [resending, setResending] = useState(false);
@@ -63,14 +66,33 @@ export default function ResetOtp() {
     useCallback(() => {
       let active = true;
       (async () => {
-        const [storedEmail, stage] = await Promise.all([
+        const [storedEmail, stage, expiresAtRaw] = await Promise.all([
           AsyncStorage.getItem('resetEmail'),
           AsyncStorage.getItem('resetStage'),
+          AsyncStorage.getItem('resetOtpExpiresAt'),
         ]);
         if (!active) return;
         if (!storedEmail) {
           if (!didNotifyRef.current) {
             showError('Reset session expired. Please start again.');
+            didNotifyRef.current = true;
+          }
+          router.replace('/super-admin/forgot-password');
+          return;
+        }
+        if (!expiresAtRaw) {
+          if (!didNotifyRef.current) {
+            showError('OTP expired. Please start again.');
+            didNotifyRef.current = true;
+          }
+          router.replace('/super-admin/forgot-password');
+          return;
+        }
+        const expiresAt = Number(expiresAtRaw);
+        if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) {
+          await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
+          if (!didNotifyRef.current) {
+            showError('OTP expired. Please start again.');
             didNotifyRef.current = true;
           }
           router.replace('/super-admin/forgot-password');
@@ -88,6 +110,7 @@ export default function ResetOtp() {
           await AsyncStorage.setItem('resetStage', 'otp');
         }
         setEmail(storedEmail);
+        setExpiresIn(Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000)));
       })();
       return () => {
         active = false;
@@ -106,6 +129,26 @@ export default function ResetOtp() {
       timerRef.current && clearTimeout(timerRef.current);
     };
   }, [resendSeconds]);
+
+  useEffect(() => {
+    if (expiresIn === null) return;
+    if (expiresIn <= 0) {
+      AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']).catch(
+        () => {}
+      );
+      showError('OTP expired. Please start again.');
+      router.replace('/super-admin/forgot-password');
+      return;
+    }
+    expireTimerRef.current && clearTimeout(expireTimerRef.current);
+    expireTimerRef.current = setTimeout(
+      () => setExpiresIn((s) => (s === null ? null : Math.max(0, s - 1))),
+      1000
+    );
+    return () => {
+      expireTimerRef.current && clearTimeout(expireTimerRef.current);
+    };
+  }, [expiresIn, router, showError]);
 
   const validate = () => {
     if (!otp) {
@@ -138,6 +181,7 @@ export default function ResetOtp() {
         ['resetToken', body.resetToken],
         ['resetStage', 'confirm'],
       ]);
+      await AsyncStorage.removeItem('resetOtpExpiresAt');
       showSuccess(body?.message || 'OTP verified.');
       setVerified(true);
       router.replace('/super-admin/reset-password');
@@ -163,6 +207,9 @@ export default function ResetOtp() {
         showError(body?.message || 'Failed to resend OTP');
       } else {
         showSuccess(body?.message || 'OTP resent');
+        const expiresAt = String(Date.now() + OTP_EXPIRE_MS);
+        await AsyncStorage.setItem('resetOtpExpiresAt', expiresAt);
+        setExpiresIn(Math.ceil(OTP_EXPIRE_MS / 1000));
         setResendSeconds(RESEND_SECONDS);
       }
     } catch {
@@ -173,6 +220,11 @@ export default function ResetOtp() {
   };
 
   const resendProgress = (RESEND_SECONDS - resendSeconds) / RESEND_SECONDS || 0;
+  const formatRemaining = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = String(s % 60).padStart(2, '0');
+    return `${m}:${sec}`;
+  };
 
   return (
     <View style={styles.wrapper}>
@@ -228,6 +280,11 @@ export default function ResetOtp() {
                 }
                 style={styles.input}
               />
+              {expiresIn !== null && (
+                <Text style={{ marginBottom: 8, opacity: 0.8 }}>
+                  OTP expires in {formatRemaining(expiresIn)}
+                </Text>
+              )}
 
               <View style={styles.resendRow}>
                 <Button
@@ -278,7 +335,7 @@ export default function ResetOtp() {
               <Button
                 mode="text"
                 onPress={async () => {
-                  await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage']);
+                  await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
                   router.replace('/super-admin/forgot-password');
                 }}
                 style={{ marginTop: 8 }}

@@ -51,8 +51,10 @@ export default function ForgotPassword() {
   const [emailErr, setEmailErr] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const OTP_EXPIRE_MS = 3 * 60 * 1000;
+
   const resetFlow = useCallback(async () => {
-    await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage']);
+    await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
   }, []);
 
   useFocusEffect(
@@ -111,9 +113,11 @@ export default function ForgotPassword() {
       }
 
       try {
+        const expiresAt = String(Date.now() + OTP_EXPIRE_MS);
         await AsyncStorage.multiSet([
           ['resetEmail', email],
           ['resetStage', 'otp'],
+          ['resetOtpExpiresAt', expiresAt],
         ]);
         await AsyncStorage.removeItem('resetToken');
       } catch (e) {
