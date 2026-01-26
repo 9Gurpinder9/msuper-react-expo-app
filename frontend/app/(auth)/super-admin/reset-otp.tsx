@@ -23,14 +23,13 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
 
-const RESEND_SECONDS = 60;
+const RESEND_SECONDS = 180;
 const OTP_EXPIRE_MS = 3 * 60 * 1000;
 
 export default function ResetOtp() {
@@ -228,12 +227,6 @@ export default function ResetOtp() {
 
   return (
     <View style={styles.wrapper}>
-      <LinearGradient
-        colors={[theme.colors.primary, (theme as any).colors.surfaceVariant]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
       <Pressable onPress={Keyboard.dismiss} style={StyleSheet.absoluteFill} pointerEvents="box-only" />
 
       <Portal>
@@ -254,8 +247,8 @@ export default function ResetOtp() {
           scrollEnabled={kbVisible}
         >
           <Card style={styles.card}>
-            <Card.Content>
-              <Text style={{ marginBottom: 8, opacity: 0.8 }}>
+            <Card.Content style={styles.cardContent}>
+              <Text style={styles.cardHint}>
                 Enter the 6-digit OTP sent to your email.
               </Text>
               <TextInput
@@ -281,7 +274,7 @@ export default function ResetOtp() {
                 style={styles.input}
               />
               {expiresIn !== null && (
-                <Text style={{ marginBottom: 8, opacity: 0.8 }}>
+                <Text style={styles.cardHint}>
                   OTP expires in {formatRemaining(expiresIn)}
                 </Text>
               )}
@@ -371,10 +364,21 @@ const makeStyles = (theme: MD3Theme) =>
       width: '90%',
       maxWidth: 400,
       alignSelf: 'center',
-      borderRadius: 12,
-      padding: 8,
-      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      padding: 6,
+      backgroundColor: theme.colors.primary,
       elevation: 2,
+    },
+    cardContent: {
+      backgroundColor: theme.colors.onPrimary,
+      borderRadius: 12,
+      padding: 16,
+      margin: 8,
+    },
+    cardHint: {
+      marginBottom: 8,
+      color: theme.colors.onSurface,
+      opacity: 0.85,
     },
     input: { marginBottom: 8 },
     statusRow: {

@@ -188,6 +188,23 @@ export default function Dashboard() {
               mode="text"
               onPress={() => {
                 setDrawerOpen(false);
+                router.push('/super-admin/scan-bill');
+              }}
+              icon={(p) => (
+                <MaterialCommunityIcons
+                  name="file-document-outline"
+                  size={p.size}
+                  color={p.color}
+                />
+              )}
+              contentStyle={{ justifyContent: 'flex-start' }}
+            >
+              Scan Bill
+            </Button>
+            <Button
+              mode="text"
+              onPress={() => {
+                setDrawerOpen(false);
                 handleLogout();
               }}
               icon={(p) => <MaterialCommunityIcons name="logout" size={p.size} color={p.color} />}

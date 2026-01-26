@@ -14,18 +14,18 @@ import type { AppTheme } from './types';
 const lightSemantic = {
   success: 'rgb(46, 125, 50)', // #2e7d32
   onSuccess: 'rgb(255, 255, 255)',
-  warning: 'rgb(237, 108, 2)', // #ed6c02
-  onWarning: 'rgb(255, 255, 255)',
-  info: 'rgb(2, 136, 209)', // #0288d1
-  onInfo: 'rgb(255, 255, 255)',
+  warning: '#ff6d00', // pumpkin-spice
+  onWarning: '#ffffff',
+  info: '#00b4d8', // turquoise-surf
+  onInfo: '#ffffff',
 };
 const darkSemantic = {
   success: 'rgb(129, 199, 132)', // #81c784
   onSuccess: 'rgb(0, 56, 28)',
-  warning: 'rgb(255, 183, 77)', // #ffb74d
-  onWarning: 'rgb(78, 43, 0)',
-  info: 'rgb(79, 195, 247)', // #4fc3f7
-  onInfo: 'rgb(0, 42, 69)',
+  warning: '#ff9e00', // amber-glow
+  onWarning: '#2a1200',
+  info: '#0096c7', // blue-green
+  onInfo: '#d8f6ff',
 };
 
 export const lightTheme: AppTheme = {

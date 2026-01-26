@@ -25,13 +25,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 
 import TopAppBar from "@super-admin/components/TopAppBar";
 import { useToast } from "@utils/toast";
 import { API_BASE_URL } from "@config";
 
-const RESEND_SECONDS = 60;
+const RESEND_SECONDS = 180;
 const OTP_EXPIRE_MS = 3 * 60 * 1000;
 
  export default function OTPVerify() {
@@ -213,13 +212,6 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
 
   return (
     <View style={styles.wrapper}>
-      {/* Subtle gradient background */}
-      <LinearGradient
-        colors={[theme.colors.primary, (theme as any).colors.surfaceVariant]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
       {/* Background-only tap to dismiss keyboard (doesn't wrap the input) */}
       <Pressable
         onPress={Keyboard.dismiss}
@@ -249,8 +241,8 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
           scrollEnabled={kbVisible}
         >
           <Card style={styles.card}>
-            <Card.Content>
-              <Text style={{ marginBottom: 8, opacity: 0.8 }}>Enter the 6-digit code we sent to your email.</Text>
+            <Card.Content style={styles.cardContent}>
+              <Text style={styles.cardHint}>Enter the 6-digit code we sent to your email.</Text>
               <TextInput
                 label="OTP"
                 value={otp}
@@ -279,7 +271,7 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
                 style={styles.input}
               />
               {expiresIn !== null && (
-                <Text style={{ marginBottom: 8, opacity: 0.8 }}>
+                <Text style={styles.cardHint}>
                   OTP expires in {formatRemaining(expiresIn)}
                 </Text>
               )}
@@ -372,10 +364,21 @@ const makeStyles = (theme: MD3Theme) =>
       width: "90%",
       maxWidth: 400,
       alignSelf: "center",
-      borderRadius: 12,
-      padding: 8,
-      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      padding: 6,
+      backgroundColor: theme.colors.primary,
       elevation: 2,
+    },
+    cardContent: {
+      backgroundColor: theme.colors.onPrimary,
+      borderRadius: 12,
+      padding: 16,
+      margin: 8,
+    },
+    cardHint: {
+      marginBottom: 8,
+      color: theme.colors.onSurface,
+      opacity: 0.85,
     },
     input: { marginBottom: 8 },
     helperText: { marginBottom: 8 },

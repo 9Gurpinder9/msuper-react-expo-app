@@ -7,106 +7,106 @@ import type { MD3Theme } from 'react-native-paper'
  * Copy/paste from the Paper docs and tweak as you like.
  */
 export const lightColors: MD3Theme['colors'] = {
-  primary:              'rgb(120, 69, 172)',
-  onPrimary:            'rgb(255, 255, 255)',
-  primaryContainer:     'rgb(240, 219, 255)',
-  onPrimaryContainer:   'rgb(44, 0, 81)',
+  primary:              '#ff5400', // blaze-orange
+  onPrimary:            '#ffffff',
+  primaryContainer:     '#ffd9c2',
+  onPrimaryContainer:   '#3a1300',
 
-  secondary:            'rgb(102, 90, 111)',
-  onSecondary:          'rgb(255, 255, 255)',
-  secondaryContainer:   'rgb(237, 221, 246)',
-  onSecondaryContainer: 'rgb(33, 24, 42)',
+  secondary:            '#00b4d8', // turquoise-surf
+  onSecondary:          '#ffffff',
+  secondaryContainer:   '#c5f2fb',
+  onSecondaryContainer: '#00313a',
 
-  tertiary:             'rgb(128, 81, 88)',
-  onTertiary:           'rgb(255, 255, 255)',
-  tertiaryContainer:    'rgb(255, 217, 221)',
-  onTertiaryContainer:  'rgb(50, 16, 23)',
+  tertiary:             '#023e8a', // french-blue
+  onTertiary:           '#ffffff',
+  tertiaryContainer:    '#cfe0ff',
+  onTertiaryContainer:  '#001536',
 
   error:                'rgb(186, 26, 26)',
   onError:              'rgb(255, 255, 255)',
   errorContainer:       'rgb(255, 218, 214)',
   onErrorContainer:     'rgb(65, 0, 2)',
 
-  background:           'rgb(255, 251, 255)',
-  onBackground:         'rgb(29, 27, 30)',
-  surface:              'rgb(255, 251, 255)',
-  onSurface:            'rgb(29, 27, 30)',
+  background:           '#fff7f0',
+  onBackground:         '#1d140f',
+  surface:              '#ffffff',
+  onSurface:            '#1d140f',
 
-  surfaceVariant:       'rgb(233, 223, 235)',
-  onSurfaceVariant:     'rgb(74, 69, 78)',
-  outline:              'rgb(124, 117, 126)',
-  outlineVariant:       'rgb(204, 196, 206)',
+  surfaceVariant:       '#f6e6dc',
+  onSurfaceVariant:     '#5e4a3f',
+  outline:              '#8a766b',
+  outlineVariant:       '#dcc8bc',
 
   shadow:               'rgb(0, 0, 0)',
   scrim:                'rgb(0, 0, 0)',
-  inverseSurface:       'rgb(50, 47, 51)',
-  inverseOnSurface:     'rgb(245, 239, 244)',
-  inversePrimary:       'rgb(220, 184, 255)',
+  inverseSurface:       '#1d140f',
+  inverseOnSurface:     '#fff7f0',
+  inversePrimary:       '#ff9e00',
 
   elevation: {
     level0: 'transparent',
-    level1: 'rgb(248, 242, 251)',
-    level2: 'rgb(244, 236, 248)',
-    level3: 'rgb(240, 231, 246)',
-    level4: 'rgb(239, 229, 245)',
-    level5: 'rgb(236, 226, 243)',
+    level1: '#fff1e7',
+    level2: '#ffeade',
+    level3: '#ffe4d6',
+    level4: '#ffdfcf',
+    level5: '#ffd9c7',
   },
 
-  surfaceDisabled:      'rgba(29, 27, 30, 0.12)',
-  onSurfaceDisabled:    'rgba(29, 27, 30, 0.38)',
-  backdrop:             'rgba(51, 47, 55, 0.4)',
+  surfaceDisabled:      'rgba(29, 20, 15, 0.12)',
+  onSurfaceDisabled:    'rgba(29, 20, 15, 0.38)',
+  backdrop:             'rgba(3, 4, 94, 0.35)',
 }
 
 /**
  * Full MD3 “dynamic” color roles for dark mode.
  */
 export const darkColors: MD3Theme['colors'] = {
-  primary:              'rgb(220, 184, 255)',
-  onPrimary:            'rgb(71, 12, 122)',
-  primaryContainer:     'rgb(95, 43, 146)',
-  onPrimaryContainer:   'rgb(240, 219, 255)',
+  primary:              '#ff9e00', // amber-glow
+  onPrimary:            '#3a1f00',
+  primaryContainer:     '#ff6d00', // pumpkin-spice
+  onPrimaryContainer:   '#2a1200',
 
-  secondary:            'rgb(208, 193, 218)',
-  onSecondary:          'rgb(54, 44, 63)',
-  secondaryContainer:   'rgb(77, 67, 87)',
-  onSecondaryContainer: 'rgb(237, 221, 246)',
+  secondary:            '#00b4d8', // turquoise-surf
+  onSecondary:          '#002a33',
+  secondaryContainer:   '#0096c7', // blue-green
+  onSecondaryContainer: '#d8f6ff',
 
-  tertiary:             'rgb(243, 183, 190)',
-  onTertiary:           'rgb(75, 37, 43)',
-  tertiaryContainer:    'rgb(101, 58, 65)',
-  onTertiaryContainer:  'rgb(255, 217, 221)',
+  tertiary:             '#023e8a', // french-blue
+  onTertiary:           '#e6edff',
+  tertiaryContainer:    '#03045e', // deep-twilight
+  onTertiaryContainer:  '#dfe6ff',
 
   error:                'rgb(255, 180, 171)',
   onError:              'rgb(105, 0, 5)',
   errorContainer:       'rgb(147, 0, 10)',
   onErrorContainer:     'rgb(255, 180, 171)',
 
-  background:           'rgb(29, 27, 30)',
-  onBackground:         'rgb(231, 225, 229)',
-  surface:              'rgb(29, 27, 30)',
-  onSurface:            'rgb(231, 225, 229)',
+  background:           '#03045e',
+  onBackground:         '#edf1ff',
+  surface:              '#022c69',
+  onSurface:            '#edf1ff',
 
-  surfaceVariant:       'rgb(74, 69, 78)',
-  onSurfaceVariant:     'rgb(204, 196, 206)',
-  outline:              'rgb(150, 142, 152)',
-  outlineVariant:       'rgb(74, 69, 78)',
+  surfaceVariant:       '#01315f',
+  onSurfaceVariant:     '#c7d5f0',
+  outline:              '#5b6e98',
+  outlineVariant:       '#2b3b64',
 
   shadow:               'rgb(0, 0, 0)',
   scrim:                'rgb(0, 0, 0)',
-  inverseSurface:       'rgb(231, 225, 229)',
-  inverseOnSurface:     'rgb(50, 47, 51)',
-  inversePrimary:       'rgb(120, 69, 172)',
+  inverseSurface:       '#edf1ff',
+  inverseOnSurface:     '#03045e',
+  inversePrimary:       '#ff5400',
 
   elevation: {
     level0: 'transparent',
-    level1: 'rgb(39, 35, 41)',
-    level2: 'rgb(44, 40, 48)',
-    level3: 'rgb(50, 44, 55)',
-    level4: 'rgb(52, 46, 57)',
-    level5: 'rgb(56, 49, 62)',
+    level1: '#04206d',
+    level2: '#04297a',
+    level3: '#043286',
+    level4: '#043a92',
+    level5: '#04429e',
   },
 
-  surfaceDisabled:      'rgba(231, 225, 229, 0.12)',
-  onSurfaceDisabled:    'rgba(231, 225, 229, 0.38)',
-  backdrop:             'rgba(51, 47, 55, 0.4)',
+  surfaceDisabled:      'rgba(237, 241, 255, 0.12)',
+  onSurfaceDisabled:    'rgba(237, 241, 255, 0.38)',
+  backdrop:             'rgba(3, 4, 94, 0.65)',
 }

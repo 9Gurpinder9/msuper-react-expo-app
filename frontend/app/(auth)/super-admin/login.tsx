@@ -18,7 +18,6 @@ import {
   Portal,
   Text,
 } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -158,13 +157,6 @@ export default function Login() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} disabled={Platform.OS === 'web'}>
       <KeyboardAvoidingView style={styles.wrapper} behavior={Platform.select({ ios: 'padding' })}>
-        {/* Subtle gradient background */}
-        <LinearGradient
-          colors={[theme.colors.primary, (theme as any).colors.surfaceVariant]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
         <TopAppBar title="Login" />
 
         {/* Thin top indeterminate progress while loading */}
@@ -186,16 +178,17 @@ export default function Login() {
           <Card style={styles.card}>
             <Card.Title
               title="Super-Admin Login"
+              titleStyle={styles.cardTitle}
               left={(props) => (
                 <MaterialCommunityIcons
                   name="shield-account"
                   size={props.size}
-                  color={theme.colors.onSurface}
+                  color={theme.colors.onPrimary}
                 />
               )}
             />
-            <Card.Content>
-              <Text variant="bodyMedium" style={{ marginBottom: 8, opacity: 0.8 }}>
+            <Card.Content style={styles.cardContent}>
+              <Text variant="bodyMedium" style={styles.cardHint}>
                 We'll send a one-time code after successful login.
               </Text>
               <TextInput
@@ -320,10 +313,24 @@ const makeStyles = (theme: MD3Theme) =>
       width: '90%',
       maxWidth: 400,
       alignSelf: 'center',
-      borderRadius: 12,
-      padding: 8,
-      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      padding: 6,
+      backgroundColor: theme.colors.primary,
       elevation: 2,
+    },
+    cardTitle: {
+      color: theme.colors.onPrimary,
+    },
+    cardContent: {
+      backgroundColor: theme.colors.onPrimary,
+      borderRadius: 12,
+      padding: 16,
+      margin: 8,
+    },
+    cardHint: {
+      marginBottom: 8,
+      color: theme.colors.onSurface,
+      opacity: 0.85,
     },
     input: { marginBottom: 12 },
     helperText: { marginBottom: 8 },

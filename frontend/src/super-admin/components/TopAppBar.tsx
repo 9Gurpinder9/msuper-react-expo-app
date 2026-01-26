@@ -1,8 +1,8 @@
 // frontend/src/super-admin/components/TopAppBar.tsx
 
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import { Appbar, Menu, useTheme } from 'react-native-paper';
+import { StyleSheet, View } from 'react-native';
+import { Appbar, Menu, Text, useTheme } from 'react-native-paper';
 // import from expo/vector-icons
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useThemeMode } from '@theme';
@@ -35,46 +35,50 @@ export default function TopAppBar({
 
   return (
     <Appbar.Header
-      mode="center-aligned"
+      mode="small"
       style={[styles.header, { backgroundColor: theme.colors.primary }]}
     >
-      {showMenu && (
-        <Appbar.Action
-          icon={({ size, color }) => (
-            <MaterialCommunityIcons name="menu" size={size} color={color} />
+      <View style={styles.barRow}>
+        <View style={styles.leadingSlot}>
+          {showMenu && (
+            <Appbar.Action
+              icon={({ size, color }) => (
+                <MaterialCommunityIcons name="menu" size={size} color={color} />
+              )}
+              color={theme.colors.onPrimary}
+              onPress={onMenuPress}
+            />
           )}
-          color={theme.colors.onPrimary}
-          onPress={onMenuPress}
-        />
-      )}
-      {showBack && (
-        <Appbar.Action
-          icon={({ size, color }) => (
-            <MaterialCommunityIcons name="arrow-left" size={size} color={color} />
+          {showBack && (
+            <Appbar.Action
+              icon={({ size, color }) => (
+                <MaterialCommunityIcons name="arrow-left" size={size} color={color} />
+              )}
+              color={theme.colors.onPrimary}
+              onPress={onBackPress}
+            />
           )}
-          color={theme.colors.onPrimary}
-          onPress={onBackPress}
-        />
-      )}
-      <Appbar.Content
-        title={title}
-        titleStyle={[styles.title, { color: theme.colors.onPrimary }]}
-      />
-      {/* Theme mode menu moved to right side */}
-      <Menu
-        visible={menuVisible}
-        onDismiss={() => setMenuVisible(false)}
-        anchor={
-          <Appbar.Action
-            accessibilityLabel="Theme mode"
-            icon={({ size, color }) => (
-              <MaterialCommunityIcons name={currentIconName as any} size={size} color={color} />
-            )}
-            color={theme.colors.onPrimary}
-            onPress={() => setMenuVisible(true)}
-          />
-        }
-      >
+        </View>
+        <View style={styles.titleSlot}>
+          <Text numberOfLines={1} style={[styles.title, { color: theme.colors.onPrimary }]}>
+            {title}
+          </Text>
+        </View>
+        <View style={styles.trailingSlot}>
+          <Menu
+            visible={menuVisible}
+            onDismiss={() => setMenuVisible(false)}
+            anchor={
+              <Appbar.Action
+                accessibilityLabel="Theme mode"
+                icon={({ size, color }) => (
+                  <MaterialCommunityIcons name={currentIconName as any} size={size} color={color} />
+                )}
+                color={theme.colors.onPrimary}
+                onPress={() => setMenuVisible(true)}
+              />
+            }
+          >
         <Menu.Item
           onPress={async () => {
             await setMode('light');
@@ -130,7 +134,9 @@ export default function TopAppBar({
               : undefined
           }
         />
-      </Menu>
+          </Menu>
+        </View>
+      </View>
     </Appbar.Header>
   );
 }
@@ -139,6 +145,27 @@ const styles = StyleSheet.create({
   header: {
     elevation: 4,
     position: 'relative',
+  },
+  barRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  leadingSlot: {
+    width: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trailingSlot: {
+    width: 56,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  titleSlot: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 20,
