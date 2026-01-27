@@ -1,4 +1,4 @@
-// frontend/app/(app)/super-admin/scan-bill.tsx
+// frontend/app/(app)/super-admin/online-scan-bill.tsx
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
@@ -13,7 +13,6 @@ import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import Constants from 'expo-constants';
 import {
   ActivityIndicator,
   Badge,
@@ -28,11 +27,13 @@ import {
   useTheme,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
-import { extractInvoiceData, formatMoney } from '@utils/invoiceParser';
-import { runOcrFromUri } from '@utils/ocrEngine';
+import { formatMoney } from '@utils/invoiceParser';
+import { fetchJson } from '@utils/network';
+import { API_BASE_URL } from '@config';
 import {
   deleteScanBillRecord,
   listScanBillRecords,
@@ -40,7 +41,13 @@ import {
   type ScanBillRecord,
 } from '@utils/scanBillStorage';
 
-export default function ScanBillScreen() {
+type ImageAsset = {
+  uri: string;
+  base64?: string | null;
+  mimeType?: string | null;
+};
+
+export default function OnlineScanBillScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { showError, showInfo, showSuccess } = useToast();
@@ -65,7 +72,7 @@ export default function ScanBillScreen() {
     try {
       setLoadingHistory(true);
       const records = await listScanBillRecords();
-      setHistory(records);
+      setHistory(records.filter((item) => item.ocrEngine === 'documentai'));
     } catch {
       toastRef.current.showError('Failed to load scan history');
     } finally {
@@ -102,56 +109,71 @@ export default function ScanBillScreen() {
             ? await ImagePicker.launchCameraAsync({
                 mediaTypes: ['images'],
                 quality: 1,
+                base64: true,
               })
             : await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
                 quality: 1,
+                base64: true,
               });
 
         if (result.canceled || !result.assets?.[0]?.uri) return;
-        await processImage(result.assets[0].uri);
-      } catch (error) {
+        const asset = result.assets[0] as ImageAsset;
+        await processImage(asset);
+      } catch {
         toastRef.current.showError('Unable to open camera or gallery');
       }
     },
     []
   );
 
-  const processImage = useCallback(
-    async (uri: string) => {
-      try {
-        if (Platform.OS !== 'web' && Constants.appOwnership === 'expo') {
-          toastRef.current.showError(
-            'OCR needs a dev build. Expo Go cannot load the ML Kit module.'
-          );
-          return;
-        }
-        setProcessing(true);
-        const ocr = await runOcrFromUri(uri);
-        if (!ocr.text.trim()) {
-          toastRef.current.showError('No text detected. Try a clearer photo.');
-          return;
-        }
-
-        const data = extractInvoiceData(ocr.text);
-        const record = await saveScanBillRecord({
-          imageUri: uri,
-          data,
-          ocrEngine: ocr.engine,
-        });
-
-        setHistory((prev) => [record, ...prev]);
-        setModalRecord(record);
-        setModalVisible(true);
-        toastRef.current.showSuccess('Invoice scanned and saved');
-      } catch (error) {
-        toastRef.current.showError('Failed to scan invoice');
-      } finally {
-        setProcessing(false);
+  const processImage = useCallback(async (asset: ImageAsset) => {
+    try {
+      if (!asset.base64) {
+        toastRef.current.showError('Failed to read image data');
+        return;
       }
-    },
-    []
-  );
+      setProcessing(true);
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        toastRef.current.showError('Please log in again');
+        return;
+      }
+
+      const res = await fetchJson(`${API_BASE_URL}/super-admin/online-scan-bill`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          imageBase64: asset.base64,
+          mimeType: asset.mimeType || 'image/jpeg',
+        }),
+      });
+
+      if (!res.ok || !res.data?.data) {
+        const message = (res.data as any)?.message || 'Failed to scan invoice';
+        toastRef.current.showError(message);
+        return;
+      }
+
+      const record = await saveScanBillRecord({
+        imageUri: asset.uri,
+        data: (res.data as any).data,
+        ocrEngine: 'documentai',
+      });
+
+      setHistory((prev) => [record, ...prev]);
+      setModalRecord(record);
+      setModalVisible(true);
+      toastRef.current.showSuccess('Invoice scanned and saved');
+    } catch {
+      toastRef.current.showError('Failed to scan invoice');
+    } finally {
+      setProcessing(false);
+    }
+  }, []);
 
   const selectedRecord = useMemo(
     () => history.find((item) => item.id === selectedId),
@@ -185,9 +207,9 @@ export default function ScanBillScreen() {
 
   const renderCard = ({ item }: { item: ScanBillRecord }) => {
     const isSelected = item.id === selectedId;
-    const total = formatMoney(item.data.total, item.data.currency);
-    const subtitle = item.data.vendor || 'Unknown vendor';
-    const date = item.data.date || 'Date not found';
+    const total = formatMoney(item.data?.total, item.data?.currency);
+    const subtitle = item.data?.vendor || 'Unknown vendor';
+    const date = item.data?.date || 'Date not found';
 
     return (
       <Pressable
@@ -238,7 +260,7 @@ export default function ScanBillScreen() {
 
   return (
     <View style={styles.wrapper}>
-      <TopAppBar title="Scan Bill" showBack onBackPress={() => router.back()} />
+      <TopAppBar title="Online Scan Bill" showBack onBackPress={() => router.back()} />
 
       <View style={styles.header}>
         <LinearGradient
@@ -249,28 +271,28 @@ export default function ScanBillScreen() {
         >
           <View style={styles.heroRow}>
             <View style={styles.heroIcon}>
-              <MaterialCommunityIcons name="barcode-scan" size={26} color={theme.colors.onPrimary} />
+              <MaterialCommunityIcons name="cloud-search-outline" size={26} color={theme.colors.onPrimary} />
             </View>
             <View style={{ flex: 1 }}>
               <Text variant="titleLarge" style={styles.heroTitle}>
-                Local OCR for invoices
+                Document AI invoice parsing
               </Text>
               <Text variant="bodySmall" style={styles.heroSubtitle}>
-                Capture, extract, and store structured JSON on-device.
+                Securely send invoices to Google Document AI and store JSON on-device.
               </Text>
             </View>
           </View>
           <View style={styles.heroChips}>
             <View style={styles.heroChip}>
-              <MaterialCommunityIcons name="shield-check" size={14} color={theme.colors.onPrimary} />
+              <MaterialCommunityIcons name="cloud-check-outline" size={14} color={theme.colors.onPrimary} />
               <Text variant="labelSmall" style={styles.heroChipText}>
-                Local only
+                Document AI
               </Text>
             </View>
             <View style={styles.heroChip}>
-              <MaterialCommunityIcons name="cloud-off-outline" size={14} color={theme.colors.onPrimary} />
+              <MaterialCommunityIcons name="shield-check" size={14} color={theme.colors.onPrimary} />
               <Text variant="labelSmall" style={styles.heroChipText}>
-                No cloud
+                Auth required
               </Text>
             </View>
           </View>
@@ -380,7 +402,7 @@ export default function ScanBillScreen() {
           <Surface style={styles.processingCard} elevation={3}>
             <ActivityIndicator animating color={theme.colors.primary} />
             <Text variant="labelMedium" style={{ marginTop: 8 }}>
-              Reading invoice…
+              Processing invoice...
             </Text>
             <Text variant="bodySmall" style={{ opacity: 0.7, marginTop: 2 }}>
               Keep the app open for best accuracy

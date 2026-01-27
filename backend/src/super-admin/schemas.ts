@@ -59,3 +59,11 @@ export const resetPasswordConfirmSchema = Joi.object({
     .messages({ 'any.only': 'Passwords do not match.' }),
 });
 
+export const onlineScanBillSchema = Joi.object({
+  imageBase64: Joi.string().trim().min(50).required().messages({
+    'string.empty': 'Image is required.',
+    'string.min': 'Image data is too short.',
+  }),
+  mimeType: Joi.string().trim().optional(),
+});
+

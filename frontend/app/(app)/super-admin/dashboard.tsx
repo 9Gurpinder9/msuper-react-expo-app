@@ -205,6 +205,23 @@ export default function Dashboard() {
               mode="text"
               onPress={() => {
                 setDrawerOpen(false);
+                router.push('/super-admin/online-scan-bill');
+              }}
+              icon={(p) => (
+                <MaterialCommunityIcons
+                  name="cloud-search-outline"
+                  size={p.size}
+                  color={p.color}
+                />
+              )}
+              contentStyle={{ justifyContent: 'flex-start' }}
+            >
+              Online Scan Bill
+            </Button>
+            <Button
+              mode="text"
+              onPress={() => {
+                setDrawerOpen(false);
                 handleLogout();
               }}
               icon={(p) => <MaterialCommunityIcons name="logout" size={p.size} color={p.color} />}

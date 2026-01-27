@@ -5,6 +5,10 @@ const envSchema = Joi.object({
   PORT: Joi.number().integer().positive().default(4000),
   SUPABASE_URL: Joi.string().uri().required(),
   SUPABASE_SERVICE_ROLE_KEY: Joi.string().min(10).required(),
+  DOCUMENTAI_PROJECT_ID: Joi.string().optional(),
+  DOCUMENTAI_LOCATION: Joi.string().valid('us', 'eu').optional(),
+  DOCUMENTAI_PROCESSOR_ID: Joi.string().optional(),
+  DOCUMENTAI_SA_KEY: Joi.string().optional(),
 }).unknown(true);
 
 const { value, error } = envSchema.validate(process.env, { abortEarly: false });
@@ -17,5 +21,9 @@ export const config = {
   port: Number(value.PORT),
   supabaseUrl: value.SUPABASE_URL as string,
   supabaseServiceRoleKey: value.SUPABASE_SERVICE_ROLE_KEY as string,
+  documentAiProjectId: value.DOCUMENTAI_PROJECT_ID as string | undefined,
+  documentAiLocation: value.DOCUMENTAI_LOCATION as 'us' | 'eu' | undefined,
+  documentAiProcessorId: value.DOCUMENTAI_PROCESSOR_ID as string | undefined,
+  documentAiServiceAccountKey: value.DOCUMENTAI_SA_KEY as string | undefined,
 };
 

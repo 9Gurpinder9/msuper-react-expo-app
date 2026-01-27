@@ -7,7 +7,7 @@ export type ScanBillRecord = {
   createdAt: string;
   jsonPath: string;
   imagePath?: string;
-  ocrEngine: 'mlkit' | 'tesseract';
+  ocrEngine: 'mlkit' | 'tesseract' | 'documentai';
   data: InvoiceData;
 };
 
@@ -30,7 +30,7 @@ function getExtension(uri: string) {
 export async function saveScanBillRecord(params: {
   imageUri?: string;
   data: InvoiceData;
-  ocrEngine: 'mlkit' | 'tesseract';
+  ocrEngine: 'mlkit' | 'tesseract' | 'documentai';
 }): Promise<ScanBillRecord> {
   await ensureDirs();
 
