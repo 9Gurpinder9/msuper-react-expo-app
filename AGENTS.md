@@ -2,6 +2,10 @@
 
 These instructions help AI agents work productively in this monorepo (frontend: Expo React Native, backend: Express + Supabase). Keep answers concrete and aligned to the codebase patterns below.
 
+## Autonomy preference
+
+- Run commands and make edits without asking for confirmation when allowed by the platform/sandbox. Ask only if the environment blocks it or if an operation is destructive.
+
 ## Skill triggers (use installed skills when prompts match)
 
 - frontend-design: Use for any UI or visual build request (design, layout, styling, landing page, dashboard, component polish, "make it look nice", "improve UI/UX").

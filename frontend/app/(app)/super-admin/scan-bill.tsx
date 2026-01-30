@@ -1,5 +1,5 @@
 // frontend/app/(app)/super-admin/scan-bill.tsx
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -22,12 +22,14 @@ import {
   Dialog,
   FAB,
   IconButton,
+  Menu,
   Portal,
   Surface,
   Text,
   useTheme,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as Sharing from 'expo-sharing';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
@@ -51,7 +53,7 @@ export default function ScanBillScreen() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [menuRecordId, setMenuRecordId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalRecord, setModalRecord] = useState<ScanBillRecord | null>(null);
   const isFocused = useIsFocused();
@@ -153,13 +155,7 @@ export default function ScanBillScreen() {
     []
   );
 
-  const selectedRecord = useMemo(
-    () => history.find((item) => item.id === selectedId),
-    [history, selectedId]
-  );
-
-  const handleDelete = useCallback(() => {
-    if (!selectedRecord) return;
+  const handleDelete = useCallback((record: ScanBillRecord) => {
     Alert.alert(
       'Delete scan?',
       'This removes the JSON file and the saved image from local storage.',
@@ -170,9 +166,8 @@ export default function ScanBillScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteScanBillRecord(selectedRecord);
-              setHistory((prev) => prev.filter((item) => item.id !== selectedRecord.id));
-              setSelectedId(null);
+              await deleteScanBillRecord(record);
+              setHistory((prev) => prev.filter((item) => item.id !== record.id));
               toastRef.current.showSuccess('Deleted scan');
             } catch {
               toastRef.current.showError('Delete failed');
@@ -181,29 +176,43 @@ export default function ScanBillScreen() {
         },
       ]
     );
-  }, [selectedRecord]);
+  }, []);
+
+  const handleShare = useCallback(async (record: ScanBillRecord) => {
+    try {
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        toastRef.current.showInfo('Sharing is not available on this device');
+        return;
+      }
+      await Sharing.shareAsync(record.jsonPath, {
+        mimeType: 'application/json',
+        dialogTitle: 'Share scan JSON',
+      });
+    } catch {
+      toastRef.current.showError('Share failed');
+    }
+  }, []);
+
+  const getFileName = useCallback((path: string) => {
+    const parts = path.split('/');
+    return parts[parts.length - 1] || path;
+  }, []);
 
   const renderCard = ({ item }: { item: ScanBillRecord }) => {
-    const isSelected = item.id === selectedId;
     const total = formatMoney(item.data.total, item.data.currency);
     const subtitle = item.data.vendor || 'Unknown vendor';
-    const date = item.data.date || 'Date not found';
+    const date = item.data.date || '';
+    const fileName = getFileName(item.jsonPath);
 
     return (
       <Pressable
-        onLongPress={() => setSelectedId(item.id)}
         onPress={() => {
-          if (selectedId && selectedId !== item.id) {
-            setSelectedId(item.id);
-          } else if (selectedId && selectedId === item.id) {
-            setSelectedId(null);
-          } else {
-            setModalRecord(item);
-            setModalVisible(true);
-          }
+          setModalRecord(item);
+          setModalVisible(true);
         }}
       >
-        <Card style={[styles.card, isSelected && styles.cardSelected]}>
+        <Card style={styles.card}>
           <Card.Content style={styles.cardContent}>
             <View style={styles.cardIcon}>
               <MaterialCommunityIcons
@@ -214,8 +223,13 @@ export default function ScanBillScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text variant="titleMedium">{subtitle}</Text>
-              <Text variant="bodySmall" style={{ opacity: 0.7 }}>
-                {date}
+              {date ? (
+                <Text variant="bodySmall" style={{ opacity: 0.7 }}>
+                  {date}
+                </Text>
+              ) : null}
+              <Text variant="bodySmall" style={styles.fileName}>
+                {fileName}
               </Text>
             </View>
             <View style={styles.cardRight}>
@@ -223,12 +237,39 @@ export default function ScanBillScreen() {
                 <Text variant="titleMedium" style={{ color: theme.colors.primary }}>
                   {total}
                 </Text>
-              ) : (
-                <Text variant="bodySmall" style={{ opacity: 0.7 }}>
-                  Total N/A
-                </Text>
-              )}
-              <Badge style={styles.engineBadge}>{item.ocrEngine.toUpperCase()}</Badge>
+              ) : null}
+              <View style={styles.cardActions}>
+                <Badge style={styles.engineBadge}>{item.ocrEngine.toUpperCase()}</Badge>
+                <Menu
+                  visible={menuRecordId === item.id}
+                  onDismiss={() => setMenuRecordId(null)}
+                  anchor={
+                    <IconButton
+                      icon="dots-vertical"
+                      size={18}
+                      onPress={() => setMenuRecordId(item.id)}
+                      accessibilityLabel="Open scan actions"
+                    />
+                  }
+                >
+                  <Menu.Item
+                    onPress={() => {
+                      setMenuRecordId(null);
+                      handleShare(item);
+                    }}
+                    title="Share"
+                    leadingIcon="share-variant"
+                  />
+                  <Menu.Item
+                    onPress={() => {
+                      setMenuRecordId(null);
+                      handleDelete(item);
+                    }}
+                    title="Delete"
+                    leadingIcon="delete-outline"
+                  />
+                </Menu>
+              </View>
             </View>
           </Card.Content>
         </Card>
@@ -276,33 +317,6 @@ export default function ScanBillScreen() {
           </View>
         </LinearGradient>
       </View>
-
-      {selectedRecord && (
-        <Surface style={styles.selectionBar} elevation={2}>
-          <View style={styles.selectionLeft}>
-            <MaterialCommunityIcons
-              name="checkbox-marked-circle-outline"
-              size={16}
-              color={theme.colors.primary}
-            />
-            <Text variant="labelMedium" style={{ marginLeft: 8 }}>
-              1 selected
-            </Text>
-          </View>
-          <View style={styles.selectionActions}>
-            <IconButton
-              icon={(props) => <MaterialCommunityIcons name="delete" size={props.size} color={props.color} />}
-              onPress={handleDelete}
-              accessibilityLabel="Delete selected scan"
-            />
-            <IconButton
-              icon={(props) => <MaterialCommunityIcons name="close" size={props.size} color={props.color} />}
-              onPress={() => setSelectedId(null)}
-              accessibilityLabel="Cancel selection"
-            />
-          </View>
-        </Surface>
-      )}
 
       <View style={styles.content}>
         <View style={styles.listHeader}>
@@ -444,24 +458,6 @@ const makeStyles = (theme: any, width: number) =>
     heroChipText: {
       color: theme.colors.onPrimary,
     },
-    selectionBar: {
-      marginHorizontal: 16,
-      marginTop: 12,
-      borderRadius: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    selectionLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    selectionActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
     content: {
       flex: 1,
       paddingHorizontal: 16,
@@ -477,10 +473,6 @@ const makeStyles = (theme: any, width: number) =>
     card: {
       borderRadius: 16,
       backgroundColor: theme.colors.surface,
-    },
-    cardSelected: {
-      borderWidth: 1,
-      borderColor: theme.colors.primary,
     },
     cardContent: {
       flexDirection: 'row',
@@ -498,11 +490,20 @@ const makeStyles = (theme: any, width: number) =>
     cardRight: {
       alignItems: 'flex-end',
     },
-    engineBadge: {
+    cardActions: {
       marginTop: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    engineBadge: {
       alignSelf: 'flex-end',
       backgroundColor: theme.colors.secondaryContainer,
       color: theme.colors.onSecondaryContainer,
+    },
+    fileName: {
+      opacity: 0.65,
+      marginTop: 2,
     },
     jsonText: {
       fontSize: 12,

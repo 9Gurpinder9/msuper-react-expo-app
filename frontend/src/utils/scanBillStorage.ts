@@ -20,6 +20,33 @@ async function ensureDirs() {
   await FileSystem.makeDirectoryAsync(IMAGE_DIR, { intermediates: true });
 }
 
+function pad2(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function formatLocalTimestamp(date = new Date()) {
+  const day = pad2(date.getDate());
+  const month = pad2(date.getMonth() + 1);
+  const year = date.getFullYear();
+  const hours = pad2(date.getHours());
+  const minutes = pad2(date.getMinutes());
+  return `${day}-${month}-${year}-${hours}-${minutes}`;
+}
+
+async function getUniqueBaseName(baseName: string) {
+  let name = baseName;
+  let counter = 1;
+  while (true) {
+    const candidatePath = `${JSON_DIR}/${name}.json`;
+    const info = await FileSystem.getInfoAsync(candidatePath);
+    if (!info.exists) {
+      return name;
+    }
+    name = `${baseName}-${counter}`;
+    counter += 1;
+  }
+}
+
 function getExtension(uri: string) {
   const clean = uri.split('?')[0];
   const parts = clean.split('.');
@@ -34,19 +61,20 @@ export async function saveScanBillRecord(params: {
 }): Promise<ScanBillRecord> {
   await ensureDirs();
 
-  const id = `SB-${Date.now()}`;
+  const baseName = await getUniqueBaseName(formatLocalTimestamp());
+  const id = baseName;
   let imagePath: string | undefined;
 
   if (params.imageUri) {
     const ext = getExtension(params.imageUri);
-    imagePath = `${IMAGE_DIR}/${id}.${ext}`;
+    imagePath = `${IMAGE_DIR}/${baseName}.${ext}`;
     await FileSystem.copyAsync({ from: params.imageUri, to: imagePath });
   }
 
   const record: ScanBillRecord = {
     id,
     createdAt: new Date().toISOString(),
-    jsonPath: `${JSON_DIR}/${id}.json`,
+    jsonPath: `${JSON_DIR}/${baseName}.json`,
     imagePath,
     ocrEngine: params.ocrEngine,
     data: params.data,
