@@ -60,3 +60,27 @@ testDatabaseRouter.get('/', async (req: Request, res: Response, next: NextFuncti
     next(err);
   }
 });
+
+/**
+ * Debug: expose which Supabase project the API is using (guarded by env flag)
+ * GET /debug/supabase
+ */
+export const supabaseInfoRouter = Router();
+supabaseInfoRouter.get('/', (req: Request, res: Response) => {
+  if (process.env.DEBUG_SUPABASE_INFO !== 'true') {
+    return res.status(404).json({ message: 'Not found.' });
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL || null;
+  const supabaseProjectRef = supabaseUrl
+    ? supabaseUrl.replace('https://', '').split('.')[0]
+    : null;
+
+  return res.json({
+    supabaseUrl,
+    supabaseProjectRef,
+    hasServiceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    nodeEnv: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
