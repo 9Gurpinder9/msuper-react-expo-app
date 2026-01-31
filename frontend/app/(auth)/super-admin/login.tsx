@@ -124,10 +124,14 @@ export default function Login() {
     const url = `${API_BASE_URL}/super-admin/login`;
 
     try {
+      const payload: Record<string, string> = { email, password };
+      if (HCAPTCHA_ENABLED && captchaToken) {
+        payload.captchaToken = captchaToken;
+      }
       const res = await fetchJson(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, captchaToken }),
+        body: JSON.stringify(payload),
       });
 
       const body: any = res.data ?? {};
