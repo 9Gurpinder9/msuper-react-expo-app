@@ -1,5 +1,5 @@
 // frontend/src/utils/ToastProvider.tsx
-import React, { createContext, ReactNode, useState } from "react";
+import React, { createContext, ReactNode, useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Snackbar, useTheme, Portal, Text } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -27,12 +27,12 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
   const [type, setType] = useState<ToastType>("success");
   const [duration, setDuration] = useState<number>(3000);
 
-  const showToast = (msg: string, t: ToastType = "success", durationMs?: number) => {
+  const showToast = useCallback((msg: string, t: ToastType = "success", durationMs?: number) => {
     setMessage(msg);
     setType(t);
     setDuration(typeof durationMs === "number" ? durationMs : 3000);
     setVisible(true);
-  };
+  }, []);
 
   // Ensure sufficient text contrast when we override Snackbar background
   const snackbarTheme = React.useMemo(() => {
@@ -65,8 +65,10 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
       ? ("information" as const)
       : ("alert-circle" as const);
 
+  const contextValue = useMemo(() => ({ showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <Portal>
         <Snackbar

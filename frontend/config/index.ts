@@ -7,6 +7,8 @@ type Extra = {
   apiBaseUrl?: string;     // legacy fallback
   LOG_COLLECTOR_URL?: string;
   logCollectorUrl?: string;
+  HCAPTCHA_SITE_KEY?: string;
+  hcaptchaSiteKey?: string;
 };
 
 const extra = (Constants?.expoConfig?.extra ?? {}) as Extra;
@@ -24,6 +26,8 @@ export const LOG_COLLECTOR_URL: string = normalize(
   extra.LOG_COLLECTOR_URL ?? extra.logCollectorUrl ?? ''
 );
 
+export const HCAPTCHA_SITE_KEY: string = (extra.HCAPTCHA_SITE_KEY ?? extra.hcaptchaSiteKey ?? '').trim();
+
 /** Warn loudly if API base URL is missing so you don't hit `undefined/...` */
 export function assertApiBaseUrl(): string {
   if (!API_BASE_URL) {
@@ -38,5 +42,6 @@ export default {
   APP_VARIANT,
   API_BASE_URL,
   LOG_COLLECTOR_URL,
+  HCAPTCHA_SITE_KEY,
   assertApiBaseUrl,
 };

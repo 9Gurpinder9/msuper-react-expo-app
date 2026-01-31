@@ -13,6 +13,11 @@ export const loginSchema = Joi.object({
     'string.min': 'Password must be at least 6 characters long.',
     'any.required': 'Password is required.',
   }),
+  captchaToken: Joi.string().trim().min(10).required().messages({
+    'string.empty': 'Captcha is required.',
+    'string.min': 'Captcha is invalid.',
+    'any.required': 'Captcha is required.',
+  }),
 });
 
 export const emailOnlySchema = Joi.object({
@@ -61,8 +66,8 @@ export const resetPasswordConfirmSchema = Joi.object({
 
 export const onlineScanBillSchema = Joi.object({
   imageBase64: Joi.string().trim().min(50).required().messages({
-    'string.empty': 'Image is required.',
-    'string.min': 'Image data is too short.',
+    'string.empty': 'File is required.',
+    'string.min': 'File data is too short.',
   }),
   mimeType: Joi.string().trim().optional(),
 });

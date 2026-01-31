@@ -26,7 +26,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
-import { API_BASE_URL } from '@config';
+import { API_BASE_URL, HCAPTCHA_SITE_KEY } from '@config';
+import HcaptchaWidget from '../../../src/components/HcaptchaWidget';
 
 import { logger } from '@utils/logger';
 import { fetchJson } from '@utils/network';
@@ -53,6 +54,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [emailErr, setEmailErr] = useState('');
   const [passwordErr, setPasswordErr] = useState('');
+  const [captchaErr, setCaptchaErr] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [loading, setLoading] = useState(false);
   const passwordRef = React.useRef<any>(null);
   const OTP_EXPIRE_MS = 3 * 60 * 1000;
@@ -90,6 +94,15 @@ export default function Login() {
       setPasswordErr('Password is required');
       ok = false;
     } else setPasswordErr('');
+    if (!HCAPTCHA_SITE_KEY) {
+      setCaptchaErr('Captcha site key is missing. Contact support.');
+      ok = false;
+    } else if (!captchaToken) {
+      setCaptchaErr('Please complete the captcha.');
+      ok = false;
+    } else {
+      setCaptchaErr('');
+    }
     return ok;
   };
 
@@ -106,7 +119,7 @@ export default function Login() {
       const res = await fetchJson(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, captchaToken }),
       });
 
       const body: any = res.data ?? {};
@@ -118,6 +131,8 @@ export default function Login() {
         }
         const errMsg = body?.message || `Login failed (HTTP ${res.status})`;
         showError(errMsg);
+        setCaptchaToken('');
+        setCaptchaResetKey((k) => k + 1);
         try {
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } catch {}
@@ -260,6 +275,33 @@ export default function Login() {
               {!!passwordErr && (
                 <HelperText type="error" style={styles.helperText}>
                   {passwordErr}
+                </HelperText>
+              )}
+              {HCAPTCHA_SITE_KEY ? (
+                <HcaptchaWidget
+                  siteKey={HCAPTCHA_SITE_KEY}
+                  resetSignal={captchaResetKey}
+                  onToken={(token) => {
+                    setCaptchaToken(token);
+                    setCaptchaErr('');
+                  }}
+                  onExpire={() => {
+                    setCaptchaToken('');
+                    setCaptchaErr('Captcha expired. Please retry.');
+                  }}
+                  onError={(message) => {
+                    setCaptchaToken('');
+                    setCaptchaErr(message);
+                  }}
+                />
+              ) : (
+                <HelperText type="error" style={styles.helperText}>
+                  Missing HCAPTCHA_SITE_KEY in frontend config.
+                </HelperText>
+              )}
+              {!!captchaErr && (
+                <HelperText type="error" style={styles.helperText}>
+                  {captchaErr}
                 </HelperText>
               )}
               <Button

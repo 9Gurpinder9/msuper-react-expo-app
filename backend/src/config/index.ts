@@ -9,6 +9,7 @@ const envSchema = Joi.object({
   DOCUMENTAI_LOCATION: Joi.string().valid('us', 'eu').optional(),
   DOCUMENTAI_PROCESSOR_ID: Joi.string().optional(),
   DOCUMENTAI_SA_KEY: Joi.string().optional(),
+  HCAPTCHA_SECRET: Joi.string().min(10).required(),
 }).unknown(true);
 
 const { value, error } = envSchema.validate(process.env, { abortEarly: false });
@@ -25,5 +26,6 @@ export const config = {
   documentAiLocation: value.DOCUMENTAI_LOCATION as 'us' | 'eu' | undefined,
   documentAiProcessorId: value.DOCUMENTAI_PROCESSOR_ID as string | undefined,
   documentAiServiceAccountKey: value.DOCUMENTAI_SA_KEY as string | undefined,
+  hcaptchaSecret: value.HCAPTCHA_SECRET as string,
 };
 

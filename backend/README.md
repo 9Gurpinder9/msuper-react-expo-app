@@ -27,3 +27,7 @@ Notes
 - Rate limiting enabled globally
 - Redis optional in local dev: leave `REDIS_URL` unset to skip connecting
 
+hCaptcha (always-on for Super Admin login)
+- Create a site in the hCaptcha dashboard and obtain keys.
+- Set `HCAPTCHA_SECRET` in `backend/.env`.
+

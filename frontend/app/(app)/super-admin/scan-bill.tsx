@@ -30,7 +30,6 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Sharing from 'expo-sharing';
-
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
 import { extractInvoiceData, formatMoney } from '@utils/invoiceParser';
@@ -155,10 +154,11 @@ export default function ScanBillScreen() {
     []
   );
 
+
   const handleDelete = useCallback((record: ScanBillRecord) => {
     Alert.alert(
       'Delete scan?',
-      'This removes the JSON file and the saved image from local storage.',
+      'This removes the JSON file and the saved document from local storage.',
       [
         { text: 'Cancel', style: 'cancel' },
         {

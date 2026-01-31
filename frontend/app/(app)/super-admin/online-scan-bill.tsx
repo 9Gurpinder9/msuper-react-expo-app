@@ -42,11 +42,21 @@ import {
   saveScanBillRecord,
   type ScanBillRecord,
 } from '@utils/scanBillStorage';
+import {
+  pickScanBillFile,
+  readScanBillFileBase64,
+} from '@utils/scanBillFilePicker';
 
 type ImageAsset = {
   uri: string;
   base64?: string | null;
   mimeType?: string | null;
+};
+
+type UploadPayload = {
+  uri: string;
+  base64: string;
+  mimeType: string;
 };
 
 export default function OnlineScanBillScreen() {
@@ -89,52 +99,57 @@ export default function OnlineScanBillScreen() {
   }, [isFocused, loadHistory]);
 
   const handleImagePick = useCallback(
-    async (mode: 'camera' | 'library') => {
+    async (mode: 'camera') => {
       try {
         setMenuVisible(false);
-        if (mode === 'camera') {
-          const permission = await ImagePicker.requestCameraPermissionsAsync();
-          if (!permission.granted) {
-            toastRef.current.showInfo('Camera permission is required');
-            return;
-          }
-        } else {
-          const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-          if (!permission.granted) {
-            toastRef.current.showInfo('Gallery permission is required');
-            return;
-          }
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          toastRef.current.showInfo('Camera permission is required');
+          return;
         }
 
-        const result =
-          mode === 'camera'
-            ? await ImagePicker.launchCameraAsync({
-                mediaTypes: ['images'],
-                quality: 1,
-                base64: true,
-              })
-            : await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'],
-                quality: 1,
-                base64: true,
-              });
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          quality: 1,
+          base64: true,
+        });
 
         if (result.canceled || !result.assets?.[0]?.uri) return;
         const asset = result.assets[0] as ImageAsset;
-        await processImage(asset);
+        if (!asset.base64) {
+          toastRef.current.showError('Failed to read image data');
+          return;
+        }
+        await processUpload({
+          uri: asset.uri,
+          base64: asset.base64,
+          mimeType: asset.mimeType || 'image/jpeg',
+        });
       } catch {
-        toastRef.current.showError('Unable to open camera or gallery');
+        toastRef.current.showError('Unable to open camera');
       }
     },
     []
   );
 
-  const processImage = useCallback(async (asset: ImageAsset) => {
+  const handleUploadPick = useCallback(async () => {
     try {
-      if (!asset.base64) {
-        toastRef.current.showError('Failed to read image data');
-        return;
-      }
+      setMenuVisible(false);
+      const file = await pickScanBillFile();
+      if (!file) return;
+      const base64 = await readScanBillFileBase64(file.uri);
+      await processUpload({
+        uri: file.uri,
+        base64,
+        mimeType: file.mimeType,
+      });
+    } catch {
+      toastRef.current.showError('Unable to open the file picker');
+    }
+  }, []);
+
+  const processUpload = useCallback(async (payload: UploadPayload) => {
+    try {
       setProcessing(true);
       const token = await AsyncStorage.getItem('authToken');
       if (!token) {
@@ -149,8 +164,8 @@ export default function OnlineScanBillScreen() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          imageBase64: asset.base64,
-          mimeType: asset.mimeType || 'image/jpeg',
+          imageBase64: payload.base64,
+          mimeType: payload.mimeType || 'image/jpeg',
         }),
       });
 
@@ -161,7 +176,7 @@ export default function OnlineScanBillScreen() {
       }
 
       const record = await saveScanBillRecord({
-        imageUri: asset.uri,
+        imageUri: payload.uri,
         data: (res.data as any).data,
         ocrEngine: 'documentai',
       });
@@ -180,7 +195,7 @@ export default function OnlineScanBillScreen() {
   const handleDelete = useCallback((record: ScanBillRecord) => {
     Alert.alert(
       'Delete scan?',
-      'This removes the JSON file and the saved image from local storage.',
+      'This removes the JSON file and the saved document from local storage.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -359,7 +374,7 @@ export default function OnlineScanBillScreen() {
               No scans yet
             </Text>
             <Text variant="bodySmall" style={{ opacity: 0.7, textAlign: 'center', marginTop: 4 }}>
-              Tap the menu button to scan a bill or upload a photo.
+              Tap the menu button to scan a bill or upload a photo/PDF.
             </Text>
           </View>
         ) : (
@@ -388,8 +403,8 @@ export default function OnlineScanBillScreen() {
             },
             {
               icon: 'upload',
-              label: 'Upload',
-              onPress: () => handleImagePick('library'),
+              label: 'Upload (Image/PDF)',
+              onPress: handleUploadPick,
             },
           ]}
         />

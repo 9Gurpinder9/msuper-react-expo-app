@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerX = useRef(new Animated.Value(0)).current; // 0..1 interpolation
+  const authErrorShown = useRef(false);
 
   const drawerWidth = Math.min(320, Math.max(260, Math.floor(width * 0.75)));
 
@@ -52,6 +53,7 @@ export default function Dashboard() {
   }, [drawerOpen, drawerX]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const token = await AsyncStorage.getItem('authToken');
@@ -60,6 +62,15 @@ export default function Dashboard() {
         });
         const body = await res.json();
         if (!res.ok) {
+          if (res.status === 401) {
+            if (!authErrorShown.current) {
+              authErrorShown.current = true;
+              showError(body.message || 'Session expired. Please log in again.');
+            }
+            await AsyncStorage.removeItem('authToken');
+            if (!cancelled) router.replace('/super-admin/login');
+            return;
+          }
           showError(body.message || 'Failed to load');
         } else {
           setData(body.data);
@@ -67,10 +78,13 @@ export default function Dashboard() {
       } catch {
         showError('Network error');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [showError]);
+    return () => {
+      cancelled = true;
+    };
+  }, [router, showError]);
 
   const widgets: Widget[] = useMemo(
     () => [
