@@ -6,6 +6,7 @@ export async function findAdminByEmail(email: string) {
     .from('super_admins')
     .select('*')
     .eq('email', email)
+    .order('id', { ascending: true })
     .limit(1);
   if (error) throw error;
   return data?.[0] ?? null;
@@ -20,6 +21,7 @@ export async function getAdminPublicByEmail(email: string) {
     .from('super_admins')
     .select('id, email, name')
     .eq('email', email)
+    .order('id', { ascending: true })
     .limit(1);
   if (error) throw error;
   return data?.[0] ?? null;
@@ -30,9 +32,7 @@ export async function updateAdminPassword(email: string, passwordHash: string) {
     .from('super_admins')
     .update({ password: passwordHash })
     .eq('email', email)
-    .select('id')
-    .order('id', { ascending: true })
-    .limit(1);
+    .select('id');
   if (error) throw error;
   return data?.[0] ?? null;
 }

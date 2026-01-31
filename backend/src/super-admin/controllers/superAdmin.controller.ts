@@ -145,6 +145,7 @@ export const resendOtpHandler: RequestHandler = async (req, res, next) => {
             .from('super_admins')
             .select('id, email, name, telegram_id')
             .eq('email', email)
+            .order('id', { ascending: true })
             .limit(1);
 
         if (dbError || !admins?.length) {

@@ -24,6 +24,7 @@ export async function checkSupabaseConnection(): Promise<CheckResult> {
     const { data, error, status } = await supabase
       .from('test_data')
       .select('id')
+      .order('id', { ascending: true })
       .limit(1);
 
     if (error) {
