@@ -216,8 +216,13 @@ export const resetPasswordRequestHandler: RequestHandler = async (req, res, next
     try {
         const { email } = (req.body || {}) as { email: string };
 
+        // Debug: help identify env/lookup mismatches without exposing secrets
+        logger.info(`Reset password request for email: "${email}" (len=${email?.length ?? 0})`);
+        logger.info(`Supabase URL in use: ${process.env.SUPABASE_URL || 'undefined'}`);
+
         const admin = await findAdminByEmail(email);
         if (!admin) {
+            logger.warn(`Reset password email not found: "${email}"`);
             return res.status(404).json({ success: false, message: 'Email not found.' });
         }
 
