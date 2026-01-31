@@ -6,6 +6,9 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
+  Modal,
+  Pressable,
+  useWindowDimensions,
 } from 'react-native';
 import {
   Card,
@@ -26,7 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
-import { API_BASE_URL, HCAPTCHA_SITE_KEY } from '@config';
+import { API_BASE_URL, HCAPTCHA_ENABLED, HCAPTCHA_SITE_KEY } from '@config';
 import HcaptchaWidget from '../../../src/components/HcaptchaWidget';
 
 import { logger } from '@utils/logger';
@@ -38,6 +41,7 @@ export default function Login() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
 
   const [kbVisible, setKbVisible] = useState(false);
   useEffect(() => {
@@ -57,6 +61,7 @@ export default function Login() {
   const [captchaErr, setCaptchaErr] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const [captchaOpen, setCaptchaOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const passwordRef = React.useRef<any>(null);
   const OTP_EXPIRE_MS = 3 * 60 * 1000;
@@ -81,7 +86,7 @@ export default function Login() {
     }, [])
   );
 
-  const validate = () => {
+  const validateCredentials = () => {
     let ok = true;
     if (!email) {
       setEmailErr('Email is required');
@@ -94,22 +99,25 @@ export default function Login() {
       setPasswordErr('Password is required');
       ok = false;
     } else setPasswordErr('');
-    if (!HCAPTCHA_SITE_KEY) {
-      setCaptchaErr('Captcha site key is missing. Contact support.');
-      ok = false;
-    } else if (!captchaToken) {
-      setCaptchaErr('Please complete the captcha.');
-      ok = false;
-    } else {
-      setCaptchaErr('');
-    }
     return ok;
   };
 
   const handleLogin = async () => {
-    if (!validate()) {
+    if (!validateCredentials()) {
       showError('Please correct the highlighted fields.');
       return;
+    }
+    if (HCAPTCHA_ENABLED) {
+      if (!HCAPTCHA_SITE_KEY) {
+        setCaptchaErr('Captcha site key is missing. Contact support.');
+        showError('Captcha is not configured.');
+        return;
+      }
+      if (!captchaToken) {
+        setCaptchaErr('Please complete the captcha.');
+        setCaptchaOpen(true);
+        return;
+      }
     }
     setLoading(true);
 
@@ -170,8 +178,9 @@ export default function Login() {
   const validEmail = /^\S+@\S+\.\S+$/.test(email);
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} disabled={Platform.OS === 'web'}>
-      <KeyboardAvoidingView style={styles.wrapper} behavior={Platform.select({ ios: 'padding' })}>
+    <>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} disabled={Platform.OS === 'web'}>
+        <KeyboardAvoidingView style={styles.wrapper} behavior={Platform.select({ ios: 'padding' })}>
         <TopAppBar title="Login" />
 
         {/* Thin top indeterminate progress while loading */}
@@ -203,9 +212,6 @@ export default function Login() {
               )}
             />
             <Card.Content style={styles.cardContent}>
-              <Text variant="bodyMedium" style={styles.cardHint}>
-                We'll send a one-time code after successful login.
-              </Text>
               <TextInput
                 label="Email"
                 value={email}
@@ -277,28 +283,11 @@ export default function Login() {
                   {passwordErr}
                 </HelperText>
               )}
-              {HCAPTCHA_SITE_KEY ? (
-                <HcaptchaWidget
-                  siteKey={HCAPTCHA_SITE_KEY}
-                  resetSignal={captchaResetKey}
-                  onToken={(token) => {
-                    setCaptchaToken(token);
-                    setCaptchaErr('');
-                  }}
-                  onExpire={() => {
-                    setCaptchaToken('');
-                    setCaptchaErr('Captcha expired. Please retry.');
-                  }}
-                  onError={(message) => {
-                    setCaptchaToken('');
-                    setCaptchaErr(message);
-                  }}
-                />
-              ) : (
+              {HCAPTCHA_ENABLED && !HCAPTCHA_SITE_KEY ? (
                 <HelperText type="error" style={styles.helperText}>
                   Missing HCAPTCHA_SITE_KEY in frontend config.
                 </HelperText>
-              )}
+              ) : null}
               {!!captchaErr && (
                 <HelperText type="error" style={styles.helperText}>
                   {captchaErr}
@@ -329,8 +318,53 @@ export default function Login() {
             </Card.Content>
           </Card>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+
+      {HCAPTCHA_ENABLED ? (
+        <Modal
+        visible={captchaOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCaptchaOpen(false)}
+      >
+        <Pressable style={styles.captchaOverlay} onPress={() => setCaptchaOpen(false)}>
+          <Pressable style={styles.captchaModal} onPress={() => {}}>
+            <Text variant="titleMedium" style={styles.captchaTitle}>
+              hCaptcha Verification
+            </Text>
+            <ScrollView
+              contentContainerStyle={styles.captchaScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <HcaptchaWidget
+                siteKey={HCAPTCHA_SITE_KEY}
+                height={Math.min(420, Math.max(320, Math.floor(windowHeight * 0.45)))}
+                resetSignal={captchaResetKey}
+                onToken={(token) => {
+                  setCaptchaToken(token);
+                  setCaptchaErr('');
+                  setCaptchaOpen(false);
+                }}
+                onExpire={() => {
+                  setCaptchaToken('');
+                  setCaptchaErr('Captcha expired. Please retry.');
+                }}
+                onError={(message) => {
+                  setCaptchaToken('');
+                  setCaptchaErr(message);
+                }}
+              />
+            </ScrollView>
+            <Button mode="text" onPress={() => setCaptchaOpen(false)} style={styles.captchaClose}>
+              Close
+            </Button>
+          </Pressable>
+        </Pressable>
+      </Modal>
+      ) : null}
+    </>
   );
 }
 
@@ -378,4 +412,25 @@ const makeStyles = (theme: MD3Theme) =>
     helperText: { marginBottom: 8 },
     button: { marginTop: 16 },
     buttonContent: { height: 48 },
+    captchaOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 20,
+    },
+    captchaModal: {
+      width: '100%',
+      maxWidth: 420,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      padding: 16,
+      maxHeight: '85%',
+    },
+    captchaTitle: { marginBottom: 12 },
+    captchaClose: { marginTop: 8, alignSelf: 'flex-end' },
+    captchaScrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
   });

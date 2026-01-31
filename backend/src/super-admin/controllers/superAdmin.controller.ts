@@ -11,6 +11,7 @@ import { findAdminByEmail, verifyPassword, getAdminPublicByEmail, updateAdminPas
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { verifyHcaptcha } from '../../utils/hcaptcha';
+import { config } from '../../config';
 
 const OTP_TTL_SECONDS = 60 * 3;        // 3 minutes
 const RESEND_COOLDOWN_SECONDS = 30;    // 30 seconds
@@ -21,9 +22,11 @@ export const loginHandler: RequestHandler = async (req, res, next) => {
     try {
         const { email, password, captchaToken } = (req.body || {}) as { email: string; password: string; captchaToken: string };
 
-        const captcha = await verifyHcaptcha(captchaToken, req.ip);
-        if (!captcha.success) {
-            return res.status(401).json({ success: false, message: 'Captcha verification failed.' });
+        if (config.hcaptchaEnabled) {
+            const captcha = await verifyHcaptcha(captchaToken, req.ip);
+            if (!captcha.success) {
+                return res.status(401).json({ success: false, message: 'Captcha verification failed.' });
+            }
         }
         const admin = await findAdminByEmail(email);
         if (!admin) {

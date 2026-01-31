@@ -13,10 +13,9 @@ export const loginSchema = Joi.object({
     'string.min': 'Password must be at least 6 characters long.',
     'any.required': 'Password is required.',
   }),
-  captchaToken: Joi.string().trim().min(10).required().messages({
+  captchaToken: Joi.string().trim().min(10).optional().messages({
     'string.empty': 'Captcha is required.',
     'string.min': 'Captcha is invalid.',
-    'any.required': 'Captcha is required.',
   }),
 });
 

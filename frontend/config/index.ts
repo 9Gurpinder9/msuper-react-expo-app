@@ -9,6 +9,8 @@ type Extra = {
   logCollectorUrl?: string;
   HCAPTCHA_SITE_KEY?: string;
   hcaptchaSiteKey?: string;
+  HCAPTCHA_ENABLED?: string;
+  hcaptchaEnabled?: string;
 };
 
 const extra = (Constants?.expoConfig?.extra ?? {}) as Extra;
@@ -27,6 +29,9 @@ export const LOG_COLLECTOR_URL: string = normalize(
 );
 
 export const HCAPTCHA_SITE_KEY: string = (extra.HCAPTCHA_SITE_KEY ?? extra.hcaptchaSiteKey ?? '').trim();
+export const HCAPTCHA_ENABLED: boolean = String(
+  extra.HCAPTCHA_ENABLED ?? extra.hcaptchaEnabled ?? 'true'
+).toLowerCase() !== 'false';
 
 /** Warn loudly if API base URL is missing so you don't hit `undefined/...` */
 export function assertApiBaseUrl(): string {
@@ -43,5 +48,6 @@ export default {
   API_BASE_URL,
   LOG_COLLECTOR_URL,
   HCAPTCHA_SITE_KEY,
+  HCAPTCHA_ENABLED,
   assertApiBaseUrl,
 };

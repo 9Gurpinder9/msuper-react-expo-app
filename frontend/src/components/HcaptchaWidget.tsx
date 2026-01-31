@@ -13,6 +13,7 @@ type Props = {
   onError?: (message: string) => void;
   onExpire?: () => void;
   resetSignal?: number;
+  height?: number;
 };
 
 export default function HcaptchaWidget({
@@ -21,6 +22,7 @@ export default function HcaptchaWidget({
   onError,
   onExpire,
   resetSignal,
+  height,
 }: Props) {
   const webRef = useRef<WebView>(null);
 
@@ -68,7 +70,7 @@ export default function HcaptchaWidget({
   );
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, height ? { height } : null]}>
       <WebView
         ref={webRef}
         originWhitelist={['*']}
@@ -95,7 +97,6 @@ const styles = StyleSheet.create({
   wrapper: {
     height: 130,
     width: '100%',
-    overflow: 'hidden',
     borderRadius: 12,
   },
   webview: {
