@@ -5,9 +5,7 @@ export async function findAdminByEmail(email: string) {
   const { data, error } = await supabase
     .from('super_admins')
     .select('*')
-    .eq('email', email)
-    .order('id', { ascending: true })
-    .limit(1);
+    .eq('email', email);
   if (error) throw error;
   return data?.[0] ?? null;
 }

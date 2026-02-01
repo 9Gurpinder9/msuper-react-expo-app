@@ -22,7 +22,7 @@ type CheckResult = {
 export async function checkSupabaseConnection(): Promise<CheckResult> {
   try {
     const { data, error, status } = await supabase
-      .from('test_data')
+      .from('super_admins')
       .select('id')
       .order('id', { ascending: true })
       .limit(1);
