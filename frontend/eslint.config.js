@@ -1,7 +1,11 @@
 const { FlatCompat } = require("@eslint/eslintrc");
+const js = require("@eslint/js");
 
 // Bridge existing .eslintrc.js config to ESLint v9 flat config
-const compat = new FlatCompat({ baseDirectory: __dirname });
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended
+});
 
 module.exports = [
   ...compat.config({
