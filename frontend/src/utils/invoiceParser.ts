@@ -1,15 +1,88 @@
 // frontend/src/utils/invoiceParser.ts
 import { Platform } from 'react-native';
 
+export type InvoiceTaxBreakdown = {
+  percent?: number;
+  amount?: number;
+};
+
 export type InvoiceLineItem = {
-  description: string;
+  description?: string;
   qty?: number;
   unitPrice?: number;
   lineTotal?: number;
+  srNo?: number;
+  name?: string;
+  hsnOrSac?: string;
+  uom?: string;
+  includingTaxPrice?: number;
+  discountAmount?: number;
+  taxableAmount?: number;
+  sgst?: InvoiceTaxBreakdown;
+  cgst?: InvoiceTaxBreakdown;
+  total?: number;
   raw: string;
 };
 
+export type InvoiceCompany = {
+  name?: string;
+  gstin?: string;
+  msme?: string;
+  pan?: string;
+  mobile?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  pincode?: string;
+  state?: string;
+  stateCode?: string;
+};
+
+export type InvoiceCustomer = {
+  name?: string;
+  address?: string;
+  pincode?: string;
+  gstin?: string;
+  contactNo?: string;
+  invoiceNo?: string;
+  invoiceDate?: string;
+  reverseCharge?: string;
+  payMode?: string;
+  grNo?: string;
+  grDate?: string;
+  placeOfSupply?: string;
+  stateCode?: string;
+};
+
+export type InvoiceItemsTotal = {
+  uomQty?: number;
+  discount?: number;
+  taxableAmount?: number;
+  sgstPercent?: number;
+  sgstAmount?: number;
+  cgstPercent?: number;
+  cgstAmount?: number;
+  total?: number;
+};
+
+export type InvoiceOthers = {
+  bankName?: string;
+  bankAccountNo?: string;
+  ifsc?: string;
+  totalAmountBeforeTax?: number;
+  sgst?: number;
+  cgst?: number;
+  totalAmountAfterTax?: number;
+  discount?: number;
+  netBillAmount?: number;
+  amountInWords?: string;
+};
+
 export type InvoiceData = {
+  company?: InvoiceCompany;
+  customer?: InvoiceCustomer;
+  items_total?: InvoiceItemsTotal;
+  others?: InvoiceOthers;
   vendor?: string;
   invoiceNumber?: string;
   date?: string;
