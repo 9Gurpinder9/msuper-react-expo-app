@@ -21,5 +21,30 @@ module.exports = [
     ],
     parserOptions: { ecmaFeatures: { jsx: true } },
     settings: { react: { version: "detect" } }
-  })
+  }),
+  {
+    files: [
+      "app.config.js",
+      ".eslintrc.js",
+      "eslint.config.js",
+      "babel.config.js",
+      "metro.config.js"
+    ],
+    languageOptions: {
+      globals: {
+        module: "readonly",
+        process: "readonly",
+        require: "readonly",
+        __dirname: "readonly"
+      }
+    }
+  },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "no-empty": "warn"
+    }
+  }
 ];
