@@ -37,24 +37,26 @@ function getKind(mimeType: string, name: string): ScanBillFileKind {
   return 'image';
 }
 
-export async function pickScanBillFile(): Promise<ScanBillFile | null> {
+export async function pickScanBillFiles(): Promise<ScanBillFile[]> {
   const result = await DocumentPicker.getDocumentAsync({
     type: ['image/*', 'application/pdf'],
     copyToCacheDirectory: true,
-    multiple: false,
+    multiple: true,
   });
 
-  if (result.canceled || !result.assets?.length) return null;
-  const asset = result.assets[0];
-  const name = asset.name || 'upload';
-  const mimeType = asset.mimeType || inferMimeTypeFromName(name) || 'application/octet-stream';
+  if (result.canceled || !result.assets?.length) return [];
 
-  return {
-    uri: asset.uri,
-    name,
-    mimeType,
-    kind: getKind(mimeType, name),
-  };
+  return result.assets.map((asset) => {
+    const name = asset.name || 'upload';
+    const mimeType = asset.mimeType || inferMimeTypeFromName(name) || 'application/octet-stream';
+
+    return {
+      uri: asset.uri,
+      name,
+      mimeType,
+      kind: getKind(mimeType, name),
+    };
+  });
 }
 
 export async function readScanBillFileBase64(uri: string): Promise<string> {

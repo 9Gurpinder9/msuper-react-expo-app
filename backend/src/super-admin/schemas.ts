@@ -64,10 +64,29 @@ export const resetPasswordConfirmSchema = Joi.object({
 });
 
 export const onlineScanBillSchema = Joi.object({
-  imageBase64: Joi.string().trim().min(50).required().messages({
+  imageBase64: Joi.string().trim().min(50).messages({
     'string.empty': 'File is required.',
     'string.min': 'File data is too short.',
   }),
   mimeType: Joi.string().trim().optional(),
-});
+  files: Joi.array()
+    .items(
+      Joi.object({
+        imageBase64: Joi.string().trim().min(50).required().messages({
+          'string.empty': 'File is required.',
+          'string.min': 'File data is too short.',
+        }),
+        mimeType: Joi.string().trim().optional(),
+      })
+    )
+    .min(1)
+    .messages({
+      'array.min': 'At least one file is required.',
+    }),
+})
+  .xor('imageBase64', 'files')
+  .messages({
+    'object.missing': 'File is required.',
+    'object.xor': 'Provide a single file or a list of files, not both.',
+  });
 

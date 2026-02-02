@@ -43,8 +43,9 @@ import {
   type ScanBillRecord,
 } from '@utils/scanBillStorage';
 import {
-  pickScanBillFile,
+  pickScanBillFiles,
   readScanBillFileBase64,
+  type ScanBillFile,
 } from '@utils/scanBillFilePicker';
 
 type ImageAsset = {
@@ -54,9 +55,10 @@ type ImageAsset = {
 };
 
 type UploadPayload = {
-  uri: string;
+  uri?: string;
   base64: string;
   mimeType: string;
+  name?: string;
 };
 
 export default function OnlineScanBillScreen() {
@@ -69,6 +71,7 @@ export default function OnlineScanBillScreen() {
   const [history, setHistory] = useState<ScanBillRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuRecordId, setMenuRecordId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -98,59 +101,60 @@ export default function OnlineScanBillScreen() {
     }
   }, [isFocused, loadHistory]);
 
-  const handleImagePick = useCallback(
-    async (mode: 'camera') => {
-      try {
-        setMenuVisible(false);
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permission.granted) {
-          toastRef.current.showInfo('Camera permission is required');
-          return;
-        }
-
-        const result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ['images'],
-          quality: 1,
-          base64: true,
-        });
-
-        if (result.canceled || !result.assets?.[0]?.uri) return;
-        const asset = result.assets[0] as ImageAsset;
-        if (!asset.base64) {
-          toastRef.current.showError('Failed to read image data');
-          return;
-        }
-        await processUpload({
-          uri: asset.uri,
-          base64: asset.base64,
-          mimeType: asset.mimeType || 'image/jpeg',
-        });
-      } catch {
-        toastRef.current.showError('Unable to open camera');
+  const handleImagePick = useCallback(async (mode: 'camera') => {
+    try {
+      setMenuVisible(false);
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        toastRef.current.showInfo('Camera permission is required');
+        return;
       }
-    },
-    []
-  );
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 1,
+        base64: true,
+      });
+
+      if (result.canceled || !result.assets?.[0]?.uri) return;
+      const asset = result.assets[0] as ImageAsset;
+      if (!asset.base64) {
+        toastRef.current.showError('Failed to read image data');
+        return;
+      }
+      await processUploadBatch(
+        [
+          {
+            uri: asset.uri,
+            base64: asset.base64,
+            mimeType: asset.mimeType || 'image/jpeg',
+          },
+        ],
+        asset.uri
+      );
+    } catch {
+      toastRef.current.showError('Unable to open camera');
+    }
+  }, []);
 
   const handleUploadPick = useCallback(async () => {
     try {
       setMenuVisible(false);
-      const file = await pickScanBillFile();
-      if (!file) return;
-      const base64 = await readScanBillFileBase64(file.uri);
-      await processUpload({
-        uri: file.uri,
-        base64,
-        mimeType: file.mimeType,
-      });
+      const files = await pickScanBillFiles();
+      if (!files.length) return;
+      await processScanBillFiles(files);
     } catch {
       toastRef.current.showError('Unable to open the file picker');
     }
   }, []);
 
-  const processUpload = useCallback(async (payload: UploadPayload) => {
+  const processUploadBatch = useCallback(
+    async (payloads: UploadPayload[], coverUri?: string) => {
     try {
       setProcessing(true);
+      setProcessingStatus(
+        payloads.length > 1 ? `Uploading ${payloads.length} pages...` : 'Processing invoice...'
+      );
       const token = await AsyncStorage.getItem('authToken');
       if (!token) {
         toastRef.current.showError('Please log in again');
@@ -164,8 +168,10 @@ export default function OnlineScanBillScreen() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          imageBase64: payload.base64,
-          mimeType: payload.mimeType || 'image/jpeg',
+          files: payloads.map((payload) => ({
+            imageBase64: payload.base64,
+            mimeType: payload.mimeType || 'image/jpeg',
+          })),
         }),
       });
 
@@ -176,7 +182,7 @@ export default function OnlineScanBillScreen() {
       }
 
       const record = await saveScanBillRecord({
-        imageUri: payload.uri,
+        imageUri: coverUri,
         data: (res.data as any).data,
         ocrEngine: 'documentai',
       });
@@ -189,8 +195,35 @@ export default function OnlineScanBillScreen() {
       toastRef.current.showError('Failed to scan invoice');
     } finally {
       setProcessing(false);
+      setProcessingStatus(null);
     }
   }, []);
+
+  const processScanBillFiles = useCallback(
+    async (files: ScanBillFile[]) => {
+      setProcessing(true);
+      try {
+        const payloads: UploadPayload[] = [];
+        for (let i = 0; i < files.length; i += 1) {
+          const file = files[i];
+          setProcessingStatus(`Preparing ${i + 1} of ${files.length}...`);
+          const base64 = await readScanBillFileBase64(file.uri);
+          payloads.push({
+            uri: file.uri,
+            base64,
+            mimeType: file.mimeType,
+            name: file.name,
+          });
+        }
+        const coverUri = files[0]?.uri;
+        await processUploadBatch(payloads, coverUri);
+      } finally {
+        setProcessing(false);
+        setProcessingStatus(null);
+      }
+    },
+    [processUploadBatch]
+  );
 
   const handleDelete = useCallback((record: ScanBillRecord) => {
     Alert.alert(
@@ -237,7 +270,7 @@ export default function OnlineScanBillScreen() {
   }, []);
 
   const renderCard = ({ item }: { item: ScanBillRecord }) => {
-    const total = formatMoney(item.data?.total, item.data?.currency);
+    //const total = formatMoney(item.data?.total, item.data?.currency);
     const subtitle = item.data?.vendor || 'Unknown vendor';
     const date = item.data?.date || '';
     const fileName = getFileName(item.jsonPath);
@@ -270,11 +303,11 @@ export default function OnlineScanBillScreen() {
               </Text>
             </View>
             <View style={styles.cardRight}>
-              {total ? (
-                <Text variant="titleMedium" style={{ color: theme.colors.primary }}>
+              {/* {total ? ( */}
+              {/* <Text variant="titleMedium" style={{ color: theme.colors.primary }}>
                   {total}
-                </Text>
-              ) : null}
+                </Text> */}
+              {/* ) : null} */}
               <View style={styles.cardActions}>
                 <Badge style={styles.engineBadge}>{item.ocrEngine.toUpperCase()}</Badge>
                 <Menu
@@ -327,7 +360,11 @@ export default function OnlineScanBillScreen() {
         >
           <View style={styles.heroRow}>
             <View style={styles.heroIcon}>
-              <MaterialCommunityIcons name="cloud-search-outline" size={26} color={theme.colors.onPrimary} />
+              <MaterialCommunityIcons
+                name="cloud-search-outline"
+                size={26}
+                color={theme.colors.onPrimary}
+              />
             </View>
             <View style={{ flex: 1 }}>
               <Text variant="titleLarge" style={styles.heroTitle}>
@@ -340,13 +377,21 @@ export default function OnlineScanBillScreen() {
           </View>
           <View style={styles.heroChips}>
             <View style={styles.heroChip}>
-              <MaterialCommunityIcons name="cloud-check-outline" size={14} color={theme.colors.onPrimary} />
+              <MaterialCommunityIcons
+                name="cloud-check-outline"
+                size={14}
+                color={theme.colors.onPrimary}
+              />
               <Text variant="labelSmall" style={styles.heroChipText}>
                 Document AI
               </Text>
             </View>
             <View style={styles.heroChip}>
-              <MaterialCommunityIcons name="shield-check" size={14} color={theme.colors.onPrimary} />
+              <MaterialCommunityIcons
+                name="shield-check"
+                size={14}
+                color={theme.colors.onPrimary}
+              />
               <Text variant="labelSmall" style={styles.heroChipText}>
                 Auth required
               </Text>
@@ -373,12 +418,12 @@ export default function OnlineScanBillScreen() {
             <Text variant="titleMedium" style={{ marginTop: 8 }}>
               No scans yet
             </Text>
-            <Text variant="bodySmall" style={{ opacity: 0.7, textAlign: 'center', marginTop: 4 }}>
-              Tap the menu button to scan a bill or upload a photo/PDF.
-            </Text>
-          </View>
-        ) : (
-          <View style={{ gap: 12 }}>
+              <Text variant="bodySmall" style={{ opacity: 0.7, textAlign: 'center', marginTop: 4 }}>
+                Tap the menu button to scan a bill or upload photos/PDFs.
+              </Text>
+            </View>
+          ) : (
+            <View style={{ gap: 12 }}>
             {history.map((item) => (
               <View key={item.id}>{renderCard({ item })}</View>
             ))}
@@ -403,7 +448,7 @@ export default function OnlineScanBillScreen() {
             },
             {
               icon: 'upload',
-              label: 'Upload (Image/PDF)',
+              label: 'Upload (Images/PDFs)',
               onPress: handleUploadPick,
             },
           ]}
@@ -411,7 +456,11 @@ export default function OnlineScanBillScreen() {
       </Portal>
 
       <Portal>
-        <Dialog visible={modalVisible} onDismiss={() => setModalVisible(false)} style={styles.modal}>
+        <Dialog
+          visible={modalVisible}
+          onDismiss={() => setModalVisible(false)}
+          style={styles.modal}
+        >
           <Dialog.Title>Extracted JSON</Dialog.Title>
           <Dialog.ScrollArea style={styles.modalScrollArea}>
             <ScrollView contentContainerStyle={styles.modalScrollContent}>
@@ -431,7 +480,7 @@ export default function OnlineScanBillScreen() {
           <Surface style={styles.processingCard} elevation={3}>
             <ActivityIndicator animating color={theme.colors.primary} />
             <Text variant="labelMedium" style={{ marginTop: 8 }}>
-              Processing invoice...
+              {processingStatus || 'Processing invoice...'}
             </Text>
             <Text variant="bodySmall" style={{ opacity: 0.7, marginTop: 2 }}>
               Keep the app open for best accuracy

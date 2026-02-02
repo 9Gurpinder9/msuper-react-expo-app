@@ -99,6 +99,113 @@ type ProcessDocumentInput = {
   mimeType?: string;
 };
 
+type ProcessDocumentFile = ProcessDocumentInput;
+
+function pickFirst<T>(...values: Array<T | undefined>): T | undefined {
+  for (const value of values) {
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return undefined;
+}
+
+function pickLast<T>(...values: Array<T | undefined>): T | undefined {
+  for (let i = values.length - 1; i >= 0; i -= 1) {
+    const value = values[i];
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return undefined;
+}
+
+function mergeInvoiceData(pages: InvoiceData[]): InvoiceData {
+  if (pages.length === 0) {
+    return {
+      company: {},
+      customer: {},
+      items: [],
+      items_total: {},
+      others: {},
+      rawText: '',
+      lines: [],
+    };
+  }
+
+  if (pages.length === 1) return pages[0];
+
+  const merged: InvoiceData = {
+    company: { ...(pages[0].company || {}) },
+    customer: { ...(pages[0].customer || {}) },
+    items: [],
+    items_total: { ...(pages[0].items_total || {}) },
+    others: { ...(pages[0].others || {}) },
+    rawText: '',
+    lines: [],
+    vendor: pages[0].vendor,
+    invoiceNumber: pages[0].invoiceNumber,
+    date: pages[0].date,
+    subtotal: pages[0].subtotal,
+    tax: pages[0].tax,
+    total: pages[0].total,
+    currency: pages[0].currency,
+  };
+
+  for (const page of pages) {
+    if (page.rawText) {
+      merged.rawText = merged.rawText ? `${merged.rawText}\n\n${page.rawText}` : page.rawText;
+    }
+    if (page.lines?.length) {
+      merged.lines = merged.lines.concat(page.lines);
+    }
+    if (page.items?.length) {
+      merged.items = merged.items.concat(page.items);
+    }
+
+    merged.vendor = pickFirst(merged.vendor, page.vendor);
+    merged.invoiceNumber = pickFirst(merged.invoiceNumber, page.invoiceNumber);
+    merged.date = pickFirst(merged.date, page.date);
+    merged.currency = pickFirst(merged.currency, page.currency);
+
+    if (page.company) {
+      merged.company = {
+        ...merged.company,
+        ...Object.fromEntries(
+          Object.entries(page.company).filter(([, value]) => value !== undefined && value !== '')
+        ),
+      };
+    }
+
+    if (page.customer) {
+      merged.customer = {
+        ...merged.customer,
+        ...Object.fromEntries(
+          Object.entries(page.customer).filter(([, value]) => value !== undefined && value !== '')
+        ),
+      };
+    }
+
+    if (page.items_total) {
+      merged.items_total = {
+        ...merged.items_total,
+        ...Object.fromEntries(
+          Object.entries(page.items_total).filter(([, value]) => value !== undefined)
+        ),
+      };
+    }
+
+    if (page.others) {
+      merged.others = {
+        ...merged.others,
+        ...Object.fromEntries(Object.entries(page.others).filter(([, value]) => value !== undefined)),
+      };
+    }
+
+    merged.subtotal = pickLast(merged.subtotal, page.subtotal);
+    merged.tax = pickLast(merged.tax, page.tax);
+    merged.total = pickLast(merged.total, page.total);
+  }
+
+  return merged;
+}
+
 function getClient() {
   const location = config.documentAiLocation || 'us';
   const apiEndpoint =
@@ -460,4 +567,20 @@ export async function processInvoiceDocument({
   }
 
   return buildInvoiceData(result?.document);
+}
+
+export async function processInvoiceDocumentBatch(
+  files: ProcessDocumentFile[]
+): Promise<InvoiceData> {
+  if (!files.length) {
+    throw new Error('No files provided for processing.');
+  }
+
+  const pages: InvoiceData[] = [];
+  for (const file of files) {
+    const page = await processInvoiceDocument(file);
+    pages.push(page);
+  }
+
+  return mergeInvoiceData(pages);
 }
