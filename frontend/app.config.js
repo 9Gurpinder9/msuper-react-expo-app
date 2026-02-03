@@ -25,6 +25,7 @@ export default ({ config }) => ({
   extra: {
     appVariant: process.env.APP_VARIANT || 'super-admin',
     API_BASE_URL: process.env.API_BASE_URL,
+    APP_SECRET: process.env.APP_SECRET,
     HCAPTCHA_SITE_KEY: process.env.HCAPTCHA_SITE_KEY,
     HCAPTCHA_ENABLED: process.env.HCAPTCHA_ENABLED,
   },

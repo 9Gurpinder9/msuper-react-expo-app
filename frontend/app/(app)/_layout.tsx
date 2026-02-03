@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View } from "react-native";
 import { ActivityIndicator, useTheme } from "react-native-paper";
@@ -7,12 +7,18 @@ import { ActivityIndicator, useTheme } from "react-native-paper";
 export default function AppGroupLayout() {
   const theme = useTheme();
   const router = useRouter();
+  const segments = useSegments();
   const [checking, setChecking] = React.useState(true);
 
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        const isCompanyRoute = segments.includes("company");
+        if (isCompanyRoute) {
+          if (!cancelled) setChecking(false);
+          return;
+        }
         const token = await AsyncStorage.getItem("authToken");
         if (cancelled) return;
         if (!token) {
@@ -40,4 +46,3 @@ export default function AppGroupLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }} />
   );
 }
-

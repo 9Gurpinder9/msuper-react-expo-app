@@ -11,6 +11,7 @@ const envSchema = Joi.object({
   DOCUMENTAI_SA_KEY: Joi.string().optional(),
   HCAPTCHA_SECRET: Joi.string().min(10).optional(),
   HCAPTCHA_ENABLED: Joi.string().valid('true', 'false').default('true'),
+  APP_SECRET: Joi.string().min(8).optional(),
 }).unknown(true);
 
 const { value, error } = envSchema.validate(process.env, { abortEarly: false });
@@ -29,5 +30,6 @@ export const config = {
   documentAiServiceAccountKey: value.DOCUMENTAI_SA_KEY as string | undefined,
   hcaptchaSecret: value.HCAPTCHA_SECRET as string | undefined,
   hcaptchaEnabled: String(value.HCAPTCHA_ENABLED).toLowerCase() !== 'false',
+  appSecret: value.APP_SECRET as string | undefined,
 };
 

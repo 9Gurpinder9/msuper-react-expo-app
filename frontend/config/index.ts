@@ -5,6 +5,7 @@ type Extra = {
   appVariant?: 'company' | 'super-admin';
   API_BASE_URL?: string;   // preferred (from app.config.js / .env)
   apiBaseUrl?: string;     // legacy fallback
+  APP_SECRET?: string;
   LOG_COLLECTOR_URL?: string;
   logCollectorUrl?: string;
   HCAPTCHA_SITE_KEY?: string;
@@ -23,6 +24,8 @@ export const APP_VARIANT: 'company' | 'super-admin' =
 export const API_BASE_URL: string = normalize(
   extra.API_BASE_URL ?? extra.apiBaseUrl
 );
+
+export const APP_SECRET: string = (extra.APP_SECRET ?? '').trim();
 
 export const LOG_COLLECTOR_URL: string = normalize(
   extra.LOG_COLLECTOR_URL ?? extra.logCollectorUrl ?? ''
@@ -46,6 +49,7 @@ export function assertApiBaseUrl(): string {
 export default {
   APP_VARIANT,
   API_BASE_URL,
+  APP_SECRET,
   LOG_COLLECTOR_URL,
   HCAPTCHA_SITE_KEY,
   HCAPTCHA_ENABLED,

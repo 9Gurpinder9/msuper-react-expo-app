@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import superAdminRouter from '../super-admin/routes';
+import companyRouter from '../company/routes';
 import { healthRouter, testDatabaseRouter } from './routes';
 
 // Central router: mount all feature routers here
@@ -11,5 +12,6 @@ router.use('/test-database', testDatabaseRouter); // GET /test-database
 
 // Feature routers
 router.use('/super-admin', superAdminRouter);
+router.use('/company', companyRouter);
 
 export default router;
