@@ -13,13 +13,13 @@ export const listBookmarksHandler: RequestHandler = async (req, res) => {
     const { search, favorite, category_id, tag, deleted, limit, offset } = req.query;
     const filters = {
       search: typeof search === 'string' && search.trim() ? search.trim() : undefined,
-      favorite: String(favorite).toLowerCase() === 'true',
+      favorite: typeof favorite === 'string' ? favorite.toLowerCase() === 'true' : false,
       category_id:
         typeof category_id === 'string' && category_id.trim() ? category_id.trim() : undefined,
       tag: typeof tag === 'string' && tag.trim() ? tag.trim() : undefined,
-      deleted: String(deleted).toLowerCase() === 'true',
-      limit: limit ? Number(limit) : undefined,
-      offset: offset ? Number(offset) : undefined,
+      deleted: typeof deleted === 'string' ? deleted.toLowerCase() === 'true' : false,
+      limit: typeof limit === 'string' ? Number(limit) : undefined,
+      offset: typeof offset === 'string' ? Number(offset) : undefined,
     };
 
     const result = await listBookmarks(filters);
@@ -43,7 +43,11 @@ export const createBookmarkHandler: RequestHandler = async (req, res) => {
 
 export const updateBookmarkHandler: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id || '').trim();
+    if (!id) {
+      res.status(400).json({ success: false, message: 'Missing bookmark id.' });
+      return;
+    }
     const payload = req.body;
     const updated = await updateBookmark(id, payload);
     res.json({ success: true, data: updated });
@@ -55,7 +59,11 @@ export const updateBookmarkHandler: RequestHandler = async (req, res) => {
 
 export const deleteBookmarkHandler: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id || '').trim();
+    if (!id) {
+      res.status(400).json({ success: false, message: 'Missing bookmark id.' });
+      return;
+    }
     const deleted = await softDeleteBookmark(id);
     res.json({ success: true, data: deleted });
   } catch (err: any) {
@@ -66,7 +74,11 @@ export const deleteBookmarkHandler: RequestHandler = async (req, res) => {
 
 export const refreshBookmarkMetaHandler: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id || '').trim();
+    if (!id) {
+      res.status(400).json({ success: false, message: 'Missing bookmark id.' });
+      return;
+    }
     const data = await refreshBookmarkMeta(id);
     res.json({ success: true, data });
   } catch (err: any) {

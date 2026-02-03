@@ -30,7 +30,11 @@ export const createCategoryHandler: RequestHandler = async (req, res) => {
 
 export const updateCategoryHandler: RequestHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id || '').trim();
+    if (!id) {
+      res.status(400).json({ success: false, message: 'Missing category id.' });
+      return;
+    }
     const name = String(req.body.name || '').trim();
     const data = await updateCategory(id, name);
     res.json({ success: true, data });
