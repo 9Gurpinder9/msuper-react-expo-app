@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+build/
+web-build/
+coverage/
+android/
+ios/
+**/__generated__/
+**/*.min.js
