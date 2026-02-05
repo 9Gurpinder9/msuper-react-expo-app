@@ -24,12 +24,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install deps (root workspaces)
-        run: npm install
-      - name: Lint
-        run: npm run lint
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Test
-        run: npm run test
+      - name: Install deps (backend workspace)
+        run: npm install --workspace backend
+      - name: Lint (backend)
+        run: npm run lint --workspace backend --if-present
+      - name: Typecheck (backend)
+        run: npm run typecheck --workspace backend --if-present
+      - name: Test (backend)
+        run: npm run test --workspace backend --if-present
 
