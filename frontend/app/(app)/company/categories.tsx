@@ -131,6 +131,7 @@ export default function CompanyCategories() {
     });
   };
 
+
   return (
     <View style={styles.page}>
       <TopAppBar title="Categories" showBack onBackPress={() => router.back()} />
@@ -307,12 +308,19 @@ export default function CompanyCategories() {
           <Text variant="titleMedium">
             {selected ? 'Edit Category' : 'Add Category'}
           </Text>
+          <Text style={[styles.modalLabel, { color: theme.colors.onSurfaceVariant }]}>
+            <Text style={[styles.required, { color: theme.colors.error }]}>*</Text> Category
+            name
+          </Text>
           <TextInput
-            label="Category name"
+            label=""
             value={name}
             onChangeText={setName}
             mode="outlined"
+            placeholder="e.g. Office tools"
+            dense
             style={styles.input}
+            contentStyle={styles.inputContent}
           />
           <View style={styles.modalActions}>
             <Button
@@ -437,7 +445,19 @@ const makeStyles = (theme: AppTheme) => {
       borderColor,
     },
     input: {
-      marginTop: 16,
+      marginTop: 6,
+    },
+    inputContent: {
+      minHeight: 36,
+      paddingVertical: 6,
+    },
+    modalLabel: {
+      marginTop: 12,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    required: {
+      fontSize: 12,
     },
     fab: {
       position: 'absolute',

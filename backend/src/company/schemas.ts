@@ -1,10 +1,10 @@
 import Joi from 'joi';
 
 export const createBookmarkSchema = Joi.object({
-  title: Joi.string().min(1).required(),
+  title: Joi.string().allow('', null).optional(),
   url: Joi.string().uri().required(),
   description: Joi.string().allow('', null),
-  category_id: Joi.string().uuid().allow('', null),
+  category_id: Joi.string().uuid().required(),
   tags: Joi.array().items(Joi.string().min(1)).default([]),
   is_favorite: Joi.boolean().default(false),
   thumbnail_url: Joi.string().uri().allow('', null),
@@ -15,7 +15,7 @@ export const createBookmarkSchema = Joi.object({
 });
 
 export const updateBookmarkSchema = Joi.object({
-  title: Joi.string().min(1).optional(),
+  title: Joi.string().allow('', null).optional(),
   url: Joi.string().uri().optional(),
   description: Joi.string().allow('', null),
   category_id: Joi.string().uuid().allow('', null),

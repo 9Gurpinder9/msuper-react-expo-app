@@ -39,7 +39,7 @@ import {
   listBookmarks,
   updateBookmark,
 } from '../../../src/features/bookmarks/api';
-import { createCategory, listCategories } from '../../../src/features/bookmarks/categories.api';
+import { listCategories } from '../../../src/features/bookmarks/categories.api';
 
 type ViewMode = 'card' | 'list' | 'compact';
 type MenuKey = 'all' | 'favorites' | 'categories' | 'tags' | 'recent' | 'trash' | 'settings';
@@ -104,7 +104,7 @@ export default function CompanyBookmarks() {
 
   const { data: categoryData } = useQuery({
     queryKey: ['bookmark-categories'],
-    queryFn: () => listCategories(),
+    queryFn: () => listCategories({ limit: 200, offset: 0 }),
   });
 
   const createMutation = useMutation({
@@ -391,15 +391,9 @@ export default function CompanyBookmarks() {
         categories={categories}
         onClose={() => setEditorOpen(false)}
         onSubmit={handleSave}
-        onManageCategories={() => router.push('/company/categories')}
-        onQuickAddCategory={async (name) => {
-          try {
-            await createCategory(name);
-            queryClient.invalidateQueries({ queryKey: ['bookmark-categories'] });
-            showSuccess('Category added');
-          } catch (err: any) {
-            showError(err?.message || 'Failed to add category');
-          }
+        onManageCategories={() => {
+          setEditorOpen(false);
+          router.push('/company/categories');
         }}
       />
     </View>
@@ -516,7 +510,6 @@ function BookmarkEditorModal({
   onClose,
   onSubmit,
   onManageCategories,
-  onQuickAddCategory,
 }: {
   visible: boolean;
   theme: AppTheme;
@@ -525,7 +518,6 @@ function BookmarkEditorModal({
   onClose: () => void;
   onSubmit: (payload: BookmarkInput) => void;
   onManageCategories: () => void;
-  onQuickAddCategory: (name: string) => void;
 }) {
   const [title, setTitle] = React.useState('');
   const [url, setUrl] = React.useState('');
@@ -534,8 +526,6 @@ function BookmarkEditorModal({
   const [tags, setTags] = React.useState('');
   const [favorite, setFavorite] = React.useState(false);
   const [categoryMenuOpen, setCategoryMenuOpen] = React.useState(false);
-  const [quickCategory, setQuickCategory] = React.useState('');
-
   React.useEffect(() => {
     if (visible) {
       setTitle(initial?.title ?? '');
@@ -570,6 +560,7 @@ function BookmarkEditorModal({
       <Modal
         visible={visible}
         onDismiss={onClose}
+        style={stylesModal.wrapper}
         contentContainerStyle={[
           stylesModal.container,
           { backgroundColor: theme.colors.surface },
@@ -578,84 +569,110 @@ function BookmarkEditorModal({
         <Text variant="titleMedium">
           {initial ? 'Edit Bookmark' : 'New Bookmark'}
         </Text>
+        <Text style={[stylesModal.label, { color: theme.colors.onSurfaceVariant }]}>
+          <Text style={[stylesModal.required, { color: theme.colors.error }]}>*</Text> URL
+        </Text>
         <TextInput
-          label="Title"
-          value={title}
-          onChangeText={setTitle}
-          mode="outlined"
-          style={stylesModal.input}
-        />
-        <TextInput
-          label="URL"
+          label=""
           value={url}
           onChangeText={setUrl}
           mode="outlined"
+          placeholder="https://example.com"
           autoCapitalize="none"
           keyboardType="url"
-          style={stylesModal.input}
-        />
-        <TextInput
-          label="Description"
-          value={description}
-          onChangeText={setDescription}
-          mode="outlined"
           multiline
+          numberOfLines={2}
+          dense
           style={stylesModal.input}
+          contentStyle={stylesModal.inputContent}
         />
+        <View style={stylesModal.labelRow}>
+          <Text style={[stylesModal.label, { color: theme.colors.onSurfaceVariant }]}>
+            <Text style={[stylesModal.required, { color: theme.colors.error }]}>*</Text> Category
+          </Text>
+          <Pressable onPress={onManageCategories} style={stylesModal.addCategoryLinkInline}>
+            <MaterialCommunityIcons
+              name="plus"
+              size={14}
+              color={theme.colors.primary}
+            />
+            <Text style={[stylesModal.addCategoryText, { color: theme.colors.primary }]}>
+              Add new
+            </Text>
+          </Pressable>
+        </View>
         <View style={stylesModal.categoryRow}>
           <Pressable onPress={() => setCategoryMenuOpen(true)} style={{ flex: 1 }}>
             <TextInput
-              label="Category"
+              label=""
               value={selectedCategoryLabel}
               mode="outlined"
               editable={false}
+              placeholder="Select category"
               right={<TextInput.Icon icon="menu-down" />}
+              dense
               style={stylesModal.input}
+              contentStyle={stylesModal.inputContent}
             />
           </Pressable>
-          <IconButton icon="cog-outline" onPress={onManageCategories} />
         </View>
-        <View style={stylesModal.quickAddRow}>
-          <TextInput
-            label="Quick add category"
-            value={quickCategory}
-            onChangeText={setQuickCategory}
-            mode="outlined"
-            style={{ flex: 1 }}
-          />
-          <Button
-            mode="outlined"
-            onPress={() => {
-              const name = quickCategory.trim();
-              if (!name) return;
-              onQuickAddCategory(name);
-              setQuickCategory('');
-            }}
-          >
-            Add
-          </Button>
-        </View>
+        <Text style={[stylesModal.label, { color: theme.colors.onSurfaceVariant }]}>Title</Text>
         <TextInput
-          label="Tags (comma separated)"
+          label=""
+          value={title}
+          onChangeText={setTitle}
+          mode="outlined"
+          placeholder="Bookmark title"
+          dense
+          style={stylesModal.input}
+          contentStyle={stylesModal.inputContent}
+        />
+        <Text style={[stylesModal.label, { color: theme.colors.onSurfaceVariant }]}>
+          Description
+        </Text>
+        <TextInput
+          label=""
+          value={description}
+          onChangeText={setDescription}
+          mode="outlined"
+          placeholder="Short description"
+          multiline
+          numberOfLines={3}
+          dense
+          style={stylesModal.input}
+          contentStyle={stylesModal.textAreaContent}
+        />
+        <Text style={[stylesModal.label, { color: theme.colors.onSurfaceVariant }]}>
+          Tags (comma separated)
+        </Text>
+        <TextInput
+          label=""
           value={tags}
           onChangeText={setTags}
           mode="outlined"
+          placeholder="tag1, tag2, tag3"
+          multiline
+          numberOfLines={2}
+          dense
           style={stylesModal.input}
+          contentStyle={stylesModal.textAreaContent}
         />
+        <Text style={[stylesModal.label, { color: theme.colors.onSurfaceVariant }]}>
+          Favorite
+        </Text>
         <View style={stylesModal.switchRow}>
-          <Text>Favorite</Text>
           <Switch value={favorite} onValueChange={setFavorite} />
         </View>
         <View style={stylesModal.actions}>
-          <Button mode="text" onPress={onClose}>
-            Cancel
-          </Button>
           <Button
             mode="contained"
             onPress={handleSave}
-            disabled={!title.trim() || !url.trim()}
+            disabled={!url.trim() || !categoryId}
           >
             Save
+          </Button>
+          <Button mode="text" onPress={onClose}>
+            Cancel
           </Button>
         </View>
       </Modal>
@@ -879,35 +896,67 @@ const stylesCard = StyleSheet.create({
 });
 
 const stylesModal = StyleSheet.create({
+  wrapper: {
+    justifyContent: 'flex-start',
+    paddingTop: 24,
+  },
   container: {
     marginHorizontal: 18,
     borderRadius: 18,
     padding: 20,
   },
-  input: {
+  label: {
     marginTop: 12,
+    color: '#334155',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  required: {
+    color: '#ef4444',
+  },
+  input: {
+    marginTop: 6,
+  },
+  inputContent: {
+    minHeight: 36,
+    paddingVertical: 6,
+  },
+  textAreaContent: {
+    minHeight: 64,
+    paddingVertical: 8,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  quickAddRow: {
-    marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  switchRow: {
-    marginTop: 14,
+  labelRow: {
+    marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
+  },
+  addCategoryLinkInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  addCategoryText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   actions: {
     marginTop: 18,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     gap: 12,
   },
   menuContainer: {

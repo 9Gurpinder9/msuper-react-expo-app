@@ -32,7 +32,10 @@ export const listBookmarksHandler: RequestHandler = async (req, res) => {
 
 export const createBookmarkHandler: RequestHandler = async (req, res) => {
   try {
-    const payload = req.body;
+    const payload = { ...req.body };
+    if (!payload.title || String(payload.title).trim() === '') {
+      payload.title = deriveTitleFromUrl(String(payload.url || ''));
+    }
     const created = await createBookmark(payload);
     res.status(201).json({ success: true, data: created });
   } catch (err: any) {
@@ -86,3 +89,34 @@ export const refreshBookmarkMetaHandler: RequestHandler = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to refresh metadata.' });
   }
 };
+
+function deriveTitleFromUrl(rawUrl: string) {
+  try {
+    const url = new URL(rawUrl);
+    const host = url.hostname.replace(/^www\./, '').split('.')[0] || 'Link';
+    const pathSeg =
+      url.pathname
+        .split('/')
+        .map((seg) => seg.trim())
+        .find((seg) => seg) || '';
+    const cleanedHost = cleanWord(host);
+    const cleanedSeg = cleanWord(pathSeg);
+    const parts = [cleanedHost, cleanedSeg].filter(Boolean);
+    const unique = parts.filter((part, idx) => parts.indexOf(part) === idx);
+    const title = unique.slice(0, 2).join(' ').trim();
+    return title || 'Link';
+  } catch {
+    return 'Link';
+  }
+}
+
+function cleanWord(value: string) {
+  if (!value) return '';
+  const trimmed = value.replace(/[-_]+/g, ' ').replace(/[^\w\s]/g, ' ').trim();
+  if (!trimmed) return '';
+  return trimmed
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
