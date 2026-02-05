@@ -2,10 +2,31 @@ import supabase from '../../database/supabaseClient';
 
 const TABLE = 'bookmark_categories';
 
-export async function listCategories() {
-  const { data, error } = await supabase.from(TABLE).select('*').order('name');
+type ListCategoriesParams = {
+  limit: number;
+  offset: number;
+  search?: string;
+};
+
+type ListCategoriesResult = {
+  data: any[];
+  total: number;
+};
+
+export async function listCategories(params: ListCategoriesParams): Promise<ListCategoriesResult> {
+  const { limit, offset, search } = params;
+  let query = supabase.from(TABLE).select('*', { count: 'exact' }).order('name');
+
+  if (search) {
+    query = query.ilike('name', `%${search}%`);
+  }
+
+  const { data, error, count } = await query.range(offset, offset + limit - 1);
   if (error) throw error;
-  return data ?? [];
+  return {
+    data: data ?? [],
+    total: count ?? 0,
+  };
 }
 
 export async function createCategory(name: string) {

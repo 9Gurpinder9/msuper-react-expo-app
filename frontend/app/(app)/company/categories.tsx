@@ -4,12 +4,14 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import {
+  ActivityIndicator,
   Button,
   Divider,
+  Modal,
+  Portal,
   Surface,
   Text,
   TextInput,
@@ -17,7 +19,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import type { AppTheme } from '../../../src/theme/types';
@@ -33,19 +35,44 @@ export default function CompanyCategories() {
   const theme = useTheme<AppTheme>();
   const styles = makeStyles(theme);
   const router = useRouter();
-  const { width } = useWindowDimensions();
   const { showError, showSuccess } = useToast();
   const queryClient = useQueryClient();
+  const listRef = React.useRef<FlatList<Category>>(null);
+  const searchInputRef = React.useRef<any>(null);
 
   const [selected, setSelected] = React.useState<Category | null>(null);
   const [name, setName] = React.useState('');
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const [showSearch, setShowSearch] = React.useState(false);
+  const [pendingQuery, setPendingQuery] = React.useState('');
+  const [appliedQuery, setAppliedQuery] = React.useState('');
+  const [showGoTop, setShowGoTop] = React.useState(false);
 
-  const { data } = useQuery({
-    queryKey: ['bookmark-categories'],
-    queryFn: () => listCategories(),
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['bookmark-categories', appliedQuery],
+    queryFn: ({ pageParam = 0 }) =>
+      listCategories({ limit: 20, offset: pageParam, query: appliedQuery }),
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + page.data.length, 0);
+      return loaded < lastPage.total ? loaded : undefined;
+    },
   });
 
-  const categories = data?.data ?? [];
+  const categories = React.useMemo(
+    () => data?.pages.flatMap((page) => page.data) ?? [],
+    [data]
+  );
+
+  const totalCount = data?.pages[0]?.total ?? categories.length;
+  const showEndMessage = totalCount > 20 && categories.length > 0 && !hasNextPage;
 
   const createMutation = useMutation({
     mutationFn: createCategory,
@@ -68,8 +95,6 @@ export default function CompanyCategories() {
     onError: (err: any) => showError(err?.message || 'Failed to update category'),
   });
 
-  const isWide = width >= 900;
-
   const submit = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -80,58 +105,207 @@ export default function CompanyCategories() {
     }
   };
 
+  const applySearch = () => {
+    setAppliedQuery(pendingQuery.trim().toLowerCase());
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
+  const resetSearch = () => {
+    setPendingQuery('');
+    setAppliedQuery('');
+    refetch();
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
+  const toggleSearch = () => {
+    setShowSearch((prev) => {
+      const next = !prev;
+      if (!next) {
+        setPendingQuery('');
+        setAppliedQuery('');
+        refetch();
+      } else {
+        requestAnimationFrame(() => searchInputRef.current?.focus?.());
+      }
+      return next;
+    });
+  };
+
   return (
     <View style={styles.page}>
       <TopAppBar title="Categories" showBack onBackPress={() => router.back()} />
 
-      <View style={[styles.body, isWide && styles.bodyWide]}>
+      <View style={styles.body}>
         <Surface style={styles.listPanel} elevation={1}>
           <View style={styles.listHeader}>
-            <Text variant="titleMedium">All Categories</Text>
-            <Text style={styles.countText}>{categories.length} total</Text>
+            <View>
+              <Text variant="titleMedium">All Categories</Text>
+              <Text style={styles.countText}>
+                {totalCount} total
+              </Text>
+            </View>
+            <Pressable onPress={toggleSearch} style={styles.searchToggle}>
+              <MaterialCommunityIcons
+                name={showSearch ? 'close' : 'magnify'}
+                size={22}
+                color={theme.colors.onSurfaceVariant}
+              />
+            </Pressable>
           </View>
+          {showSearch ? (
+            <TextInput
+              ref={searchInputRef}
+              value={pendingQuery}
+              onChangeText={setPendingQuery}
+              mode="outlined"
+              placeholder="Search categories"
+              style={styles.searchInput}
+              contentStyle={styles.searchInputContent}
+              dense
+              onSubmitEditing={applySearch}
+              right={
+                <TextInput.Icon
+                  icon="magnify"
+                  onPress={applySearch}
+                  forceTextInputFocus={false}
+                />
+              }
+            />
+          ) : null}
           <Divider style={styles.divider} />
-          <FlatList
-            data={categories}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => {
-              const active = selected?.id === item.id;
-              return (
-                <Pressable
-                  onPress={() => {
-                    setSelected(item);
-                    setName(item.name);
-                  }}
-                  style={[styles.listRow, active && styles.listRowActive]}
-                >
-                  <View style={styles.listRowLeft}>
-                    <MaterialCommunityIcons
-                      name="shape-outline"
-                      size={18}
-                      color={active ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                    />
-                    <Text style={[styles.listRowText, active && styles.listRowTextActive]}>
-                      {item.name}
+          <View style={styles.tableShell}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderText, styles.colNo]}>Sr. No.</Text>
+              <Text style={[styles.tableHeaderText, styles.colName]}>
+                Category Name
+              </Text>
+              <Text style={[styles.tableHeaderText, styles.colAction]}>Action</Text>
+            </View>
+            <FlatList
+              ref={listRef}
+              data={categories}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.listContent}
+              onEndReached={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
+              onEndReachedThreshold={0.2}
+              onScroll={(event) => {
+                const offsetY = event.nativeEvent.contentOffset.y;
+                const shouldShow = offsetY > 260;
+                setShowGoTop((prev) => (prev !== shouldShow ? shouldShow : prev));
+              }}
+              scrollEventThrottle={16}
+              refreshing={isFetching && !isFetchingNextPage}
+              onRefresh={resetSearch}
+              ListEmptyComponent={
+                isLoading ? (
+                  <View style={styles.emptyState}>
+                    <ActivityIndicator />
+                    <Text style={styles.emptyText}>Loading categories...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyText}>
+                      {appliedQuery
+                        ? 'No categories match your search.'
+                        : 'No categories found yet.'}
                     </Text>
                   </View>
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={18}
-                    color={theme.colors.onSurfaceVariant}
-                  />
-                </Pressable>
-              );
-            }}
-          />
+                )
+              }
+              ListFooterComponent={
+                categories.length ? (
+                  <View style={styles.footer}>
+                    {isFetchingNextPage ? (
+                      <>
+                        <ActivityIndicator size="small" />
+                        <Text style={styles.footerText}>
+                          Loading more categories...
+                        </Text>
+                      </>
+                    ) : hasNextPage ? (
+                      <Text style={styles.footerText}>
+                        Scroll for more categories
+                      </Text>
+                    ) : showEndMessage ? (
+                      <Text style={styles.footerText}>
+                        You have reached the end.
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null
+              }
+              renderItem={({ item, index }) => (
+                <View style={styles.tableRow}>
+                  <Text style={[styles.tableCellText, styles.colNo]}>
+                    {index + 1}
+                  </Text>
+                  <Text
+                    style={[styles.tableCellText, styles.colName]}
+                    numberOfLines={1}
+                  >
+                    {item.name}
+                  </Text>
+                  <View style={[styles.colAction, styles.actionCell]}>
+                    <Pressable
+                      onPress={() => {
+                        setSelected(item);
+                        setName(item.name);
+                        setModalOpen(true);
+                      }}
+                      style={styles.editIconButton}
+                    >
+                      <MaterialCommunityIcons
+                        name="pencil-outline"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+            />
+          </View>
         </Surface>
+      </View>
 
-        <Surface style={styles.editorPanel} elevation={1}>
+      <Pressable
+        style={styles.fab}
+        onPress={() => {
+          setSelected(null);
+          setName('');
+          setModalOpen(true);
+        }}
+      >
+        <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onPrimary} />
+      </Pressable>
+
+      {showGoTop ? (
+        <Pressable
+          style={styles.goTopFab}
+          onPress={() => listRef.current?.scrollToOffset({ offset: 0, animated: true })}
+        >
+          <MaterialCommunityIcons
+            name="arrow-up-bold"
+            size={20}
+            color={theme.colors.onPrimary}
+          />
+          <Text style={styles.goTopText}>Go Top</Text>
+        </Pressable>
+      ) : null}
+
+      <Portal>
+        <Modal
+          visible={modalOpen}
+          onDismiss={() => setModalOpen(false)}
+          style={styles.modalWrapper}
+          contentContainerStyle={[styles.modal, { backgroundColor: theme.colors.surface }]}
+        >
           <Text variant="titleMedium">
             {selected ? 'Edit Category' : 'Add Category'}
-          </Text>
-          <Text style={styles.editorHint}>
-            Names are unique. Use clear, short labels.
           </Text>
           <TextInput
             label="Category name"
@@ -140,30 +314,32 @@ export default function CompanyCategories() {
             mode="outlined"
             style={styles.input}
           />
-          <View style={styles.editorActions}>
-            {selected && (
-              <Button
-                mode="text"
-                onPress={() => {
-                  setSelected(null);
-                  setName('');
-                }}
-              >
-                Cancel
-              </Button>
-            )}
-            <Button mode="contained" onPress={submit} disabled={!name.trim()}>
-              {selected ? 'Save changes' : 'Create category'}
+          <View style={styles.modalActions}>
+            <Button
+              mode="contained"
+              buttonColor={theme.colors.primary}
+              textColor={theme.colors.onPrimary}
+              onPress={() => {
+                submit();
+                setModalOpen(false);
+              }}
+              disabled={!name.trim()}
+            >
+              {selected ? 'Save' : 'Create'}
+            </Button>
+            <Button mode="text" onPress={() => setModalOpen(false)}>
+              Cancel
             </Button>
           </View>
-        </Surface>
-      </View>
+        </Modal>
+      </Portal>
     </View>
   );
 }
 
-const makeStyles = (theme: AppTheme) =>
-  StyleSheet.create({
+const makeStyles = (theme: AppTheme) => {
+  const borderColor = theme.colors.outlineVariant ?? theme.colors.outline;
+  return StyleSheet.create({
     page: {
       flex: 1,
       backgroundColor: theme.colors.background,
@@ -171,17 +347,12 @@ const makeStyles = (theme: AppTheme) =>
     body: {
       flex: 1,
       padding: 16,
-      gap: 16,
-    },
-    bodyWide: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
     },
     listPanel: {
-      flex: 1,
       borderRadius: 16,
       padding: 16,
       backgroundColor: theme.colors.surface,
+      alignSelf: 'stretch',
     },
     listHeader: {
       flexDirection: 'row',
@@ -192,53 +363,151 @@ const makeStyles = (theme: AppTheme) =>
       color: theme.colors.onSurfaceVariant,
       fontSize: 12,
     },
+    searchToggle: {
+      padding: 6,
+      borderRadius: 16,
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    searchInput: {
+      marginTop: 12,
+      height: 44,
+    },
+    searchInputContent: {
+      height: 40,
+    },
     divider: {
       marginVertical: 12,
     },
     listContent: {
-      gap: 8,
-      paddingBottom: 12,
+      gap: 0,
+      paddingBottom: 120,
     },
-    listRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: 10,
-      paddingHorizontal: 12,
+    tableShell: {
+      borderWidth: 1,
+      borderColor,
       borderRadius: 12,
-      backgroundColor: theme.colors.surfaceVariant,
+      overflow: 'hidden',
+      backgroundColor: 'transparent',
     },
-    listRowActive: {
-      backgroundColor: theme.colors.primaryContainer,
-    },
-    listRowLeft: {
+    tableHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      backgroundColor: 'transparent',
+      borderBottomWidth: 1,
+      borderColor,
     },
-    listRowText: {
+    tableHeaderText: {
+      color: theme.colors.onSurfaceVariant,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    tableRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      backgroundColor: 'transparent',
+      borderBottomWidth: 1,
+      borderColor,
+    },
+    tableCellText: {
       color: theme.colors.onSurface,
     },
-    listRowTextActive: {
-      color: theme.colors.onPrimaryContainer,
+    colNo: {
+      width: 64,
     },
-    editorPanel: {
+    colName: {
       flex: 1,
-      borderRadius: 16,
-      padding: 16,
-      backgroundColor: theme.colors.surface,
+      paddingRight: 8,
     },
-    editorHint: {
-      marginTop: 6,
-      color: theme.colors.onSurfaceVariant,
+    colAction: {
+      width: 90,
+      alignItems: 'flex-start',
+    },
+    actionCell: {
+      alignItems: 'flex-start',
+    },
+    editIconButton: {
+      padding: 4,
+      borderRadius: 16,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor,
     },
     input: {
       marginTop: 16,
     },
-    editorActions: {
+    fab: {
+      position: 'absolute',
+      right: 20,
+      bottom: 24,
+      width: 54,
+      height: 54,
+      borderRadius: 27,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.primary,
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 6 },
+    },
+    goTopFab: {
+      position: 'absolute',
+      bottom: 24,
+      alignSelf: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 20,
+      backgroundColor: theme.colors.primary,
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    goTopText: {
+      color: theme.colors.onPrimary,
+      fontSize: 12,
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 24,
+      gap: 8,
+    },
+    emptyText: {
+      color: theme.colors.onSurfaceVariant,
+      textAlign: 'center',
+    },
+    footer: {
+      alignItems: 'center',
+      paddingVertical: 16,
+      gap: 8,
+    },
+    footerText: {
+      color: theme.colors.onSurfaceVariant,
+      fontSize: 12,
+    },
+    modalWrapper: {
+      justifyContent: 'flex-start',
+      paddingTop: 24,
+    },
+    modal: {
+      marginHorizontal: 18,
+      borderRadius: 16,
+      padding: 18,
+    },
+    modalActions: {
       marginTop: 16,
       flexDirection: 'row',
-      justifyContent: 'flex-end',
+      justifyContent: 'center',
       gap: 12,
     },
   });
+};

@@ -2,14 +2,36 @@ import { API_BASE_URL, APP_SECRET, assertApiBaseUrl } from '../../../config';
 import { fetchJson } from '../../utils/network';
 import type { Category } from './types';
 
-type ListResponse = { success: boolean; data: Category[] };
+type ListResponse = {
+  success: boolean;
+  data: Category[];
+  total: number;
+  limit: number;
+  offset: number;
+};
 type ItemResponse = { success: boolean; data: Category };
 
 const authHeader = APP_SECRET ? { 'x-app-secret': APP_SECRET } : {};
 
-export async function listCategories() {
+type ListCategoriesParams = {
+  limit?: number;
+  offset?: number;
+  query?: string;
+};
+
+export async function listCategories(params: ListCategoriesParams) {
   const base = assertApiBaseUrl();
-  const res = await fetchJson<ListResponse>(`${base}/company/categories`, {
+  const limit = params.limit ?? 20;
+  const offset = params.offset ?? 0;
+  const query = params.query?.trim();
+  const searchParams = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (query) {
+    searchParams.set('q', query);
+  }
+  const res = await fetchJson<ListResponse>(`${base}/company/categories?${searchParams}`, {
     headers: {
       Accept: 'application/json',
       ...authHeader,

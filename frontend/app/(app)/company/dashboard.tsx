@@ -187,15 +187,6 @@ export default function CompanyDashboard() {
             );
           })}
         </View>
-        <View style={styles.quickActions}>
-          <Button
-            mode="outlined"
-            icon="shape-outline"
-            onPress={() => router.push('/company/categories')}
-          >
-            Manage Categories
-          </Button>
-        </View>
       </View>
     </View>
   );
@@ -215,10 +206,6 @@ const makeStyles = (theme: MD3Theme) =>
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 12,
-    },
-    quickActions: {
-      marginTop: 16,
-      alignItems: 'flex-start',
     },
     widget: {
       minHeight: 88,

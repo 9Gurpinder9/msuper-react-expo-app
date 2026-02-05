@@ -2,10 +2,17 @@ import { RequestHandler } from 'express';
 import logger from '../../utils/logger';
 import { createCategory, listCategories, updateCategory } from '../services/categories.service';
 
-export const listCategoriesHandler: RequestHandler = async (_req, res) => {
+export const listCategoriesHandler: RequestHandler = async (req, res) => {
   try {
-    const data = await listCategories();
-    res.json({ success: true, data });
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const search = String(req.query.q || '').trim();
+    const { data, total } = await listCategories({
+      limit,
+      offset,
+      search: search || undefined,
+    });
+    res.json({ success: true, data, total, limit, offset });
   } catch (err: any) {
     logger.error('List categories failed', err);
     res.status(500).json({ success: false, message: 'Failed to load categories.' });
