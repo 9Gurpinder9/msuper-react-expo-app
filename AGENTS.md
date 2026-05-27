@@ -2,9 +2,11 @@
 
 These instructions help AI agents work productively in this monorepo (frontend: Expo React Native, backend: Express + Supabase). Keep answers concrete and aligned to the codebase patterns below.
 
-## Autonomy preference
+## Autonomy preference & planning flow
 
-- Run commands and make edits without asking for confirmation when allowed by the platform/sandbox. Ask only if the environment blocks it or if an operation is destructive.
+- **Mandatory Planning Rule:** Every time the user requests a new feature, design improvement, or code implementation, you **MUST first provide a clear summary/implementation plan** outlining the proposed changes.
+- **Obtain Approval:** Do NOT start coding or making file edits for features until the user reviews the plan and explicitly confirms/approves to proceed.
+- **Environment Autonomy:** For minor diagnostic commands or non-destructive terminal tasks, run them without manual confirmation if allowed by the sandbox. Ask only if blocked or destructive.
 
 ## Skill triggers (use installed skills when prompts match)
 
@@ -15,16 +17,14 @@ These instructions help AI agents work productively in this monorepo (frontend: 
 - ui-ux-pro-max: Use for UX reviews, design systems, typography/color/spacing guidance, or "design/optimize/check UI/UX".
 - react-best-practices: Use when reading or writing React components, hooks, effects, or performance fixes.
 - react-native-architecture: Use for Expo/React Native navigation, native modules, offline sync, device APIs, or mobile app architecture.
-- threejs-fundamentals: Use for basic Three.js scene setup, cameras, renderer, transforms.
-- threejs-geometry: Use when creating or optimizing geometries/meshes or instancing.
-- threejs-materials: Use for material selection, PBR settings, textures on materials.
-- threejs-lighting: Use when adding/configuring lights and shadows.
-- threejs-loaders: Use for GLTF/texture/HDR loading or asset pipelines.
-- threejs-animation: Use for keyframes, skeletal/morph animations, mixing.
-- threejs-interaction: Use for raycasting, controls, picking, input.
-- threejs-postprocessing: Use for bloom/DOF/effects composer.
-- threejs-shaders: Use for custom shader work or GLSL.
-- threejs-textures: Use for UVs, texture settings, environment maps.
+- react-patterns: Use for standard React design patterns, component composition, and hooks.
+- react-state-management: Use when designing or optimizing state management solutions (e.g. Context API, state updates).
+- react-ui-patterns: Use for structured guidelines when building reusable React UI components.
+- react-modernization: Use when refactoring legacy React patterns to modern functional standards.
+- react-nextjs-development: Use for Next.js-specific React patterns (Server Components, App Router).
+- react-flow-node-ts: Use for creating custom node systems using React Flow and TypeScript.
+- zustand-store-ts: Use when creating or updating Zustand state stores.
+- fp-react: Use for combining functional programming principles (fp-ts) with React components.
 
 ## Architecture overview
 
