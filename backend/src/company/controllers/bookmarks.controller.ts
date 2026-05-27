@@ -7,6 +7,7 @@ import {
   softDeleteBookmark,
   refreshBookmarkMeta,
 } from '../services/bookmarks.service';
+import { fetchUrlMetadata } from '../utils/urlMeta';
 
 export const listBookmarksHandler: RequestHandler = async (req, res) => {
   try {
@@ -33,6 +34,7 @@ export const listBookmarksHandler: RequestHandler = async (req, res) => {
 export const createBookmarkHandler: RequestHandler = async (req, res) => {
   try {
     const payload = { ...req.body };
+    await applyMetadataToPayload(payload);
     if (!payload.title || String(payload.title).trim() === '') {
       payload.title = deriveTitleFromUrl(String(payload.url || ''));
     }
@@ -51,7 +53,8 @@ export const updateBookmarkHandler: RequestHandler = async (req, res) => {
       res.status(400).json({ success: false, message: 'Missing bookmark id.' });
       return;
     }
-    const payload = req.body;
+    const payload = { ...req.body };
+    await applyMetadataToPayload(payload);
     const updated = await updateBookmark(id, payload);
     res.json({ success: true, data: updated });
   } catch (err: any) {
@@ -103,7 +106,12 @@ function deriveTitleFromUrl(rawUrl: string) {
     const cleanedSeg = cleanWord(pathSeg);
     const parts = [cleanedHost, cleanedSeg].filter(Boolean);
     const unique = parts.filter((part, idx) => parts.indexOf(part) === idx);
-    const title = unique.slice(0, 2).join(' ').trim();
+    const title = unique
+      .join(' ')
+      .split(/\s+/)
+      .slice(0, 3)
+      .join(' ')
+      .trim();
     return title || 'Link';
   } catch {
     return 'Link';
@@ -119,4 +127,31 @@ function cleanWord(value: string) {
     .slice(0, 2)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
+}
+
+async function applyMetadataToPayload(payload: Record<string, unknown>) {
+  const rawUrl = typeof payload.url === 'string' ? payload.url.trim() : '';
+  if (!rawUrl) return;
+
+  const needsMeta =
+    !payload.thumbnail_url ||
+    !payload.favicon_url ||
+    !payload.og_title ||
+    !payload.og_description ||
+    !payload.og_image;
+  if (!needsMeta) return;
+
+  try {
+    const meta = await fetchUrlMetadata(rawUrl);
+    if (!payload.thumbnail_url && meta.thumbnail_url) payload.thumbnail_url = meta.thumbnail_url;
+    if (!payload.favicon_url && meta.favicon_url) payload.favicon_url = meta.favicon_url;
+    if (!payload.og_title && meta.og_title) payload.og_title = meta.og_title;
+    if (!payload.og_description && meta.og_description) payload.og_description = meta.og_description;
+    if (!payload.og_image && meta.og_image) payload.og_image = meta.og_image;
+  } catch (err: any) {
+    logger.warn('Bookmark metadata fetch failed', {
+      url: rawUrl,
+      error: err?.message || String(err),
+    });
+  }
 }

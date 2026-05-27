@@ -5,4 +5,4 @@ Start-Process -WorkingDirectory $PWD -FilePath "npm" -ArgumentList "start", "--w
 # CMD equivalents (paste into cmd.exe if you're not in PowerShell):
 # start "" cmd /k "npm run dev --workspace backend"
 # start "" cmd /k "npm start --workspace frontend"
-#codex resume 019c2301-aeee-79b1-a9b2-b284df98ec8c
+#codex resume 019c315a-27ef-7530-8a31-17dfdd5b0c03

@@ -3,6 +3,7 @@ import React from 'react';
 import {
   Alert,
   FlatList,
+  Image,
   Platform,
   Pressable,
   RefreshControl,
@@ -13,8 +14,8 @@ import {
 import {
   Button,
   Chip,
-  Divider,
   IconButton,
+  Menu,
   Modal,
   Portal,
   Surface,
@@ -32,7 +33,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '../../../src/utils/toast';
 import type { AppTheme } from '../../../src/theme/types';
-import type { Bookmark, BookmarkInput, Category } from '../../../src/features/bookmarks/types';
+import type {
+  Bookmark,
+  BookmarkInput,
+  BookmarkUpdateInput,
+  Category,
+} from '../../../src/features/bookmarks/types';
 import {
   createBookmark,
   deleteBookmark,
@@ -41,17 +47,14 @@ import {
 } from '../../../src/features/bookmarks/api';
 import { listCategories } from '../../../src/features/bookmarks/categories.api';
 
-type ViewMode = 'card' | 'list' | 'compact';
+type ViewMode = 'card' | 'list' | 'table';
 type MenuKey = 'all' | 'favorites' | 'categories' | 'tags' | 'recent' | 'trash' | 'settings';
 
 const MENU_ITEMS: Array<{ key: MenuKey; label: string; icon: string }> = [
   { key: 'all', label: 'Dashboard', icon: 'view-grid-outline' },
   { key: 'favorites', label: 'Favorites', icon: 'star-outline' },
-  { key: 'categories', label: 'Categories', icon: 'shape-outline' },
   { key: 'tags', label: 'Tags', icon: 'tag-outline' },
-  { key: 'recent', label: 'Recently Added', icon: 'clock-outline' },
-  { key: 'trash', label: 'Trash', icon: 'trash-can-outline' },
-  { key: 'settings', label: 'Settings', icon: 'cog-outline' },
+  { key: 'recent', label: 'Today', icon: 'clock-outline' },
 ];
 
 export default function CompanyBookmarks() {
@@ -63,18 +66,23 @@ export default function CompanyBookmarks() {
   const { width } = useWindowDimensions();
 
   const [viewMode, setViewMode] = React.useState<ViewMode>('card');
-  const [search, setSearch] = React.useState('');
+  const [showSearch, setShowSearch] = React.useState(false);
+  const [pendingSearch, setPendingSearch] = React.useState('');
+  const [appliedSearch, setAppliedSearch] = React.useState('');
   const [activeMenu, setActiveMenu] = React.useState<MenuKey>('all');
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorDraft, setEditorDraft] = React.useState<Bookmark | null>(null);
+  const [navMenuOpen, setNavMenuOpen] = React.useState(false);
+  const [layoutMenuOpen, setLayoutMenuOpen] = React.useState(false);
+  const [actionMenuId, setActionMenuId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     (async () => {
       try {
         const saved = await AsyncStorage.getItem('company.bookmarks.view');
-        if (saved === 'card' || saved === 'list' || saved === 'compact') {
+        if (saved === 'card' || saved === 'list' || saved === 'table') {
           setViewMode(saved);
         }
       } catch {}
@@ -87,13 +95,13 @@ export default function CompanyBookmarks() {
 
   const filters = React.useMemo(
     () => ({
-      search: search.trim() || undefined,
+      search: appliedSearch.trim() || undefined,
       favorite: activeMenu === 'favorites',
       category_id: selectedCategoryId || undefined,
       tag: selectedTag || undefined,
       deleted: activeMenu === 'trash',
     }),
-    [search, activeMenu, selectedCategoryId, selectedTag]
+    [appliedSearch, activeMenu, selectedCategoryId, selectedTag]
   );
 
   const { data, isFetching, refetch } = useQuery({
@@ -117,7 +125,7 @@ export default function CompanyBookmarks() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: BookmarkInput }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: BookmarkUpdateInput }) =>
       updateBookmark(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
@@ -147,17 +155,40 @@ export default function CompanyBookmarks() {
   }, [bookmarks]);
 
   const recentCutoff = React.useMemo(() => {
-    const now = Date.now();
-    return now - 1000 * 60 * 60 * 24 * 7;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today.getTime();
   }, []);
 
   const visibleBookmarks = React.useMemo(() => {
-    if (activeMenu !== 'recent') return bookmarks;
-    return bookmarks.filter((b) => new Date(b.created_at).getTime() >= recentCutoff);
-  }, [bookmarks, activeMenu, recentCutoff]);
+    const base =
+      activeMenu === 'recent'
+        ? bookmarks.filter((b) => new Date(b.created_at).getTime() >= recentCutoff)
+        : activeMenu === 'tags'
+          ? bookmarks.filter((b) => (b.tags ?? []).length > 0)
+          : bookmarks;
+    const needle = appliedSearch.trim().toLowerCase();
+    if (!needle) return base;
+    return base.filter((b) => {
+      const categoryName =
+        categories.find((c) => c.id === b.category_id)?.name?.toLowerCase() || '';
+      return (
+        b.title?.toLowerCase().includes(needle) ||
+        b.url?.toLowerCase().includes(needle) ||
+        b.description?.toLowerCase().includes(needle) ||
+        categoryName.includes(needle)
+      );
+    });
+  }, [activeMenu, appliedSearch, bookmarks, categories, recentCutoff]);
 
-  const showSidebar = width >= 900;
-  const columns = viewMode === 'card' ? (width >= 1300 ? 3 : width >= 980 ? 2 : 1) : 1;
+  const columns = viewMode === 'card' ? (width >= 1300 ? 2 : 1) : 1;
+  const isDark = theme.dark;
+  const cardBg = isDark ? '#142a49' : theme.colors.surface;
+  const pageBg = isDark ? '#0b1530' : '#fff4ec';
+  const chipBg = isDark ? '#0f6d8a' : '#e6f6fb';
+  const chipTextColor = isDark ? '#9be8ff' : '#197aa0';
+  const iconRowBg = isDark ? '#0b1633' : theme.colors.surface;
+  const menuBg = isDark ? '#1c2c46' : theme.colors.surface;
 
   const openEditor = (bookmark?: Bookmark) => {
     setEditorDraft(bookmark ?? null);
@@ -194,165 +225,205 @@ export default function CompanyBookmarks() {
     setEditorOpen(false);
   };
 
+  const applySearch = () => {
+    setAppliedSearch(pendingSearch.trim());
+  };
+
+  const clearSearch = () => {
+    setPendingSearch('');
+    setAppliedSearch('');
+  };
+
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: pageBg }]}>
       <TopAppBar title="Bookmarks" showBack onBackPress={() => router.back()} />
 
       <View style={styles.body}>
-        {showSidebar && (
-          <Surface style={styles.sidebar} elevation={1}>
-            <Text style={styles.sidebarTitle}>Navigation</Text>
-            {MENU_ITEMS.map((item) => {
-              const active = activeMenu === item.key;
-              return (
-                <Pressable
-                  key={item.key}
-                  onPress={() => {
-                    setActiveMenu(item.key);
-                    if (item.key !== 'categories') setSelectedCategoryId(null);
-                    if (item.key !== 'tags') setSelectedTag(null);
-                  }}
-                  style={[styles.sidebarItem, active && styles.sidebarItemActive]}
-                >
-                  <MaterialCommunityIcons
-                    name={item.icon as any}
-                    size={18}
-                    color={active ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                  />
-                  <Text style={[styles.sidebarItemText, active && styles.sidebarItemTextActive]}>
-                    {item.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-
-            <Divider style={styles.sidebarDivider} />
-
-            <Text style={styles.sidebarSectionTitle}>Categories</Text>
-            <View style={styles.sidebarChips}>
-              {categories.length === 0 && (
-                <Text style={styles.sidebarHint}>No categories yet</Text>
-              )}
-              {categories.map((cat) => (
-                <Chip
-                  key={cat.id}
-                  compact
-                  selected={selectedCategoryId === cat.id}
-                  onPress={() => {
-                    setActiveMenu('categories');
-                    setSelectedCategoryId((prev) => (prev === cat.id ? null : cat.id));
-                  }}
-                  style={styles.sidebarChip}
-                >
-                  {cat.name}
-                </Chip>
-              ))}
-            </View>
-
-            <Text style={styles.sidebarSectionTitle}>Tags</Text>
-            <View style={styles.sidebarChips}>
-              {tags.length === 0 && <Text style={styles.sidebarHint}>No tags yet</Text>}
-              {tags.map((tag) => (
-                <Chip
-                  key={tag}
-                  compact
-                  selected={selectedTag === tag}
-                  onPress={() => {
-                    setActiveMenu('tags');
-                    setSelectedTag((prev) => (prev === tag ? null : tag));
-                  }}
-                  style={styles.sidebarChip}
-                >
-                  #{tag}
-                </Chip>
-              ))}
-            </View>
-          </Surface>
-        )}
-
         <View style={styles.main}>
-          {!showSidebar && (
-            <View style={styles.mobileMenuRow}>
+          <Surface style={[styles.topControls, { backgroundColor: iconRowBg }]} elevation={1}>
+            <Menu
+              visible={navMenuOpen}
+              onDismiss={() => setNavMenuOpen(false)}
+              contentStyle={[styles.menuContent, { backgroundColor: menuBg }]}
+              anchor={
+                <IconButton
+                  icon="menu"
+                  size={20}
+                  onPress={() => setNavMenuOpen(true)}
+                  iconColor={theme.colors.onSurfaceVariant}
+                  style={styles.controlIconButton}
+                />
+              }
+            >
               {MENU_ITEMS.map((item) => (
-                <Chip
-                  key={item.key}
-                  compact
-                  icon={item.icon as any}
-                  selected={activeMenu === item.key}
-                  onPress={() => setActiveMenu(item.key)}
-                  style={styles.mobileMenuChip}
-                >
-                  {item.label}
-                </Chip>
-              ))}
-            </View>
-          )}
+            <Menu.Item
+              key={item.key}
+              leadingIcon={item.icon as any}
+              onPress={() => {
+                setActiveMenu(item.key);
+                setSelectedCategoryId(null);
+                setSelectedTag(null);
+                setNavMenuOpen(false);
+                refetch();
+              }}
+              title={item.label}
+            />
+          ))}
+            </Menu>
 
-          <View style={styles.toolbar}>
-            <View style={styles.searchWrap}>
+            <IconButton
+              icon="magnify"
+              size={20}
+              onPress={() =>
+                setShowSearch((prev) => {
+                  const next = !prev;
+                  if (!next) clearSearch();
+                  return next;
+                })
+              }
+              iconColor={theme.colors.onSurfaceVariant}
+              style={styles.controlIconButton}
+            />
+
+            <Menu
+              visible={layoutMenuOpen}
+              onDismiss={() => setLayoutMenuOpen(false)}
+              contentStyle={[styles.menuContent, { backgroundColor: menuBg }]}
+              anchor={
+                <IconButton
+                  icon="view-dashboard-outline"
+                  size={20}
+                  onPress={() => setLayoutMenuOpen(true)}
+                  iconColor={theme.colors.onSurfaceVariant}
+                  style={styles.controlIconButton}
+                />
+              }
+            >
+              <Menu.Item
+                leadingIcon="view-grid-outline"
+                title="Card"
+                onPress={() => {
+                  setViewMode('card');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+              <Menu.Item
+                leadingIcon="view-list-outline"
+                title="List"
+                onPress={() => {
+                  setViewMode('list');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+              <Menu.Item
+                leadingIcon="table"
+                title="Table"
+                onPress={() => {
+                  setViewMode('table');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+            </Menu>
+          </Surface>
+
+          {showSearch ? (
+            <View style={styles.searchRow}>
               <TextInput
                 mode="outlined"
-                placeholder="Search bookmarks, URLs, or notes"
-                value={search}
-                onChangeText={setSearch}
-                left={<TextInput.Icon icon="magnify" />}
+                placeholder="Search bookmarks, categories, URLs"
+                value={pendingSearch}
+                onChangeText={setPendingSearch}
                 dense
                 style={styles.searchInput}
+                right={
+                  <TextInput.Icon
+                    icon="magnify"
+                    onPress={applySearch}
+                    forceTextInputFocus={false}
+                  />
+                }
+                onSubmitEditing={applySearch}
               />
               <Text style={styles.countText}>{totalCount} total</Text>
             </View>
+          ) : (
+            <Text style={styles.countText}>{totalCount} total</Text>
+          )}
 
-            <View style={styles.toolbarActions}>
-              <View style={styles.viewToggle}>
-                <IconButton
-                  icon="view-grid-outline"
-                  size={20}
-                  mode={viewMode === 'card' ? 'contained' : 'outlined'}
-                  onPress={() => setViewMode('card')}
-                />
-                <IconButton
-                  icon="view-list-outline"
-                  size={20}
-                  mode={viewMode === 'list' ? 'contained' : 'outlined'}
-                  onPress={() => setViewMode('list')}
-                />
-                <IconButton
-                  icon="format-list-bulleted"
-                  size={20}
-                  mode={viewMode === 'compact' ? 'contained' : 'outlined'}
-                  onPress={() => setViewMode('compact')}
-                />
+          {viewMode === 'table' ? (
+            <View style={styles.tableShell}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, styles.colTitle]}>Title</Text>
+                <Text style={[styles.tableHeaderText, styles.colCategory]}>Category</Text>
+                <Text style={[styles.tableHeaderText, styles.colActions]}>Actions</Text>
               </View>
-              <IconButton
-                icon="refresh"
-                mode="outlined"
-                size={20}
-                onPress={() => refetch()}
-                disabled={isFetching}
+              <FlatList
+                key={`${viewMode}-${columns}`}
+                data={visibleBookmarks}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.tableContent}
+                refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} />}
+                renderItem={({ item }) => (
+                  <BookmarkCard
+                    bookmark={item}
+                    theme={theme}
+                    viewMode={viewMode}
+                    onOpen={() => Linking.openURL(item.url)}
+                    onCopy={() => handleCopy(item.url)}
+                    onEdit={() => openEditor(item)}
+                    onDelete={() => handleDelete(item)}
+                    onToggleFavorite={() =>
+                      updateMutation.mutate({
+                        id: item.id,
+                        payload: { is_favorite: !item.is_favorite },
+                      })
+                    }
+                    categoryName={categories.find((c) => c.id === item.category_id)?.name}
+                    actionMenuId={actionMenuId}
+                    setActionMenuId={setActionMenuId}
+                    cardBg={cardBg}
+                    chipBg={chipBg}
+                    chipTextColor={chipTextColor}
+                  />
+                )}
+                ListEmptyComponent={
+                  <Surface style={styles.emptyState} elevation={0}>
+                    <MaterialCommunityIcons
+                      name="bookmark-outline"
+                      size={48}
+                      color={theme.colors.onSurfaceVariant}
+                    />
+                    <Text variant="titleMedium" style={{ marginTop: 12 }}>
+                      No bookmarks yet
+                    </Text>
+                    <Text style={styles.emptyHint}>
+                      Add your first bookmark to start building your collection.
+                    </Text>
+                    <Button mode="contained" onPress={() => openEditor()} style={{ marginTop: 16 }}>
+                      Add bookmark
+                    </Button>
+                  </Surface>
+                }
               />
-              <Button mode="contained" icon="plus" onPress={() => openEditor()}>
-                Add
-              </Button>
             </View>
-          </View>
-
-          <FlatList
-            key={`${viewMode}-${columns}`}
-            data={visibleBookmarks}
-            keyExtractor={(item) => item.id}
-            numColumns={columns}
-            columnWrapperStyle={columns > 1 ? styles.columnWrap : undefined}
-            contentContainerStyle={styles.listContent}
-            refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} />}
-            renderItem={({ item }) => (
-              <BookmarkCard
-                bookmark={item}
-                theme={theme}
-                viewMode={viewMode}
-                onOpen={() => Linking.openURL(item.url)}
-                onCopy={() => handleCopy(item.url)}
-                onEdit={() => openEditor(item)}
-                onDelete={() => handleDelete(item)}
+          ) : (
+            <FlatList
+              key={`${viewMode}-${columns}`}
+              data={visibleBookmarks}
+              keyExtractor={(item) => item.id}
+              numColumns={viewMode === 'card' ? columns : 1}
+              columnWrapperStyle={viewMode === 'card' && columns > 1 ? styles.columnWrap : undefined}
+              contentContainerStyle={styles.listContent}
+              refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} />}
+              renderItem={({ item }) => (
+                <BookmarkCard
+                  bookmark={item}
+                  theme={theme}
+                  viewMode={viewMode}
+                  onOpen={() => Linking.openURL(item.url)}
+                  onCopy={() => handleCopy(item.url)}
+                  onEdit={() => openEditor(item)}
+                  onDelete={() => handleDelete(item)}
                   onToggleFavorite={() =>
                     updateMutation.mutate({
                       id: item.id,
@@ -360,27 +431,33 @@ export default function CompanyBookmarks() {
                     })
                   }
                   categoryName={categories.find((c) => c.id === item.category_id)?.name}
+                  actionMenuId={actionMenuId}
+                  setActionMenuId={setActionMenuId}
+                  cardBg={cardBg}
+                  chipBg={chipBg}
+                  chipTextColor={chipTextColor}
                 />
               )}
-            ListEmptyComponent={
-              <Surface style={styles.emptyState} elevation={0}>
-                <MaterialCommunityIcons
-                  name="bookmark-outline"
-                  size={48}
-                  color={theme.colors.onSurfaceVariant}
-                />
-                <Text variant="titleMedium" style={{ marginTop: 12 }}>
-                  No bookmarks yet
-                </Text>
-                <Text style={styles.emptyHint}>
-                  Add your first bookmark to start building your collection.
-                </Text>
-                <Button mode="contained" onPress={() => openEditor()} style={{ marginTop: 16 }}>
-                  Add bookmark
-                </Button>
-              </Surface>
-            }
-          />
+              ListEmptyComponent={
+                <Surface style={styles.emptyState} elevation={0}>
+                  <MaterialCommunityIcons
+                    name="bookmark-outline"
+                    size={48}
+                    color={theme.colors.onSurfaceVariant}
+                  />
+                  <Text variant="titleMedium" style={{ marginTop: 12 }}>
+                    No bookmarks yet
+                  </Text>
+                  <Text style={styles.emptyHint}>
+                    Add your first bookmark to start building your collection.
+                  </Text>
+                  <Button mode="contained" onPress={() => openEditor()} style={{ marginTop: 16 }}>
+                    Add bookmark
+                  </Button>
+                </Surface>
+              }
+            />
+          )}
         </View>
       </View>
 
@@ -396,6 +473,10 @@ export default function CompanyBookmarks() {
           router.push('/company/categories');
         }}
       />
+
+      <Pressable style={styles.fab} onPress={() => openEditor()}>
+        <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onPrimary} />
+      </Pressable>
     </View>
   );
 }
@@ -410,6 +491,11 @@ function BookmarkCard({
   onDelete,
   onToggleFavorite,
   categoryName,
+  actionMenuId,
+  setActionMenuId,
+  cardBg,
+  chipBg,
+  chipTextColor,
 }: {
   bookmark: Bookmark;
   theme: AppTheme;
@@ -420,85 +506,237 @@ function BookmarkCard({
   onDelete: () => void;
   onToggleFavorite: () => void;
   categoryName?: string;
+  actionMenuId: string | null;
+  setActionMenuId: (id: string | null) => void;
+  cardBg: string;
+  chipBg: string;
+  chipTextColor: string;
 }) {
-  const compact = viewMode === 'compact';
+  const isTable = viewMode === 'table';
+  const isList = viewMode === 'list';
+  const menuVisible = actionMenuId === bookmark.id;
+  const previewUrl = bookmark.thumbnail_url || bookmark.og_image || bookmark.favicon_url || '';
+
+  const actionMenu = (
+    <Menu
+      visible={menuVisible}
+      onDismiss={() => setActionMenuId(null)}
+      anchor={
+        <IconButton
+          icon="dots-vertical"
+          size={18}
+          onPress={() => setActionMenuId(bookmark.id)}
+          iconColor={theme.colors.onSurfaceVariant}
+        />
+      }
+    >
+      <Menu.Item
+        leadingIcon="open-in-new"
+        title="Open Link"
+        onPress={() => {
+          setActionMenuId(null);
+          onOpen();
+        }}
+      />
+      <Menu.Item
+        leadingIcon="content-copy"
+        title="Copy"
+        onPress={() => {
+          setActionMenuId(null);
+          onCopy();
+        }}
+      />
+      <Menu.Item
+        leadingIcon="pencil-outline"
+        title="Edit"
+        onPress={() => {
+          setActionMenuId(null);
+          onEdit();
+        }}
+      />
+      <Menu.Item
+        leadingIcon="trash-can-outline"
+        title="Delete"
+        onPress={() => {
+          setActionMenuId(null);
+          onDelete();
+        }}
+      />
+    </Menu>
+  );
+
+  if (isTable) {
+    return (
+      <View style={[stylesTable.row, { borderColor: theme.colors.outlineVariant }]}>
+        <View style={stylesTable.colTitle}>
+          <View style={stylesTable.titleRow}>
+            {previewUrl ? (
+              <Image source={{ uri: previewUrl }} style={stylesTable.preview} resizeMode="cover" />
+            ) : (
+              <View style={stylesTable.previewFallback}>
+                <MaterialCommunityIcons
+                  name="web"
+                  size={12}
+                  color={theme.colors.onSurfaceVariant}
+                />
+              </View>
+            )}
+            <View style={stylesTable.titleTextWrap}>
+              <Text style={stylesTable.title} numberOfLines={1}>
+                {bookmark.title}
+              </Text>
+              <Text style={stylesTable.url} numberOfLines={1}>
+                {bookmark.url}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={stylesTable.colCategory}>
+          {categoryName ? (
+            <CategoryBadge
+              label={categoryName}
+              bgColor={chipBg}
+              textColor={chipTextColor}
+            />
+          ) : (
+            <Text style={stylesTable.muted}>-</Text>
+          )}
+        </View>
+        <View style={stylesTable.colActions}>
+          <IconButton
+            icon={bookmark.is_favorite ? 'star' : 'star-outline'}
+            size={18}
+            onPress={onToggleFavorite}
+            iconColor={theme.colors.onSurfaceVariant}
+          />
+          {actionMenu}
+        </View>
+      </View>
+    );
+  }
+
+  if (isList) {
+    return (
+      <Surface style={[stylesList.row, { backgroundColor: cardBg }]} elevation={1}>
+        {previewUrl ? (
+          <Image source={{ uri: previewUrl }} style={stylesList.preview} resizeMode="cover" />
+        ) : (
+          <View style={stylesList.previewFallback}>
+            <MaterialCommunityIcons name="web" size={14} color={theme.colors.onSurfaceVariant} />
+          </View>
+        )}
+        <Pressable onPress={onOpen} style={stylesList.content}>
+          <Text style={stylesList.title} numberOfLines={1}>
+            {bookmark.title}
+          </Text>
+          <Text style={stylesList.url} numberOfLines={1}>
+            {bookmark.url}
+          </Text>
+          {!!categoryName && (
+            <CategoryBadge
+              label={categoryName}
+              bgColor={chipBg}
+              textColor={chipTextColor}
+            />
+          )}
+        </Pressable>
+        <View style={stylesList.actions}>
+          <IconButton
+            icon={bookmark.is_favorite ? 'star' : 'star-outline'}
+            size={18}
+            onPress={onToggleFavorite}
+            iconColor={theme.colors.onSurfaceVariant}
+          />
+          {actionMenu}
+        </View>
+      </Surface>
+    );
+  }
+
   return (
     <Surface
       style={[
         stylesCard.card,
-        compact && stylesCard.cardCompact,
-        { backgroundColor: theme.colors.surface },
+        { backgroundColor: cardBg },
       ]}
       elevation={1}
     >
       <Pressable onPress={onOpen} style={{ flex: 1 }}>
         <View style={stylesCard.header}>
           <View style={stylesCard.titleRow}>
-            <MaterialCommunityIcons
-              name="link-variant"
-              size={18}
-              color={theme.colors.onSurfaceVariant}
-            />
             <Text variant="titleMedium" numberOfLines={1} style={stylesCard.title}>
               {bookmark.title}
             </Text>
           </View>
-          <IconButton
-            icon={bookmark.is_favorite ? 'star' : 'star-outline'}
-            size={18}
-            onPress={onToggleFavorite}
-          />
+          <View style={stylesCard.headerActions}>
+            <IconButton
+              icon={bookmark.is_favorite ? 'star' : 'star-outline'}
+              size={18}
+              onPress={onToggleFavorite}
+              iconColor={theme.colors.onSurfaceVariant}
+            />
+            {actionMenu}
+          </View>
         </View>
 
-        {!compact && (
+        {previewUrl ? (
+          <Image source={{ uri: previewUrl }} style={stylesCard.preview} resizeMode="cover" />
+        ) : null}
+
+        {bookmark.description ? (
           <Text
             style={[stylesCard.description, { color: theme.colors.onSurfaceVariant }]}
             numberOfLines={2}
           >
-            {bookmark.description || bookmark.url}
+            {bookmark.description}
           </Text>
-        )}
+        ) : null}
 
         <Text style={[stylesCard.url, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>
           {bookmark.url}
         </Text>
 
-        {!compact && (
-          <View style={stylesCard.metaRow}>
-            {!!categoryName && (
-              <Chip
-                compact
-                style={[
-                  stylesCard.metaChip,
-                  { backgroundColor: theme.colors.surfaceVariant },
-                ]}
-              >
-                {categoryName}
-              </Chip>
-            )}
-            {(bookmark.tags || []).slice(0, 3).map((tag) => (
-              <Chip
-                compact
-                key={tag}
-                style={[
-                  stylesCard.metaChip,
-                  { backgroundColor: theme.colors.surfaceVariant },
-                ]}
-              >
-                #{tag}
-              </Chip>
-            ))}
-          </View>
-        )}
+        <View style={stylesCard.metaRow}>
+          {!!categoryName && (
+            <CategoryBadge
+              label={categoryName}
+              bgColor={chipBg}
+              textColor={chipTextColor}
+            />
+          )}
+          {(bookmark.tags || []).slice(0, 3).map((tag) => (
+            <Chip
+              compact
+              key={tag}
+              style={[
+                stylesCard.metaChip,
+                { backgroundColor: theme.colors.surfaceVariant },
+              ]}
+            >
+              #{tag}
+            </Chip>
+          ))}
+        </View>
       </Pressable>
-
-      <View style={stylesCard.actions}>
-        <IconButton icon="open-in-new" size={18} onPress={onOpen} />
-        <IconButton icon="content-copy" size={18} onPress={onCopy} />
-        <IconButton icon="pencil-outline" size={18} onPress={onEdit} />
-        <IconButton icon="trash-can-outline" size={18} onPress={onDelete} />
-      </View>
     </Surface>
+  );
+}
+
+function CategoryBadge({
+  label,
+  bgColor,
+  textColor,
+}: {
+  label: string;
+  bgColor: string;
+  textColor: string;
+}) {
+  return (
+    <View style={[stylesBadge.pill, { backgroundColor: bgColor }]}>
+      <Text numberOfLines={1} style={[stylesBadge.pillText, { color: textColor }]}>
+        {label}
+      </Text>
+    </View>
   );
 }
 
@@ -718,114 +956,56 @@ function BookmarkEditorModal({
   );
 }
 
-const makeStyles = (theme: AppTheme) =>
-  StyleSheet.create({
+const makeStyles = (theme: AppTheme) => {
+  const borderColor = theme.colors.outlineVariant ?? theme.colors.outline;
+  return StyleSheet.create({
     page: {
       flex: 1,
       backgroundColor: theme.colors.background,
     },
     body: {
       flex: 1,
-      flexDirection: 'row',
-    },
-    sidebar: {
-      width: 260,
-      padding: 16,
-      backgroundColor: theme.colors.surface,
-      borderRightWidth: StyleSheet.hairlineWidth,
-      borderRightColor: theme.colors.outlineVariant,
-    },
-    sidebarTitle: {
-      fontSize: 14,
-      letterSpacing: 1.2,
-      textTransform: 'uppercase',
-      color: theme.colors.onSurfaceVariant,
-      marginBottom: 12,
-    },
-    sidebarItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      paddingVertical: 8,
-      paddingHorizontal: 10,
-      borderRadius: 10,
-    },
-    sidebarItemActive: {
-      backgroundColor: theme.colors.secondaryContainer,
-    },
-    sidebarItemText: {
-      color: theme.colors.onSurfaceVariant,
-    },
-    sidebarItemTextActive: {
-      color: theme.colors.onSecondaryContainer,
-    },
-    sidebarDivider: {
-      marginVertical: 16,
-    },
-    sidebarSectionTitle: {
-      fontSize: 12,
-      letterSpacing: 1.2,
-      textTransform: 'uppercase',
-      color: theme.colors.onSurfaceVariant,
-      marginBottom: 8,
-    },
-    sidebarChips: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-      marginBottom: 16,
-    },
-    sidebarChip: {
-      backgroundColor: theme.colors.surfaceVariant,
-    },
-    sidebarHint: {
-      color: theme.colors.onSurfaceVariant,
-      fontSize: 12,
     },
     main: {
       flex: 1,
       padding: 16,
     },
-    mobileMenuRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: 8,
-      marginBottom: 12,
-    },
-    mobileMenuChip: {
-      backgroundColor: theme.colors.surfaceVariant,
-    },
-    toolbar: {
+    topControls: {
       flexDirection: 'row',
       alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: 12,
-      marginBottom: 16,
+      justifyContent: 'space-around',
+      paddingVertical: 2,
+      paddingHorizontal: 4,
+      borderRadius: 10,
+      gap: 0,
+      marginBottom: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.outlineVariant,
     },
-    searchWrap: {
-      flex: 1,
-      minWidth: 240,
+    controlIconButton: {
+      margin: 0,
+      width: 32,
+      height: 32,
+    },
+    menuContent: {
+      borderRadius: 14,
+      paddingVertical: 6,
+    },
+    searchRow: {
+      marginBottom: 8,
+      gap: 6,
     },
     searchInput: {
       backgroundColor: theme.colors.surface,
+      height: 34,
     },
     countText: {
       marginTop: 6,
       color: theme.colors.onSurfaceVariant,
       fontSize: 12,
     },
-    toolbarActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    viewToggle: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-    },
     listContent: {
-      gap: 12,
+      paddingTop: 10,
       paddingBottom: 24,
     },
     columnWrap: {
@@ -842,18 +1022,70 @@ const makeStyles = (theme: AppTheme) =>
       textAlign: 'center',
       color: theme.colors.onSurfaceVariant,
     },
+    fab: {
+      position: 'absolute',
+      right: 20,
+      bottom: 24,
+      width: 54,
+      height: 54,
+      borderRadius: 27,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.primary,
+      elevation: 5,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 6 },
+    },
+    tableHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      backgroundColor: 'transparent',
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      borderBottomWidth: 1,
+      borderColor,
+    },
+    tableHeaderText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.colors.onSurfaceVariant,
+    },
+    colTitle: {
+      flex: 1,
+    },
+    colCategory: {
+      width: 130,
+    },
+    colActions: {
+      width: 90,
+      textAlign: 'right',
+    },
+    tableShell: {
+      borderWidth: 1,
+      borderColor,
+      borderRadius: 12,
+      overflow: 'hidden',
+      backgroundColor: 'transparent',
+    },
+    tableContent: {
+      gap: 0,
+      paddingBottom: 16,
+    },
   });
+};
 
 const stylesCard = StyleSheet.create({
   card: {
     flex: 1,
-    minHeight: 150,
+    minHeight: 140,
     padding: 16,
     borderRadius: 18,
     backgroundColor: '#fff',
-  },
-  cardCompact: {
-    minHeight: 110,
+    marginBottom: 12,
   },
   header: {
     flexDirection: 'row',
@@ -861,21 +1093,35 @@ const stylesCard = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     flex: 1,
   },
   title: {
     flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  preview: {
+    width: '100%',
+    height: 92,
+    borderRadius: 10,
+    marginBottom: 8,
+    backgroundColor: '#0f172a22',
   },
   description: {
-    color: '#475569',
-    marginBottom: 8,
+    color: '#94a3b8',
+    marginBottom: 6,
+    fontSize: 12,
   },
   url: {
-    color: '#64748b',
+    color: '#8aa0bf',
     fontSize: 12,
     marginBottom: 8,
   },
@@ -887,11 +1133,119 @@ const stylesCard = StyleSheet.create({
   metaChip: {
     backgroundColor: '#f1f5f9',
   },
+});
+
+const stylesList = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+  },
+  preview: {
+    width: 52,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: '#0f172a22',
+  },
+  previewFallback: {
+    width: 52,
+    height: 38,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0f172a22',
+  },
+  content: {
+    flex: 1,
+    gap: 6,
+  },
+  title: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  url: {
+    fontSize: 11,
+    opacity: 0.8,
+  },
   actions: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 4,
-    marginTop: 8,
+  },
+});
+
+const stylesTable = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#e2e8f0',
+  },
+  colTitle: {
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  titleTextWrap: {
+    flex: 1,
+  },
+  preview: {
+    width: 26,
+    height: 18,
+    borderRadius: 4,
+    backgroundColor: '#0f172a22',
+  },
+  previewFallback: {
+    width: 26,
+    height: 18,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0f172a22',
+  },
+  colCategory: {
+    width: 130,
+  },
+  colActions: {
+    width: 90,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  title: {
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  url: {
+    fontSize: 11,
+    opacity: 0.7,
+  },
+  muted: {
+    opacity: 0.6,
+    fontSize: 12,
+  },
+});
+
+const stylesBadge = StyleSheet.create({
+  pill: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingVertical: 1,
+    paddingHorizontal: 8,
+    maxWidth: '100%',
+  },
+  pillText: {
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: '600',
   },
 });
 

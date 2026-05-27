@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const validate_1 = require("../middleware/validate");
+const appSecret_1 = __importDefault(require("../middleware/appSecret"));
+const bookmarks_controller_1 = require("./controllers/bookmarks.controller");
+const categories_controller_1 = require("./controllers/categories.controller");
+const schemas_1 = require("./schemas");
+const router = (0, express_1.Router)();
+router.use(appSecret_1.default);
+router.get('/bookmarks', bookmarks_controller_1.listBookmarksHandler);
+router.post('/bookmarks', (0, validate_1.validate)(schemas_1.createBookmarkSchema), bookmarks_controller_1.createBookmarkHandler);
+router.put('/bookmarks/:id', (0, validate_1.validate)(schemas_1.updateBookmarkSchema), bookmarks_controller_1.updateBookmarkHandler);
+router.delete('/bookmarks/:id', bookmarks_controller_1.deleteBookmarkHandler);
+router.post('/bookmarks/:id/refresh-meta', bookmarks_controller_1.refreshBookmarkMetaHandler);
+router.get('/categories', categories_controller_1.listCategoriesHandler);
+router.post('/categories', (0, validate_1.validate)(schemas_1.createCategorySchema), categories_controller_1.createCategoryHandler);
+router.put('/categories/:id', (0, validate_1.validate)(schemas_1.updateCategorySchema), categories_controller_1.updateCategoryHandler);
+exports.default = router;

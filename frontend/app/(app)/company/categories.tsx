@@ -303,7 +303,7 @@ export default function CompanyCategories() {
           visible={modalOpen}
           onDismiss={() => setModalOpen(false)}
           style={styles.modalWrapper}
-          contentContainerStyle={[styles.modal, { backgroundColor: theme.colors.surface }]}
+          contentContainerStyle={styles.modal}
         >
           <Text variant="titleMedium">
             {selected ? 'Edit Category' : 'Add Category'}
@@ -346,11 +346,19 @@ export default function CompanyCategories() {
 }
 
 const makeStyles = (theme: AppTheme) => {
+  const isDark = theme.dark;
   const borderColor = theme.colors.outlineVariant ?? theme.colors.outline;
+  const pageBg = isDark ? '#0b1530' : theme.colors.background;
+  const panelBg = isDark ? '#142a49' : theme.colors.surface;
+  const softBg = isDark ? '#0b1633' : theme.colors.surfaceVariant;
+  const inputBg = isDark ? '#1c2c46' : theme.colors.surface;
+  const modalBg = isDark ? '#1c2c46' : theme.colors.surface;
+  const rowBorder = isDark ? 'rgba(255,255,255,0.14)' : borderColor;
+
   return StyleSheet.create({
     page: {
       flex: 1,
-      backgroundColor: theme.colors.background,
+      backgroundColor: pageBg,
     },
     body: {
       flex: 1,
@@ -359,7 +367,9 @@ const makeStyles = (theme: AppTheme) => {
     listPanel: {
       borderRadius: 16,
       padding: 16,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: panelBg,
+      borderWidth: isDark ? StyleSheet.hairlineWidth : 0,
+      borderColor: isDark ? 'rgba(255,255,255,0.16)' : 'transparent',
       alignSelf: 'stretch',
     },
     listHeader: {
@@ -374,17 +384,19 @@ const makeStyles = (theme: AppTheme) => {
     searchToggle: {
       padding: 6,
       borderRadius: 16,
-      backgroundColor: theme.colors.surfaceVariant,
+      backgroundColor: softBg,
     },
     searchInput: {
       marginTop: 12,
       height: 44,
+      backgroundColor: inputBg,
     },
     searchInputContent: {
       height: 40,
     },
     divider: {
       marginVertical: 12,
+      backgroundColor: rowBorder,
     },
     listContent: {
       gap: 0,
@@ -392,7 +404,7 @@ const makeStyles = (theme: AppTheme) => {
     },
     tableShell: {
       borderWidth: 1,
-      borderColor,
+      borderColor: rowBorder,
       borderRadius: 12,
       overflow: 'hidden',
       backgroundColor: 'transparent',
@@ -404,7 +416,7 @@ const makeStyles = (theme: AppTheme) => {
       paddingHorizontal: 12,
       backgroundColor: 'transparent',
       borderBottomWidth: 1,
-      borderColor,
+      borderColor: rowBorder,
     },
     tableHeaderText: {
       color: theme.colors.onSurfaceVariant,
@@ -418,7 +430,7 @@ const makeStyles = (theme: AppTheme) => {
       paddingHorizontal: 12,
       backgroundColor: 'transparent',
       borderBottomWidth: 1,
-      borderColor,
+      borderColor: rowBorder,
     },
     tableCellText: {
       color: theme.colors.onSurface,
@@ -440,9 +452,9 @@ const makeStyles = (theme: AppTheme) => {
     editIconButton: {
       padding: 4,
       borderRadius: 16,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: softBg,
       borderWidth: 1,
-      borderColor,
+      borderColor: rowBorder,
     },
     input: {
       marginTop: 6,
@@ -522,6 +534,9 @@ const makeStyles = (theme: AppTheme) => {
       marginHorizontal: 18,
       borderRadius: 16,
       padding: 18,
+      backgroundColor: modalBg,
+      borderWidth: isDark ? StyleSheet.hairlineWidth : 0,
+      borderColor: isDark ? 'rgba(255,255,255,0.16)' : 'transparent',
     },
     modalActions: {
       marginTop: 16,

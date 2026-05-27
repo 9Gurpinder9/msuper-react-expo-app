@@ -134,6 +134,7 @@ type CardViewProps = {
 function EntryCardView({ card, index, reveal, onPress, theme }: CardViewProps) {
   const scale = React.useRef(new Animated.Value(1)).current;
   const lift = React.useRef(new Animated.Value(0)).current;
+  const isDark = theme.dark;
 
   const handlePressIn = () => {
     Animated.parallel([
@@ -149,25 +150,31 @@ function EntryCardView({ card, index, reveal, onPress, theme }: CardViewProps) {
     ]).start();
   };
 
-  const cardGradient: [string, string] =
-    card.key === 'super-admin'
+  const cardGradient: [string, string] = isDark
+    ? card.key === 'super-admin'
+      ? ['#ff9c2a', '#c96706']
+      : ['#12b8ff', '#0b68cc']
+    : card.key === 'super-admin'
       ? [theme.colors.primaryContainer, theme.colors.surface]
       : [theme.colors.secondaryContainer, theme.colors.surface];
 
-  const cardTextColor =
-    card.key === 'super-admin'
+  const cardTextColor = isDark
+    ? '#f5f9ff'
+    : card.key === 'super-admin'
       ? theme.colors.onPrimaryContainer
       : theme.colors.onSecondaryContainer;
 
-  const iconShellColor =
-    card.key === 'super-admin'
+  const cardDescriptionColor = isDark
+    ? 'rgba(245, 249, 255, 0.92)'
+    : cardTextColor;
+
+  const iconShellColor = isDark
+    ? '#eef6ff'
+    : card.key === 'super-admin'
       ? theme.colors.onPrimaryContainer
       : theme.colors.onSecondaryContainer;
 
-  const iconShellBackground =
-    card.key === 'super-admin'
-      ? theme.colors.background
-      : theme.colors.background;
+  const iconShellBackground = isDark ? 'rgba(9, 23, 49, 0.44)' : theme.colors.background;
 
   return (
     <Animated.View
@@ -197,7 +204,15 @@ function EntryCardView({ card, index, reveal, onPress, theme }: CardViewProps) {
         <Animated.View style={{ transform: [{ scale }, { translateY: lift }] }}>
           <LinearGradient
             colors={cardGradient}
-            style={[styles.card, { shadowColor: theme.colors.shadow }]}
+            style={[
+              styles.card,
+              {
+                shadowColor: theme.colors.shadow,
+                borderWidth: isDark ? 1 : 0,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'transparent',
+                shadowOpacity: isDark ? 0.34 : 0.18,
+              },
+            ]}
           >
             <View style={styles.cardHeader}>
               <View
@@ -215,7 +230,7 @@ function EntryCardView({ card, index, reveal, onPress, theme }: CardViewProps) {
             <Text
               style={[
                 styles.cardDescription,
-                { color: cardTextColor, opacity: 0.78 },
+                { color: cardDescriptionColor, opacity: isDark ? 1 : 0.78 },
               ]}
             >
               {card.description}

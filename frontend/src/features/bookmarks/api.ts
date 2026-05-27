@@ -1,6 +1,6 @@
 import { API_BASE_URL, APP_SECRET, assertApiBaseUrl } from '../../../config';
 import { fetchJson } from '../../utils/network';
-import type { Bookmark, BookmarkFilters, BookmarkInput } from './types';
+import type { Bookmark, BookmarkFilters, BookmarkInput, BookmarkUpdateInput } from './types';
 
 type ListResponse = { success: boolean; data: Bookmark[]; count: number };
 type ItemResponse = { success: boolean; data: Bookmark };
@@ -53,7 +53,7 @@ export async function createBookmark(input: BookmarkInput) {
   return res.data.data;
 }
 
-export async function updateBookmark(id: string, input: BookmarkInput) {
+export async function updateBookmark(id: string, input: BookmarkUpdateInput) {
   const base = assertApiBaseUrl();
   const res = await fetchJson<ItemResponse>(`${base}/company/bookmarks/${id}`, {
     method: 'PUT',

@@ -30,6 +30,8 @@ export type BookmarkInput = {
   og_image?: string | null;
 };
 
+export type BookmarkUpdateInput = Partial<BookmarkInput>;
+
 export type BookmarkFilters = {
   search?: string;
   favorite?: boolean;

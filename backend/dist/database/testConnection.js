@@ -14,8 +14,9 @@ const supabaseClient_1 = __importDefault(require("./supabaseClient"));
 async function checkSupabaseConnection() {
     try {
         const { data, error, status } = await supabaseClient_1.default
-            .from('test_data')
+            .from('super_admins')
             .select('id')
+            .order('id', { ascending: true })
             .limit(1);
         if (error) {
             return {

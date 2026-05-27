@@ -1,4 +1,5 @@
 import supabase from '../../database/supabaseClient';
+import { fetchUrlMetadata } from '../utils/urlMeta';
 
 export type BookmarkFilters = {
   search?: string;
@@ -86,5 +87,18 @@ export async function refreshBookmarkMeta(id: string) {
     .eq('id', id)
     .single();
   if (error) throw error;
-  return data;
+
+  const url = typeof data?.url === 'string' ? data.url.trim() : '';
+  if (!url) return data;
+
+  const meta = await fetchUrlMetadata(url);
+  const updates: Record<string, string> = {};
+  if (meta.thumbnail_url) updates.thumbnail_url = meta.thumbnail_url;
+  if (meta.favicon_url) updates.favicon_url = meta.favicon_url;
+  if (meta.og_title) updates.og_title = meta.og_title;
+  if (meta.og_description) updates.og_description = meta.og_description;
+  if (meta.og_image) updates.og_image = meta.og_image;
+  if (Object.keys(updates).length === 0) return data;
+
+  return updateBookmark(id, updates);
 }
