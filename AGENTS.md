@@ -8,6 +8,9 @@ These instructions help AI agents work productively in this monorepo (frontend: 
 
 ## Skill triggers (use installed skills when prompts match)
 
+> [!IMPORTANT]
+> If a skill seems relevant to your current task, you MUST use the `view_file` tool on its `SKILL.md` file to read the full instructions before proceeding.
+
 - frontend-design: Use for any UI or visual build request (design, layout, styling, landing page, dashboard, component polish, "make it look nice", "improve UI/UX").
 - ui-ux-pro-max: Use for UX reviews, design systems, typography/color/spacing guidance, or "design/optimize/check UI/UX".
 - react-best-practices: Use when reading or writing React components, hooks, effects, or performance fixes.
@@ -31,15 +34,16 @@ These instructions help AI agents work productively in this monorepo (frontend: 
   - App wiring: security (`helmet`, `cors`), JSON body, request id, access logs (`morgan`), global rate limit, routes from `src/routes/index.ts`, final `errorHandler`.
   - Config: `src/config/index.ts` validates env via Joi. Required: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. Optional: `REDIS_URL`, `JWT_SECRET`, `APP_NAME`, `SMTP_USER/SMTP_PASS`, `TELEGRAM_BOT_TOKEN`.
   - Data/infra: Supabase client (`database/supabaseClient.ts`), Redis client with in-memory fallback when `REDIS_URL` is missing (`database/redisClient.ts`).
-  - Feature example: Super-Admin OTP login flow under `src/super-admin/` with Joi schemas, controller, service, and router mounted at `/super-admin`.
+  - Feature examples:
+    - Super-Admin OTP login flow under `src/super-admin/` with Joi schemas, controller, service, and router mounted at `/super-admin`.
+    - Company Bookmarks & Categories feature under `src/company/` with Joi schemas, controllers, and services mounted at `/company` (secured by app secret).
   - Health/diagnostics: `GET /healthz`; `GET /test-database` performs a minimal Supabase query and reports reachability.
 - Frontend
   - Router: `app/` folder (expo-router) with grouped layouts. Root providers in `app/_layout.tsx`: ThemeMode, React Query, SafeArea, Toast.
     - `(auth)` group: unauthenticated screens (e.g., `super-admin/login`, `super-admin/otp-verify`). The group layout redirects to dashboard if a token exists.
-    - `(app)` group: authenticated screens (e.g., `super-admin/dashboard`). The group layout redirects to login if no token.
+    - `(app)` group: authenticated screens (e.g., `super-admin/dashboard`, `company/bookmarks`, `company/categories`). The group layout redirects to login if no token.
   - Theming: `src/theme/` with `ThemeModeProvider` and `getTheme`; `TopAppBar` exposes a mode switcher.
   - Utilities: `src/utils/logger.ts` (dev log collector + global error handlers), `src/utils/network.ts` (`fetchJson` wrapper with logging), `src/utils/ToastProvider.tsx` (Snackbar-based toasts with type icons).
-  - Super-Admin screens: `app/(auth)/super-admin/login.tsx`, `app/(auth)/super-admin/otp-verify.tsx`, `app/(app)/super-admin/dashboard.tsx` using `API_BASE_URL` from `config/index.ts`.
 
 ## Routing at a glance
 
@@ -55,6 +59,10 @@ app/
     _layout.tsx
     super-admin/
       dashboard.tsx
+    company/
+      dashboard.tsx
+      bookmarks.tsx
+      categories.tsx
 ```
 
 - Group names in parentheses are not part of the URL.
@@ -88,6 +96,13 @@ app/
 - POST `/super-admin/resend-otp` — server enforces a cooldown (30s by default). Frontend UI currently uses a 60s resend timer.
 - GET `/super-admin/dashboard` — protected by `middleware/authenticate.ts` (Bearer token).
 - Example files: controller `super-admin/controllers/superAdmin.controller.ts`, service `super-admin/services/superAdmin.service.ts`, schemas `super-admin/schemas.ts`, router `super-admin/routes.ts`.
+
+## Company Bookmarks & Categories flow (reference pattern)
+
+- Sub-routes under `/company` are protected by `appSecretGuard` middleware.
+- POST `/company/bookmarks` — creates a new bookmark, fetches URL meta details (title, description, image) via urlMeta utility, and returns the metadata.
+- POST `/company/bookmarks/:id/refresh-meta` — refetches and updates metadata for an existing bookmark.
+- GET `/company/categories` and GET `/company/bookmarks` — lists categories and bookmarks.
 
 ## Frontend conventions
 
