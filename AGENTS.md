@@ -6,6 +6,7 @@ These instructions help AI agents work productively in this monorepo (frontend: 
 
 - **Mandatory Planning Rule:** Every time the user requests a new feature, design improvement, or code implementation, you **MUST first provide a clear summary/implementation plan** outlining the proposed changes.
 - **Obtain Approval:** Do NOT start coding or making file edits for features until the user reviews the plan and explicitly confirms/approves to proceed.
+- **No Auto-Commits:** Do NOT commit or push any changes to GitHub by default. Only perform a commit and push when the user explicitly/manually requests you to "commit and push to github".
 - **Environment Autonomy:** For minor diagnostic commands or non-destructive terminal tasks, run them without manual confirmation if allowed by the sandbox. Ask only if blocked or destructive.
 
 ## Skill triggers (use installed skills when prompts match)

@@ -2,6 +2,7 @@
 import React from 'react';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   Animated,
@@ -61,6 +62,7 @@ export default function Index() {
 
   return (
     <LinearGradient colors={backgroundGradient} style={styles.page}>
+      <StatusBar style={theme.dark ? 'light' : 'dark'} />
       <SafeAreaView style={styles.page}>
         <ScrollView
           contentContainerStyle={styles.content}
@@ -152,29 +154,31 @@ function EntryCardView({ card, index, reveal, onPress, theme }: CardViewProps) {
 
   const cardGradient: [string, string] = isDark
     ? card.key === 'super-admin'
-      ? ['#ff9c2a', '#c96706']
-      : ['#12b8ff', '#0b68cc']
+      ? ['#0046ff', '#001bb7']
+      : ['#ff8040', '#812000']
     : card.key === 'super-admin'
       ? [theme.colors.primaryContainer, theme.colors.surface]
       : [theme.colors.secondaryContainer, theme.colors.surface];
 
   const cardTextColor = isDark
-    ? '#f5f9ff'
+    ? '#ffffff'
     : card.key === 'super-admin'
       ? theme.colors.onPrimaryContainer
       : theme.colors.onSecondaryContainer;
 
   const cardDescriptionColor = isDark
-    ? 'rgba(245, 249, 255, 0.92)'
+    ? 'rgba(255, 255, 255, 0.85)'
     : cardTextColor;
 
   const iconShellColor = isDark
-    ? '#eef6ff'
+    ? card.key === 'super-admin'
+      ? theme.colors.primary
+      : theme.colors.secondary
     : card.key === 'super-admin'
       ? theme.colors.onPrimaryContainer
       : theme.colors.onSecondaryContainer;
 
-  const iconShellBackground = isDark ? 'rgba(9, 23, 49, 0.44)' : theme.colors.background;
+  const iconShellBackground = isDark ? '#ffffff' : theme.colors.background;
 
   return (
     <Animated.View

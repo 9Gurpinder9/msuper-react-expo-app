@@ -90,3 +90,27 @@ export const onlineScanBillSchema = Joi.object({
     'object.xor': 'Provide a single file or a list of files, not both.',
   });
 
+export const createCountrySchema = Joi.object({
+  name: Joi.string().trim().min(2).max(100).required().messages({
+    'string.empty': 'Name is required.',
+    'string.min': 'Name must be at least 2 characters.',
+  }),
+  code: Joi.string().trim().uppercase().min(2).max(10).required().messages({
+    'string.empty': 'Code is required.',
+    'string.min': 'Code must be at least 2 characters.',
+  }),
+  phone_code: Joi.string().trim().min(1).max(10).optional().allow('', null),
+  is_active: Joi.boolean().default(true),
+});
+
+export const updateCountrySchema = Joi.object({
+  name: Joi.string().trim().min(2).max(100).required(),
+  code: Joi.string().trim().uppercase().min(2).max(10).required(),
+  phone_code: Joi.string().trim().min(1).max(10).optional().allow('', null),
+  is_active: Joi.boolean().optional(),
+});
+
+export const toggleCountryStatusSchema = Joi.object({
+  is_active: Joi.boolean().required(),
+});
+

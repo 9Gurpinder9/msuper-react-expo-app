@@ -10,6 +10,12 @@ import {
     resetPasswordConfirmHandler
 } from './controllers/superAdmin.controller';
 import { onlineScanBillHandler } from './controllers/documentAi.controller';
+import {
+    getCountries,
+    createCountry,
+    updateCountry,
+    toggleCountryStatus
+} from './controllers/country.controller';
 import { validate } from '../middleware/validate';
 import {
     loginSchema,
@@ -18,7 +24,10 @@ import {
     resetPasswordRequestSchema,
     resetPasswordVerifyOtpSchema,
     resetPasswordConfirmSchema,
-    onlineScanBillSchema
+    onlineScanBillSchema,
+    createCountrySchema,
+    updateCountrySchema,
+    toggleCountryStatusSchema
 } from './schemas';
 
 const router = Router();
@@ -31,5 +40,11 @@ router.post('/reset-password/verify-otp', validate(resetPasswordVerifyOtpSchema)
 router.post('/reset-password/confirm', validate(resetPasswordConfirmSchema), resetPasswordConfirmHandler);
 router.get('/dashboard', authenticate, dashboardHandler);
 router.post('/online-scan-bill', authenticate, validate(onlineScanBillSchema), onlineScanBillHandler);
+
+// Countries CRUD
+router.get('/countries', authenticate, getCountries);
+router.post('/countries', authenticate, validate(createCountrySchema), createCountry);
+router.put('/countries/:id', authenticate, validate(updateCountrySchema), updateCountry);
+router.patch('/countries/:id/status', authenticate, validate(toggleCountryStatusSchema), toggleCountryStatus);
 
 export default router;

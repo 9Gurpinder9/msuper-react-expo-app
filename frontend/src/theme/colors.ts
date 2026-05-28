@@ -6,107 +6,289 @@ import type { MD3Theme } from 'react-native-paper'
  * Full MD3 “dynamic” color roles for light mode.
  * Copy/paste from the Paper docs and tweak as you like.
  */
+// ==========================================
+// THEME 1 (Electric Corporate - Blue/Orange)
+// ==========================================
 export const lightColors: MD3Theme['colors'] = {
-  primary:              '#ff5400', // blaze-orange
+  primary:              '#0046ff',
   onPrimary:            '#ffffff',
-  primaryContainer:     '#ffd9c2',
-  onPrimaryContainer:   '#3a1300',
-
-  secondary:            '#00b4d8', // turquoise-surf
+  primaryContainer:     '#DBEAFE',
+  onPrimaryContainer:   '#001bb7',
+  secondary:            '#ff8040',
   onSecondary:          '#ffffff',
-  secondaryContainer:   '#c5f2fb',
-  onSecondaryContainer: '#00313a',
-
-  tertiary:             '#023e8a', // french-blue
+  secondaryContainer:   '#FFE5D9',
+  onSecondaryContainer: '#9A3412',
+  tertiary:             '#001bb7',
   onTertiary:           '#ffffff',
-  tertiaryContainer:    '#cfe0ff',
-  onTertiaryContainer:  '#001536',
+  tertiaryContainer:    '#E0E7FF',
+  onTertiaryContainer:  '#4338CA',
+  error:                'rgb(186, 26, 26)',
+  onError:              'rgb(255, 255, 255)',
+  errorContainer:       'rgb(255, 218, 214)',
+  onErrorContainer:     'rgb(65, 0, 2)',
+  background:           '#f5f1dc',
+  onBackground:         '#0F172A',
+  surface:              '#ffffff',
+  onSurface:            '#0F172A',
+  surfaceVariant:       '#EAE5CF',
+  onSurfaceVariant:     '#001bb7',
+  outline:              '#CBD5E1', 
+  outlineVariant:       '#E2E8F0', 
+  shadow:               'rgb(0, 0, 0)',
+  scrim:                'rgb(0, 0, 0)',
+  inverseSurface:       '#0F172A',
+  inverseOnSurface:     '#F8FAFC',
+  inversePrimary:       '#60A5FA',
+  elevation: {
+    level0: 'transparent',
+    level1: '#ffffff',
+    level2: '#FAF9F0',
+    level3: '#F4F2E4',
+    level4: '#EAE5CF',
+    level5: '#DED8BA',
+  },
+  surfaceDisabled:      'rgba(15, 23, 42, 0.12)',
+  onSurfaceDisabled:    'rgba(15, 23, 42, 0.38)',
+  backdrop:             'rgba(15, 23, 42, 0.35)',
+}
+
+export const darkColors: MD3Theme['colors'] = {
+  primary:              '#0046ff',
+  onPrimary:            '#ffffff',
+  primaryContainer:     '#001bb7',
+  onPrimaryContainer:   '#DBEAFE',
+  secondary:            '#ff8040',
+  onSecondary:          '#000000',
+  secondaryContainer:   '#812000',
+  onSecondaryContainer: '#FFE5D9',
+  tertiary:             '#818CF8',
+  onTertiary:           '#1E1B4B',
+  tertiaryContainer:    '#312E81',
+  onTertiaryContainer:  '#E0E7FF',
+  error:                'rgb(255, 180, 171)',
+  onError:              'rgb(105, 0, 5)',
+  errorContainer:       'rgb(147, 0, 10)',
+  onErrorContainer:     'rgb(255, 180, 171)',
+  background:           '#090a14',
+  onBackground:         '#f5f1dc',
+  surface:              '#111226',
+  onSurface:            '#F8FAFC',
+  surfaceVariant:       '#1E1F3B',
+  onSurfaceVariant:     '#94A3B8',
+  outline:              '#475569',
+  outlineVariant:       '#334155',
+  shadow:               'rgb(0, 0, 0)',
+  scrim:                'rgb(0, 0, 0)',
+  inverseSurface:       '#F8FAFC',
+  inverseOnSurface:     '#0F172A',
+  inversePrimary:       '#0046ff',
+  elevation: {
+    level0: 'transparent',
+    level1: '#111226',
+    level2: '#161830',
+    level3: '#1B1D3B',
+    level4: '#202246',
+    level5: '#262952',
+  },
+  surfaceDisabled:      'rgba(248, 250, 252, 0.12)',
+  onSurfaceDisabled:    'rgba(248, 250, 252, 0.38)',
+  backdrop:             'rgba(15, 23, 42, 0.65)',
+}
+
+/*
+// ==========================================
+// THEME 2 (Warm Espresso / Earth tones)
+// ==========================================
+export const lightColors: MD3Theme['colors'] = {
+  primary:              '#622b14', // Deep Espresso Brown
+  onPrimary:            '#ffffff',
+  primaryContainer:     '#e4d6a9', // Light Cream
+  onPrimaryContainer:   '#622b14',
+  secondary:            '#995f2f', // Caramel Brown
+  onSecondary:          '#ffffff',
+  secondaryContainer:   '#f5ecd2',
+  onSecondaryContainer: '#622b14',
+  tertiary:             '#978f66', // Sage / Khaki
+  onTertiary:           '#ffffff',
+  tertiaryContainer:    '#f0ebd5',
+  onTertiaryContainer:  '#622b14',
+  error:                'rgb(186, 26, 26)',
+  onError:              'rgb(255, 255, 255)',
+  errorContainer:       'rgb(255, 218, 214)',
+  onErrorContainer:     'rgb(65, 0, 2)',
+  background:           '#e4d6a9', // Light Ivory / Cream
+  onBackground:         '#622b14',
+  surface:              '#ffffff',
+  onSurface:            '#622b14',
+  surfaceVariant:       '#f3ebd2',
+  onSurfaceVariant:     '#622b14',
+  outline:              '#bfae92', 
+  outlineVariant:       '#dcd4be', 
+  shadow:               'rgb(0, 0, 0)',
+  scrim:                'rgb(0, 0, 0)',
+  inverseSurface:       '#622b14',
+  inverseOnSurface:     '#e4d6a9',
+  inversePrimary:       '#995f2f',
+  elevation: {
+    level0: 'transparent',
+    level1: '#ffffff',
+    level2: '#fbf8f0',
+    level3: '#f7f2e1',
+    level4: '#f3ebd2',
+    level5: '#e8dcba',
+  },
+  surfaceDisabled:      'rgba(98, 43, 20, 0.12)',
+  onSurfaceDisabled:    'rgba(98, 43, 20, 0.38)',
+  backdrop:             'rgba(98, 43, 20, 0.35)',
+}
+
+export const darkColors: MD3Theme['colors'] = {
+  primary:              '#e4d6a9', // Light Cream for text contrast
+  onPrimary:            '#622b14',
+  primaryContainer:     '#622b14', // Deep Espresso Brown
+  onPrimaryContainer:   '#e4d6a9',
+  secondary:            '#995f2f', // Caramel Brown
+  onSecondary:          '#ffffff',
+  secondaryContainer:   '#4a200d',
+  onSecondaryContainer: '#f5ecd2',
+  tertiary:             '#978f66', // Sage / Khaki
+  onTertiary:           '#1a0b05',
+  tertiaryContainer:    '#302c1d',
+  onTertiaryContainer:  '#f0ebd5',
+  error:                'rgb(255, 180, 171)',
+  onError:              'rgb(105, 0, 5)',
+  errorContainer:       'rgb(147, 0, 10)',
+  onErrorContainer:     'rgb(255, 180, 171)',
+  background:           '#1c0c05', // Rich Dark Chocolate base
+  onBackground:         '#e4d6a9',
+  surface:              '#281208', // Warm surface card backing
+  onSurface:            '#F8FAFC',
+  surfaceVariant:       '#3b1c0e', 
+  onSurfaceVariant:     '#bfae92',
+  outline:              '#756553', 
+  outlineVariant:       '#4b3e31',
+  shadow:               'rgb(0, 0, 0)',
+  scrim:                'rgb(0, 0, 0)',
+  inverseSurface:       '#e4d6a9',
+  inverseOnSurface:     '#1a0b05',
+  inversePrimary:       '#622b14',
+  elevation: {
+    level0: 'transparent',
+    level1: '#281208',
+    level2: '#30160b',
+    level3: '#391a0e',
+    level4: '#421f11',
+    level5: '#4b2414',
+  },
+  surfaceDisabled:      'rgba(228, 214, 169, 0.12)',
+  onSurfaceDisabled:    'rgba(228, 214, 169, 0.38)',
+  backdrop:             'rgba(26, 11, 5, 0.65)',
+}
+*/
+
+/*
+// ==========================================
+// THEME 3 (Forest Green / Sage palette)
+// ==========================================
+export const lightColors: MD3Theme['colors'] = {
+  primary:              '#0d530e', // Deep Olive / Dark Green
+  onPrimary:            '#ffffff',
+  primaryContainer:     '#e7e1b1', // Soft Khaki / Sage
+  onPrimaryContainer:   '#0d530e',
+
+  secondary:            '#306d29', // Forest Green
+  onSecondary:          '#ffffff',
+  secondaryContainer:   '#f4f0df',
+  onSecondaryContainer: '#0d530e',
+
+  tertiary:             '#306d29',
+  onTertiary:           '#ffffff',
+  tertiaryContainer:    '#e1dbb5',
+  onTertiaryContainer:  '#0d530e',
 
   error:                'rgb(186, 26, 26)',
   onError:              'rgb(255, 255, 255)',
   errorContainer:       'rgb(255, 218, 214)',
   onErrorContainer:     'rgb(65, 0, 2)',
 
-  background:           '#fff7f0',
-  onBackground:         '#1d140f',
+  background:           '#fbf5dd', // Light Sand / Cream background
+  onBackground:         '#0d530e',
   surface:              '#ffffff',
-  onSurface:            '#1d140f',
+  onSurface:            '#0d530e',
 
-  surfaceVariant:       '#f6e6dc',
-  onSurfaceVariant:     '#5e4a3f',
-  outline:              '#8a766b',
-  outlineVariant:       '#dcc8bc',
+  surfaceVariant:       '#f3ebd2',
+  onSurfaceVariant:     '#0d530e',
+  outline:              '#bfae92', 
+  outlineVariant:       '#dcd4be', 
 
   shadow:               'rgb(0, 0, 0)',
   scrim:                'rgb(0, 0, 0)',
-  inverseSurface:       '#1d140f',
-  inverseOnSurface:     '#fff7f0',
-  inversePrimary:       '#ff9e00',
+  inverseSurface:       '#0d530e',
+  inverseOnSurface:     '#fbf5dd',
+  inversePrimary:       '#306d29',
 
   elevation: {
     level0: 'transparent',
-    level1: '#fff1e7',
-    level2: '#ffeade',
-    level3: '#ffe4d6',
-    level4: '#ffdfcf',
-    level5: '#ffd9c7',
+    level1: '#ffffff',
+    level2: '#fbf8f0',
+    level3: '#f7f2e1',
+    level4: '#f3ebd2',
+    level5: '#e8dcba',
   },
 
-  surfaceDisabled:      'rgba(29, 20, 15, 0.12)',
-  onSurfaceDisabled:    'rgba(29, 20, 15, 0.38)',
-  backdrop:             'rgba(3, 4, 94, 0.35)',
+  surfaceDisabled:      'rgba(13, 83, 14, 0.12)',
+  onSurfaceDisabled:    'rgba(13, 83, 14, 0.38)',
+  backdrop:             'rgba(13, 83, 14, 0.35)',
 }
 
-/**
- * Full MD3 “dynamic” color roles for dark mode.
- */
 export const darkColors: MD3Theme['colors'] = {
-  primary:              '#ff9e00', // amber-glow
-  onPrimary:            '#3a1f00',
-  primaryContainer:     '#ff6d00', // pumpkin-spice
-  onPrimaryContainer:   '#2a1200',
+  primary:              '#e7e1b1', // Soft Khaki for high text contrast
+  onPrimary:            '#0d530e',
+  primaryContainer:     '#0d530e', // Deep Dark Green
+  onPrimaryContainer:   '#e7e1b1',
 
-  secondary:            '#00b4d8', // turquoise-surf
-  onSecondary:          '#002a33',
-  secondaryContainer:   '#0096c7', // blue-green
-  onSecondaryContainer: '#d8f6ff',
+  secondary:            '#306d29', // Forest Green
+  onSecondary:          '#ffffff',
+  secondaryContainer:   '#051c05',
+  onSecondaryContainer: '#f4f0df',
 
-  tertiary:             '#023e8a', // french-blue
-  onTertiary:           '#e6edff',
-  tertiaryContainer:    '#03045e', // deep-twilight
-  onTertiaryContainer:  '#dfe6ff',
+  tertiary:             '#306d29',
+  onTertiary:           '#fbf5dd',
+  tertiaryContainer:    '#112611',
+  onTertiaryContainer:  '#e7e1b1',
 
   error:                'rgb(255, 180, 171)',
   onError:              'rgb(105, 0, 5)',
   errorContainer:       'rgb(147, 0, 10)',
   onErrorContainer:     'rgb(255, 180, 171)',
 
-  background:           '#03045e',
-  onBackground:         '#edf1ff',
-  surface:              '#022c69',
-  onSurface:            '#edf1ff',
+  background:           '#041505', // Very dark green-black
+  onBackground:         '#fbf5dd',
+  surface:              '#0a220b', // Forest card base
+  onSurface:            '#F8FAFC',
 
-  surfaceVariant:       '#01315f',
-  onSurfaceVariant:     '#c7d5f0',
-  outline:              '#5b6e98',
-  outlineVariant:       '#2b3b64',
+  surfaceVariant:       '#0e2d0f', 
+  onSurfaceVariant:     '#bfae92',
+  outline:              '#756553', 
+  outlineVariant:       '#4b3e31',
 
   shadow:               'rgb(0, 0, 0)',
   scrim:                'rgb(0, 0, 0)',
-  inverseSurface:       '#edf1ff',
-  inverseOnSurface:     '#03045e',
-  inversePrimary:       '#ff5400',
+  inverseSurface:       '#fbf5dd',
+  inverseOnSurface:     '#041505',
+  inversePrimary:       '#0d530e',
 
   elevation: {
     level0: 'transparent',
-    level1: '#04206d',
-    level2: '#04297a',
-    level3: '#043286',
-    level4: '#043a92',
-    level5: '#04429e',
+    level1: '#0a220b',
+    level2: '#0d2b0e',
+    level3: '#103411',
+    level4: '#133d14',
+    level5: '#164617',
   },
 
-  surfaceDisabled:      'rgba(237, 241, 255, 0.12)',
-  onSurfaceDisabled:    'rgba(237, 241, 255, 0.38)',
-  backdrop:             'rgba(3, 4, 94, 0.65)',
+  surfaceDisabled:      'rgba(231, 225, 177, 0.12)',
+  onSurfaceDisabled:    'rgba(231, 225, 177, 0.38)',
+  backdrop:             'rgba(4, 21, 5, 0.65)',
 }
+*/

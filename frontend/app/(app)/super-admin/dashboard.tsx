@@ -1,6 +1,5 @@
-// frontend/app/(app)/super-admin/dashboard.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, Animated, Pressable, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, Animated, Pressable, useWindowDimensions, ScrollView } from 'react-native';
 import {
   Text,
   ActivityIndicator,
@@ -14,6 +13,9 @@ import {
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
+import { useThemeMode } from '@theme';
+import { SegmentedButtons } from 'react-native-paper';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import { useToast } from '@utils/toast';
@@ -30,6 +32,7 @@ type Widget = {
 
 export default function Dashboard() {
   const theme = useTheme();
+  const { mode, setMode } = useThemeMode();
   const styles = makeStyles(theme);
   const router = useRouter();
   const { showError, showSuccess } = useToast();
@@ -42,6 +45,10 @@ export default function Dashboard() {
   const drawerX = useRef(new Animated.Value(0)).current; // 0..1 interpolation
   const authErrorShown = useRef(false);
 
+  // Diagnostics states
+  const [apiHealth, setApiHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
+  const [dbHealth, setDbHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
+
   const drawerWidth = Math.min(320, Math.max(260, Math.floor(width * 0.75)));
 
   useEffect(() => {
@@ -51,6 +58,33 @@ export default function Dashboard() {
       useNativeDriver: false,
     }).start();
   }, [drawerOpen, drawerX]);
+
+  const fetchDiagnostics = async () => {
+    // Check API Health
+    try {
+      const apiRes = await fetch(`${API_BASE_URL}/healthz`);
+      if (apiRes.ok) {
+        setApiHealth('healthy');
+      } else {
+        setApiHealth('down');
+      }
+    } catch {
+      setApiHealth('down');
+    }
+
+    // Check Database Health
+    try {
+      const dbRes = await fetch(`${API_BASE_URL}/test-database`);
+      if (dbRes.ok) {
+        const dbData = await dbRes.json();
+        setDbHealth(dbData.connected && dbData.querySucceeded ? 'healthy' : 'down');
+      } else {
+        setDbHealth('down');
+      }
+    } catch {
+      setDbHealth('down');
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +108,7 @@ export default function Dashboard() {
           showError(body.message || 'Failed to load');
         } else {
           setData(body.data);
+          await fetchDiagnostics();
         }
       } catch {
         showError('Network error');
@@ -89,30 +124,47 @@ export default function Dashboard() {
   const widgets: Widget[] = useMemo(
     () => [
       {
+        key: 'countries',
+        title: 'Countries Registry',
+        subtitle: 'Manage administrative countries',
+        icon: 'earth',
+        color: theme.colors.primary,
+        to: '/super-admin/countries',
+      },
+      {
         key: 'states',
-        title: 'States',
-        subtitle: 'Manage states list',
+        title: 'States Registry',
+        subtitle: 'Manage administrative states',
         icon: 'map-outline',
         color: theme.colors.primary,
         to: '/super-admin/states',
       },
       {
         key: 'cities',
-        title: 'Cities',
-        subtitle: 'Manage cities per state',
+        title: 'Cities Directory',
+        subtitle: 'Manage municipalities and districts',
         icon: 'city-variant-outline',
-        color: (theme as any).colors.info,
+        color: theme.colors.secondary,
         to: '/super-admin/cities',
       },
       {
-        key: 'users',
-        title: 'Users',
-        subtitle: 'Coming soon',
-        icon: 'account-group',
+        key: 'scan',
+        title: 'Document Scanner',
+        subtitle: 'Upload and process documents via OCR',
+        icon: 'file-document-outline',
+        color: theme.colors.primary,
+        to: '/super-admin/scan-bill',
+      },
+      {
+        key: 'online-scan',
+        title: 'Online Bill Scan',
+        subtitle: 'Advanced online scan & search integration',
+        icon: 'cloud-search-outline',
         color: theme.colors.secondary,
+        to: '/super-admin/online-scan-bill',
       },
     ],
-    [theme.colors.primary, (theme as any).colors.info, theme.colors.secondary]
+    [theme.colors.primary, theme.colors.secondary]
   );
 
   const handleLogout = async () => {
@@ -126,7 +178,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator animating color={(theme as any).colors.info} />
+        <ActivityIndicator animating color={theme.colors.primary} />
       </View>
     );
   }
@@ -136,7 +188,7 @@ export default function Dashboard() {
 
   return (
     <View style={styles.wrapper}>
-      <TopAppBar title="Super-Admin Dashboard" showMenu onMenuPress={() => setDrawerOpen(true)} />
+      <TopAppBar title="System Console" showMenu onMenuPress={() => setDrawerOpen(true)} />
 
       {/* Drawer overlay (captures outside clicks) */}
       {drawerOpen && (
@@ -152,16 +204,16 @@ export default function Dashboard() {
       <Animated.View
         style={[styles.drawer, { width: drawerWidth, transform: [{ translateX: tx }] }]}
       >
-        <Surface elevation={2} style={StyleSheet.absoluteFill}>
+        <Surface elevation={0} style={StyleSheet.absoluteFill}>
           <View style={styles.drawerHeader}>
             <View style={styles.drawerHeaderLeft}>
               <MaterialCommunityIcons
                 name="shield-account"
-                size={24}
+                size={22}
                 color={theme.colors.onSurface}
               />
-              <Text variant="titleMedium" style={{ marginLeft: 8 }}>
-                Menu
+              <Text variant="titleMedium" style={{ marginLeft: 8, fontWeight: '700' }}>
+                Management Console
               </Text>
             </View>
             <IconButton
@@ -176,14 +228,25 @@ export default function Dashboard() {
               mode="text"
               onPress={() => {
                 setDrawerOpen(false);
+                router.push('/super-admin/countries');
+              }}
+              icon="earth"
+              contentStyle={{ justifyContent: 'flex-start' }}
+              textColor={theme.colors.onSurface}
+            >
+              Countries Registry
+            </Button>
+            <Button
+              mode="text"
+              onPress={() => {
+                setDrawerOpen(false);
                 router.push('/super-admin/states');
               }}
-              icon={(p) => (
-                <MaterialCommunityIcons name="map-outline" size={p.size} color={p.color} />
-              )}
+              icon="map-outline"
               contentStyle={{ justifyContent: 'flex-start' }}
+              textColor={theme.colors.onSurface}
             >
-              States
+              States Registry
             </Button>
             <Button
               mode="text"
@@ -191,12 +254,11 @@ export default function Dashboard() {
                 setDrawerOpen(false);
                 router.push('/super-admin/cities');
               }}
-              icon={(p) => (
-                <MaterialCommunityIcons name="city-variant-outline" size={p.size} color={p.color} />
-              )}
+              icon="city-variant-outline"
               contentStyle={{ justifyContent: 'flex-start' }}
+              textColor={theme.colors.onSurface}
             >
-              Cities
+              Cities Directory
             </Button>
             <Button
               mode="text"
@@ -204,14 +266,9 @@ export default function Dashboard() {
                 setDrawerOpen(false);
                 router.push('/super-admin/scan-bill');
               }}
-              icon={(p) => (
-                <MaterialCommunityIcons
-                  name="file-document-outline"
-                  size={p.size}
-                  color={p.color}
-                />
-              )}
+              icon="file-document-outline"
               contentStyle={{ justifyContent: 'flex-start' }}
+              textColor={theme.colors.onSurface}
             >
               Scan Bill
             </Button>
@@ -221,14 +278,9 @@ export default function Dashboard() {
                 setDrawerOpen(false);
                 router.push('/super-admin/online-scan-bill');
               }}
-              icon={(p) => (
-                <MaterialCommunityIcons
-                  name="cloud-search-outline"
-                  size={p.size}
-                  color={p.color}
-                />
-              )}
+              icon="cloud-search-outline"
               contentStyle={{ justifyContent: 'flex-start' }}
+              textColor={theme.colors.onSurface}
             >
               Online Scan Bill
             </Button>
@@ -236,22 +288,54 @@ export default function Dashboard() {
               mode="text"
               onPress={() => {
                 setDrawerOpen(false);
+                router.push('/super-admin/diagnostics');
+              }}
+              icon="pulse"
+              contentStyle={{ justifyContent: 'flex-start' }}
+              textColor={theme.colors.onSurface}
+            >
+              System Diagnostics
+            </Button>
+            <View style={styles.drawerDivider} />
+            <Button
+              mode="text"
+              onPress={() => {
+                setDrawerOpen(false);
                 handleLogout();
               }}
-              icon={(p) => <MaterialCommunityIcons name="logout" size={p.size} color={p.color} />}
+              icon="logout"
               contentStyle={{ justifyContent: 'flex-start' }}
+              textColor={theme.colors.error}
             >
-              Logout
+              Logout Session
             </Button>
+            <View style={styles.drawerDivider} />
+            <Text variant="labelMedium" style={styles.drawerSectionHeader}>
+              Theme Color Mode
+            </Text>
+            <SegmentedButtons
+              value={mode}
+              onValueChange={(val) => setMode(val as any)}
+              style={styles.segmentedButtons}
+              buttons={[
+                { value: 'light', label: 'Light', icon: 'white-balance-sunny' },
+                { value: 'dark', label: 'Dark', icon: 'weather-night' },
+                { value: 'system', label: 'Auto', icon: 'theme-light-dark' },
+              ]}
+            />
+            <View style={{ flex: 1 }} />
+            <Text variant="bodySmall" style={styles.versionText}>
+              App Version: {Constants.expoConfig?.version || '1.0.0'}
+            </Text>
           </View>
         </Surface>
       </Animated.View>
 
-      {/* Grid of widgets */}
-      <View style={styles.container}>
-        <Text variant="titleLarge" style={{ marginBottom: 12 }}>
-          Welcome, Super-Admin!
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.welcomeText}>
+          System Control Panel
         </Text>
+        
         <View style={styles.grid}>
           {widgets.map((w) => {
             const isHovered = hoverKey === w.key;
@@ -260,45 +344,41 @@ export default function Dashboard() {
                 key={w.key}
                 onHoverIn={() => setHoverKey(w.key)}
                 onHoverOut={() => setHoverKey((k) => (k === w.key ? null : k))}
-                style={{ width: '100%', maxWidth: 360 }}
+                style={styles.gridItem}
+                onPress={() => w.to && router.push(w.to)}
               >
                 <Card
-                  mode="elevated"
-                  elevation={isHovered ? 5 : 2}
+                  mode="outlined"
                   style={[
                     styles.widget,
                     isHovered && styles.widgetHover,
-                    { backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF' },
                   ]}
-                  onPress={() => w.to && router.push(w.to)}
                 >
                   <Card.Content style={styles.widgetContent}>
-                    <View
-                      style={[
-                        styles.widgetIconWrap,
-                        { backgroundColor: (theme as any).colors.primaryContainer },
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={w.icon as any}
-                        size={26}
-                        color={(theme as any).colors.onPrimaryContainer || theme.colors.primary}
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text variant="titleMedium" style={{ color: theme.colors.onSurface }}>
-                        {w.title}
-                      </Text>
+                    {/* Hover state indicator stripe */}
+                    {isHovered && <View style={styles.hoverIndicator} />}
+                    
+                    <View style={styles.widgetMeta}>
+                      <View style={styles.widgetHeaderRow}>
+                        <MaterialCommunityIcons
+                          name={w.icon as any}
+                          size={22}
+                          color={isHovered ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                        />
+                        <Text style={styles.widgetTitle}>
+                          {w.title}
+                        </Text>
+                      </View>
                       {!!w.subtitle && (
-                        <Text variant="bodySmall" style={{ opacity: 0.8 }}>
+                        <Text style={styles.widgetSubtitle}>
                           {w.subtitle}
                         </Text>
                       )}
                     </View>
                     <MaterialCommunityIcons
                       name="chevron-right"
-                      size={22}
-                      color={theme.colors.onSurface}
+                      size={20}
+                      color={theme.colors.onSurfaceVariant}
                     />
                   </Card.Content>
                 </Card>
@@ -306,7 +386,7 @@ export default function Dashboard() {
             );
           })}
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -315,42 +395,153 @@ const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
     wrapper: {
       flex: 1,
-      backgroundColor: (theme as any).dark ? (theme as any).colors.surfaceVariant : '#F3F4F6',
+      backgroundColor: theme.colors.background,
     },
     container: {
       flex: 1,
-      padding: 16,
+    },
+    scrollContent: {
+      padding: 20,
+      gap: 20,
     },
     center: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: theme.colors.background,
+    },
+    welcomeText: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: theme.colors.onBackground,
+      letterSpacing: -0.3,
+    },
+    diagnosticsCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
+      padding: 16,
+      gap: 12,
+    },
+    diagnosticsHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    diagnosticsTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 16,
+    },
+    healthItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    healthLabel: {
+      fontSize: 13,
+      color: theme.colors.onSurface,
+      fontWeight: '500',
+    },
+    statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+      gap: 6,
+    },
+    statusDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+    },
+    badgeText: {
+      fontSize: 11,
+      fontWeight: '800',
+      letterSpacing: 0.5,
+    },
+    // Healthy (teal-like or green)
+    badgeSuccess: {
+      backgroundColor: theme.dark ? 'rgba(45, 212, 191, 0.1)' : '#CCFBF1',
+    },
+    dotSuccess: {
+      backgroundColor: '#0D9488',
+    },
+    textSuccess: {
+      color: '#0D9488',
+    },
+    // Down (red)
+    badgeError: {
+      backgroundColor: theme.dark ? 'rgba(239, 68, 68, 0.1)' : '#FEE2E2',
+    },
+    dotError: {
+      backgroundColor: '#EF4444',
+    },
+    textError: {
+      color: '#EF4444',
     },
     grid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 12,
     },
+    gridItem: {
+      width: '100%',
+      maxWidth: 360,
+    },
     widget: {
-      minHeight: 88,
+      borderRadius: 14,
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.outlineVariant,
+      borderWidth: 1,
       overflow: 'hidden',
-      borderRadius: 12,
     },
     widgetHover: {
-      transform: [{ translateY: -1 }],
+      borderColor: theme.colors.primary,
     },
     widgetContent: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
+      justifyContent: 'space-between',
+      padding: 16,
+      position: 'relative',
     },
-    widgetIconWrap: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+    hoverIndicator: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 4,
+      backgroundColor: theme.colors.primary,
+    },
+    widgetMeta: {
+      flex: 1,
+      gap: 4,
+      paddingLeft: 4,
+    },
+    widgetHeaderRow: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 4,
+      gap: 8,
+    },
+    widgetTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.colors.onSurface,
+    },
+    widgetSubtitle: {
+      fontSize: 13,
+      color: theme.colors.onSurfaceVariant,
+      opacity: 0.8,
     },
     drawer: {
       position: 'absolute',
@@ -360,6 +551,8 @@ const makeStyles = (theme: MD3Theme) =>
       backgroundColor: theme.colors.surface,
       zIndex: 1000,
       elevation: 4,
+      borderRightWidth: 1,
+      borderRightColor: theme.colors.outlineVariant,
     },
     overlay: {
       ...StyleSheet.absoluteFillObject,
@@ -375,8 +568,8 @@ const makeStyles = (theme: MD3Theme) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: 16,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: (theme as any).colors.outlineVariant || '#00000022',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outlineVariant,
     },
     drawerHeaderLeft: {
       flexDirection: 'row',
@@ -384,8 +577,30 @@ const makeStyles = (theme: MD3Theme) =>
       flexShrink: 1,
     },
     drawerItems: {
-      paddingVertical: 8,
+      paddingVertical: 12,
       paddingHorizontal: 8,
       gap: 4,
+      flex: 1,
+    },
+    drawerDivider: {
+      height: 1,
+      backgroundColor: theme.colors.outlineVariant,
+      marginVertical: 8,
+    },
+    drawerSectionHeader: {
+      marginHorizontal: 8,
+      marginVertical: 4,
+      color: theme.colors.onSurfaceVariant,
+      fontWeight: '600',
+    },
+    segmentedButtons: {
+      marginHorizontal: 8,
+      marginVertical: 8,
+    },
+    versionText: {
+      textAlign: 'center',
+      color: theme.colors.onSurfaceVariant,
+      opacity: 0.5,
+      paddingBottom: 16,
     },
   });

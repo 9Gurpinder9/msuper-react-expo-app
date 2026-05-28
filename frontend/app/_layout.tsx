@@ -16,7 +16,7 @@ function AppShell() {
 
   return (
     <>
-      <StatusBar style={theme.dark ? 'light' : 'dark'} />
+      <StatusBar style="light" />
       <ToastProvider>
         <Slot />
       </ToastProvider>

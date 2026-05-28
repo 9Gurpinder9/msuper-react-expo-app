@@ -19,6 +19,7 @@ import {
   Text,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +38,11 @@ export default function ResetPassword() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const insets = useSafeAreaInsets();
+  const isDark = theme.dark;
+
+  const backgroundGradient: [string, string, string] = isDark
+    ? ['#090D1A', '#0F172A', '#1E293B']
+    : ['#F8FAFC', '#F1F5F9', '#E2E8F0'];
 
   const [kbVisible, setKbVisible] = useState(false);
   useEffect(() => {
@@ -170,162 +176,170 @@ export default function ResetPassword() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} disabled={Platform.OS === 'web'}>
       <KeyboardAvoidingView style={styles.wrapper} behavior={Platform.select({ ios: 'padding' })}>
-        <TopAppBar title="Set New Password" />
+        <TopAppBar title="Set New Password" showBack onBackPress={() => router.replace('/super-admin/login')} />
 
         <Portal>
           {loading && (
             <ProgressBar
               indeterminate
               style={[styles.topProgress, { top: insets.top }]}
-              color={(theme as any).colors.info}
+              color={theme.colors.primary}
             />
           )}
         </Portal>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          scrollEnabled={kbVisible}
-        >
-          <Card style={styles.card}>
-            <Card.Title
-              title="Create a New Password"
-              titleStyle={styles.cardTitle}
-              left={(props) => (
-                <MaterialCommunityIcons
-                  name="lock-reset"
-                  size={props.size}
-                  color={theme.colors.onPrimary}
+        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={kbVisible}
+          >
+            <Card style={styles.card}>
+              <Card.Content style={styles.cardContent}>
+                <Text style={styles.cardTitle}>Create a New Password</Text>
+                <Text variant="bodyMedium" style={styles.cardHint}>
+                  Use a strong password with uppercase, lowercase, number, and symbol.
+                </Text>
+                <TextInput
+                  label="Email"
+                  value={email}
+                  mode="outlined"
+                  editable={false}
+                  disabled
+                  left={
+                    <TextInput.Icon
+                      icon={({ size, color }) => (
+                        <MaterialCommunityIcons name="email" size={size} color={color} />
+                      )}
+                    />
+                  }
+                  style={styles.input}
+                  contentStyle={styles.inputContent}
+                  outlineStyle={styles.inputOutline}
                 />
-              )}
-            />
-            <Card.Content style={styles.cardContent}>
-              <Text variant="bodyMedium" style={styles.cardHint}>
-                Use a strong password with uppercase, lowercase, number, and symbol.
-              </Text>
-              <TextInput
-                label="Email"
-                value={email}
-                mode="outlined"
-                editable={false}
-                disabled
-                left={
-                  <TextInput.Icon
-                    icon={({ size, color }) => (
-                      <MaterialCommunityIcons name="email" size={size} color={color} />
-                    )}
-                  />
-                }
-                style={styles.input}
-              />
-              <TextInput
-                label="New Password"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                mode="outlined"
-                secureTextEntry={!showNewPassword}
-                error={!!newPasswordErr}
-                textContentType="newPassword"
-                autoComplete="new-password"
-                returnKeyType="next"
-                left={
-                  <TextInput.Icon
-                    icon={({ size, color }) => (
-                      <MaterialCommunityIcons name="lock" size={size} color={color} />
-                    )}
-                  />
-                }
-                right={
-                  newPassword.length > 0 ? (
+                <TextInput
+                  label="New Password"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  mode="outlined"
+                  secureTextEntry={!showNewPassword}
+                  error={!!newPasswordErr}
+                  textContentType="newPassword"
+                  autoComplete="new-password"
+                  returnKeyType="next"
+                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
+                  activeOutlineColor={theme.colors.primary}
+                  cursorColor={theme.colors.primary}
+                  selectionColor={theme.colors.primary}
+                  left={
                     <TextInput.Icon
-                      icon={({ size }) => (
-                        <MaterialCommunityIcons
-                          name={showNewPassword ? 'eye-off' : 'eye'}
-                          size={size}
-                          color={(theme as any).colors.onSurfaceVariant || theme.colors.onSurface}
-                        />
+                      icon={({ size, color }) => (
+                        <MaterialCommunityIcons name="lock" size={size} color={color} />
                       )}
-                      onPress={() => setShowNewPassword((p) => !p)}
-                      forceTextInputFocus={false}
                     />
-                  ) : undefined
-                }
-                editable={!loading}
-                style={styles.input}
-              />
-              {!!newPasswordErr && (
-                <HelperText type="error" style={styles.helperText}>
-                  {newPasswordErr}
-                </HelperText>
-              )}
-              <TextInput
-                label="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                mode="outlined"
-                secureTextEntry={!showConfirmPassword}
-                error={!!confirmPasswordErr}
-                textContentType="password"
-                autoComplete="password"
-                returnKeyType="done"
-                onSubmitEditing={handleResetPassword}
-                left={
-                  <TextInput.Icon
-                    icon={({ size, color }) => (
-                      <MaterialCommunityIcons name="lock-check" size={size} color={color} />
-                    )}
-                  />
-                }
-                right={
-                  confirmPassword.length > 0 ? (
-                    <TextInput.Icon
-                      icon={({ size }) => (
-                        <MaterialCommunityIcons
-                          name={showConfirmPassword ? 'eye-off' : 'eye'}
-                          size={size}
-                          color={(theme as any).colors.onSurfaceVariant || theme.colors.onSurface}
-                        />
-                      )}
-                      onPress={() => setShowConfirmPassword((p) => !p)}
-                      forceTextInputFocus={false}
-                    />
-                  ) : undefined
-                }
-                editable={!loading}
-                style={styles.input}
-              />
-              {!!confirmPasswordErr && (
-                <HelperText type="error" style={styles.helperText}>
-                  {confirmPasswordErr}
-                </HelperText>
-              )}
-
-              <Button
-                mode="contained"
-                onPress={handleResetPassword}
-                loading={loading}
-                disabled={loading}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-                icon={({ size, color }) => (
-                  <MaterialCommunityIcons name="check-circle" size={size} color={color} />
+                  }
+                  right={
+                    newPassword.length > 0 ? (
+                      <TextInput.Icon
+                        icon={({ size }) => (
+                          <MaterialCommunityIcons
+                            name={showNewPassword ? 'eye-off' : 'eye'}
+                            size={size}
+                            color={(theme as any).colors.onSurfaceVariant || theme.colors.onSurface}
+                          />
+                        )}
+                        onPress={() => setShowNewPassword((p) => !p)}
+                        forceTextInputFocus={false}
+                      />
+                    ) : undefined
+                  }
+                  editable={!loading}
+                  style={styles.input}
+                  contentStyle={styles.inputContent}
+                  outlineStyle={styles.inputOutline}
+                />
+                {!!newPasswordErr && (
+                  <HelperText type="error" style={styles.helperText}>
+                    {newPasswordErr}
+                  </HelperText>
                 )}
-              >
-                Update Password
-              </Button>
-              <Button
-                mode="text"
-                onPress={async () => {
-                  await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
-                  router.replace('/super-admin/login');
-                }}
-                style={{ marginTop: 8 }}
-              >
-                Back to Login
-              </Button>
-            </Card.Content>
-          </Card>
-        </ScrollView>
+                <TextInput
+                  label="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  mode="outlined"
+                  secureTextEntry={!showConfirmPassword}
+                  error={!!confirmPasswordErr}
+                  textContentType="password"
+                  autoComplete="password"
+                  returnKeyType="done"
+                  onSubmitEditing={handleResetPassword}
+                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
+                  activeOutlineColor={theme.colors.primary}
+                  cursorColor={theme.colors.primary}
+                  selectionColor={theme.colors.primary}
+                  left={
+                    <TextInput.Icon
+                      icon={({ size, color }) => (
+                        <MaterialCommunityIcons name="lock-check" size={size} color={color} />
+                      )}
+                    />
+                  }
+                  right={
+                    confirmPassword.length > 0 ? (
+                      <TextInput.Icon
+                        icon={({ size }) => (
+                          <MaterialCommunityIcons
+                            name={showConfirmPassword ? 'eye-off' : 'eye'}
+                            size={size}
+                            color={(theme as any).colors.onSurfaceVariant || theme.colors.onSurface}
+                          />
+                        )}
+                        onPress={() => setShowConfirmPassword((p) => !p)}
+                        forceTextInputFocus={false}
+                      />
+                    ) : undefined
+                  }
+                  editable={!loading}
+                  style={styles.input}
+                  contentStyle={styles.inputContent}
+                  outlineStyle={styles.inputOutline}
+                />
+                {!!confirmPasswordErr && (
+                  <HelperText type="error" style={styles.helperText}>
+                    {confirmPasswordErr}
+                  </HelperText>
+                )}
+
+                <Button
+                  mode="contained"
+                  onPress={handleResetPassword}
+                  loading={loading}
+                  disabled={loading}
+                  style={styles.button}
+                  contentStyle={styles.buttonContent}
+                  buttonColor={theme.colors.primary}
+                  textColor={theme.colors.onPrimary}
+                  icon={({ size, color }) => (
+                    <MaterialCommunityIcons name="check-circle" size={size} color={color} />
+                  )}
+                >
+                  Update Password
+                </Button>
+                <Button
+                  mode="text"
+                  onPress={async () => {
+                    await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
+                    router.replace('/super-admin/login');
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  Back to Login
+                </Button>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        </LinearGradient>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -334,12 +348,16 @@ export default function ResetPassword() {
 const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
     wrapper: { flex: 1, backgroundColor: theme.colors.background },
+    backgroundGradient: {
+      flex: 1,
+    },
     scrollContainer: {
       flexGrow: 1,
       justifyContent: 'flex-start',
       alignItems: 'center',
       paddingHorizontal: 16,
-      paddingTop: 24,
+      paddingTop: 48,
+      paddingBottom: 40,
     },
     topProgress: {
       position: 'absolute',
@@ -349,30 +367,48 @@ const makeStyles = (theme: MD3Theme) =>
       zIndex: 1000,
     },
     card: {
-      width: '90%',
+      width: '100%',
       maxWidth: 400,
       alignSelf: 'center',
-      borderRadius: 16,
-      padding: 6,
-      backgroundColor: theme.colors.primary,
-      elevation: 2,
+      borderRadius: 24,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
+      shadowColor: '#0F172A',
+      shadowOpacity: theme.dark ? 0.4 : 0.06,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 10 },
+      padding: 4,
     },
     cardTitle: {
-      color: theme.colors.onPrimary,
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.colors.onSurface,
+      marginBottom: 8,
     },
     cardContent: {
-      backgroundColor: theme.colors.onPrimary,
-      borderRadius: 12,
       padding: 16,
-      margin: 8,
     },
     cardHint: {
-      marginBottom: 8,
-      color: theme.colors.onSurface,
-      opacity: 0.85,
+      marginBottom: 16,
+      color: theme.colors.onSurfaceVariant,
+      fontSize: 14,
+      lineHeight: 20,
     },
-    input: { marginBottom: 12 },
-    helperText: { marginBottom: 8 },
-    button: { marginTop: 16 },
-    buttonContent: { height: 48 },
+    input: {
+      marginBottom: 4,
+      backgroundColor: theme.colors.surface,
+    },
+    inputOutline: {
+      borderRadius: 12,
+      borderWidth: 1,
+    },
+    inputContent: {
+      minHeight: 50,
+      fontSize: 15,
+      color: theme.colors.onSurface,
+    },
+    helperText: { marginBottom: 4, marginTop: 2 },
+    button: { marginTop: 16, borderRadius: 12 },
+    buttonContent: { height: 50 },
   });
