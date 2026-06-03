@@ -19,6 +19,7 @@ import {
   Text,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +36,11 @@ export default function ForgotPassword() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const insets = useSafeAreaInsets();
+  const isDark = theme.dark;
+
+  const backgroundGradient: [string, string, string] = isDark
+    ? ['#090D1A', '#0F172A', '#1E293B']
+    : ['#F8FAFC', '#F1F5F9', '#E2E8F0'];
 
   const [kbVisible, setKbVisible] = useState(false);
   useEffect(() => {
@@ -139,94 +145,90 @@ export default function ForgotPassword() {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} disabled={Platform.OS === 'web'}>
       <KeyboardAvoidingView style={styles.wrapper} behavior={Platform.select({ ios: 'padding' })}>
-        <TopAppBar title="Forgot Password" />
+        <TopAppBar title="Forgot Password" showBack onBackPress={() => router.replace('/super-admin/login')} />
 
         <Portal>
           {loading && (
             <ProgressBar
               indeterminate
               style={[styles.topProgress, { top: insets.top }]}
-              color={(theme as any).colors.info}
+              color={theme.colors.primary}
             />
           )}
         </Portal>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          scrollEnabled={kbVisible}
-        >
-          <Card style={styles.card}>
-            <Card.Title
-              title="Reset Your Password"
-              titleStyle={styles.cardTitle}
-              left={(props) => (
-                <MaterialCommunityIcons
-                  name="email-lock"
-                  size={props.size}
-                  color={theme.colors.onPrimary}
+        <LinearGradient colors={backgroundGradient} style={styles.backgroundGradient}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={kbVisible}
+          >
+            <Card style={styles.card}>
+              <Card.Content style={styles.cardContent}>
+                <Text style={styles.cardTitle}>Reset Your Password</Text>
+                <Text variant="bodyMedium" style={styles.cardHint}>
+                  Enter your registered email to receive a 6-digit OTP.
+                </Text>
+                <TextInput
+                  label="Email Address"
+                  value={email}
+                  onChangeText={setEmail}
+                  mode="outlined"
+                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
+                  activeOutlineColor={theme.colors.primary}
+                  cursorColor={theme.colors.primary}
+                  selectionColor={theme.colors.primary}
+                  error={!!emailErr}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  textContentType="username"
+                  autoComplete="email"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSendOtp}
+                  left={
+                    <TextInput.Icon
+                      icon="email-outline"
+                    />
+                  }
+                  editable={!loading}
+                  style={styles.input}
+                  contentStyle={styles.inputContent}
+                  outlineStyle={styles.inputOutline}
                 />
-              )}
-            />
-            <Card.Content style={styles.cardContent}>
-              <Text variant="bodyMedium" style={styles.cardHint}>
-                Enter your registered email to receive a 6-digit OTP.
-              </Text>
-              <TextInput
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                mode="outlined"
-                error={!!emailErr}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="email-address"
-                textContentType="username"
-                autoComplete="email"
-                returnKeyType="done"
-                onSubmitEditing={handleSendOtp}
-                left={
-                  <TextInput.Icon
-                    icon={({ size, color }) => (
-                      <MaterialCommunityIcons name="email" size={size} color={color} />
-                    )}
-                  />
-                }
-                editable={!loading}
-                style={styles.input}
-              />
-              {!!emailErr && (
-                <HelperText type="error" style={styles.helperText}>
-                  {emailErr}
-                </HelperText>
-              )}
-
-              <Button
-                mode="contained"
-                onPress={handleSendOtp}
-                loading={loading}
-                disabled={loading}
-                style={styles.button}
-                contentStyle={styles.buttonContent}
-                icon={({ size, color }) => (
-                  <MaterialCommunityIcons name="send" size={size} color={color} />
+                {!!emailErr && (
+                  <HelperText type="error" style={styles.helperText}>
+                    {emailErr}
+                  </HelperText>
                 )}
-              >
-                Send OTP
-              </Button>
-              <Button
-                mode="text"
-                onPress={async () => {
-                  await resetFlow();
-                  router.replace('/super-admin/login');
-                }}
-                style={{ marginTop: 8 }}
-              >
-                Back to Login
-              </Button>
-            </Card.Content>
-          </Card>
-        </ScrollView>
+
+                <Button
+                  mode="contained"
+                  onPress={handleSendOtp}
+                  loading={loading}
+                  disabled={loading}
+                  style={styles.button}
+                  contentStyle={styles.buttonContent}
+                  buttonColor={theme.colors.primary}
+                  textColor={theme.colors.onPrimary}
+                  icon="send-outline"
+                >
+                  Send OTP Code
+                </Button>
+                <Button
+                  mode="text"
+                  onPress={async () => {
+                    await resetFlow();
+                    router.replace('/super-admin/login');
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  Back to Login
+                </Button>
+              </Card.Content>
+            </Card>
+          </ScrollView>
+        </LinearGradient>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
@@ -235,12 +237,16 @@ export default function ForgotPassword() {
 const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
     wrapper: { flex: 1, backgroundColor: theme.colors.background },
+    backgroundGradient: {
+      flex: 1,
+    },
     scrollContainer: {
       flexGrow: 1,
       justifyContent: 'flex-start',
       alignItems: 'center',
       paddingHorizontal: 16,
-      paddingTop: 24,
+      paddingTop: 48,
+      paddingBottom: 40,
     },
     topProgress: {
       position: 'absolute',
@@ -250,30 +256,48 @@ const makeStyles = (theme: MD3Theme) =>
       zIndex: 1000,
     },
     card: {
-      width: '90%',
+      width: '100%',
       maxWidth: 400,
       alignSelf: 'center',
-      borderRadius: 16,
-      padding: 6,
-      backgroundColor: theme.colors.primary,
-      elevation: 2,
+      borderRadius: 24,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
+      shadowColor: '#0F172A',
+      shadowOpacity: theme.dark ? 0.4 : 0.06,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 10 },
+      padding: 4,
     },
     cardTitle: {
-      color: theme.colors.onPrimary,
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.colors.onSurface,
+      marginBottom: 8,
     },
     cardContent: {
-      backgroundColor: theme.colors.onPrimary,
-      borderRadius: 12,
       padding: 16,
-      margin: 8,
     },
     cardHint: {
-      marginBottom: 8,
-      color: theme.colors.onSurface,
-      opacity: 0.85,
+      marginBottom: 16,
+      color: theme.colors.onSurfaceVariant,
+      fontSize: 14,
+      lineHeight: 20,
     },
-    input: { marginBottom: 12 },
-    helperText: { marginBottom: 8 },
-    button: { marginTop: 16 },
-    buttonContent: { height: 48 },
+    input: {
+      marginBottom: 4,
+      backgroundColor: theme.colors.surface,
+    },
+    inputOutline: {
+      borderRadius: 12,
+      borderWidth: 1,
+    },
+    inputContent: {
+      minHeight: 50,
+      fontSize: 15,
+      color: theme.colors.onSurface,
+    },
+    helperText: { marginBottom: 4, marginTop: 2 },
+    button: { marginTop: 16, borderRadius: 12 },
+    buttonContent: { height: 50 },
   });

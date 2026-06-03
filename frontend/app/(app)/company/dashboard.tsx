@@ -12,6 +12,9 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
+import { useThemeMode } from '@theme';
+import { SegmentedButtons } from 'react-native-paper';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 
@@ -25,6 +28,7 @@ type Widget = {
 
 export default function CompanyDashboard() {
   const theme = useTheme();
+  const { mode, setMode } = useThemeMode();
   const styles = makeStyles(theme);
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -125,6 +129,24 @@ export default function CompanyDashboard() {
             >
               Categories
             </Button>
+            <View style={styles.drawerDivider} />
+            <Text variant="labelMedium" style={styles.drawerSectionHeader}>
+              Theme Color Mode
+            </Text>
+            <SegmentedButtons
+              value={mode}
+              onValueChange={(val) => setMode(val as any)}
+              style={styles.segmentedButtons}
+              buttons={[
+                { value: 'light', label: 'Light', icon: 'white-balance-sunny' },
+                { value: 'dark', label: 'Dark', icon: 'weather-night' },
+                { value: 'system', label: 'Auto', icon: 'theme-light-dark' },
+              ]}
+            />
+            <View style={{ flex: 1 }} />
+            <Text variant="bodySmall" style={styles.versionText}>
+              App Version: {Constants.expoConfig?.version || '1.0.0'}
+            </Text>
           </View>
         </Surface>
       </Animated.View>
@@ -263,5 +285,27 @@ const makeStyles = (theme: MD3Theme) =>
       paddingVertical: 8,
       paddingHorizontal: 8,
       gap: 4,
+      flex: 1,
+    },
+    drawerDivider: {
+      height: 1,
+      backgroundColor: (theme as any).colors.outlineVariant || '#00000022',
+      marginVertical: 8,
+    },
+    drawerSectionHeader: {
+      marginHorizontal: 8,
+      marginVertical: 4,
+      color: theme.colors.onSurfaceVariant,
+      fontWeight: '600',
+    },
+    segmentedButtons: {
+      marginHorizontal: 8,
+      marginVertical: 8,
+    },
+    versionText: {
+      textAlign: 'center',
+      color: theme.colors.onSurfaceVariant,
+      opacity: 0.5,
+      paddingBottom: 16,
     },
   });

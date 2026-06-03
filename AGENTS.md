@@ -2,26 +2,30 @@
 
 These instructions help AI agents work productively in this monorepo (frontend: Expo React Native, backend: Express + Supabase). Keep answers concrete and aligned to the codebase patterns below.
 
-## Autonomy preference
+## Autonomy preference & planning flow
 
-- Run commands and make edits without asking for confirmation when allowed by the platform/sandbox. Ask only if the environment blocks it or if an operation is destructive.
+- **Mandatory Planning Rule:** Every time the user requests a new feature, design improvement, or code implementation, you **MUST first provide a clear summary/implementation plan** outlining the proposed changes.
+- **Obtain Approval:** Do NOT start coding or making file edits for features until the user reviews the plan and explicitly confirms/approves to proceed.
+- **No Auto-Commits:** Do NOT commit or push any changes to GitHub by default. Only perform a commit and push when the user explicitly/manually requests you to "commit and push to github".
+- **Environment Autonomy:** For minor diagnostic commands or non-destructive terminal tasks, run them without manual confirmation if allowed by the sandbox. Ask only if blocked or destructive.
 
 ## Skill triggers (use installed skills when prompts match)
+
+> [!IMPORTANT]
+> If a skill seems relevant to your current task, you MUST use the `view_file` tool on its `SKILL.md` file to read the full instructions before proceeding.
 
 - frontend-design: Use for any UI or visual build request (design, layout, styling, landing page, dashboard, component polish, "make it look nice", "improve UI/UX").
 - ui-ux-pro-max: Use for UX reviews, design systems, typography/color/spacing guidance, or "design/optimize/check UI/UX".
 - react-best-practices: Use when reading or writing React components, hooks, effects, or performance fixes.
 - react-native-architecture: Use for Expo/React Native navigation, native modules, offline sync, device APIs, or mobile app architecture.
-- threejs-fundamentals: Use for basic Three.js scene setup, cameras, renderer, transforms.
-- threejs-geometry: Use when creating or optimizing geometries/meshes or instancing.
-- threejs-materials: Use for material selection, PBR settings, textures on materials.
-- threejs-lighting: Use when adding/configuring lights and shadows.
-- threejs-loaders: Use for GLTF/texture/HDR loading or asset pipelines.
-- threejs-animation: Use for keyframes, skeletal/morph animations, mixing.
-- threejs-interaction: Use for raycasting, controls, picking, input.
-- threejs-postprocessing: Use for bloom/DOF/effects composer.
-- threejs-shaders: Use for custom shader work or GLSL.
-- threejs-textures: Use for UVs, texture settings, environment maps.
+- react-patterns: Use for standard React design patterns, component composition, and hooks.
+- react-state-management: Use when designing or optimizing state management solutions (e.g. Context API, state updates).
+- react-ui-patterns: Use for structured guidelines when building reusable React UI components.
+- react-modernization: Use when refactoring legacy React patterns to modern functional standards.
+- react-nextjs-development: Use for Next.js-specific React patterns (Server Components, App Router).
+- react-flow-node-ts: Use for creating custom node systems using React Flow and TypeScript.
+- zustand-store-ts: Use when creating or updating Zustand state stores.
+- fp-react: Use for combining functional programming principles (fp-ts) with React components.
 
 ## Architecture overview
 
@@ -31,15 +35,16 @@ These instructions help AI agents work productively in this monorepo (frontend: 
   - App wiring: security (`helmet`, `cors`), JSON body, request id, access logs (`morgan`), global rate limit, routes from `src/routes/index.ts`, final `errorHandler`.
   - Config: `src/config/index.ts` validates env via Joi. Required: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. Optional: `REDIS_URL`, `JWT_SECRET`, `APP_NAME`, `SMTP_USER/SMTP_PASS`, `TELEGRAM_BOT_TOKEN`.
   - Data/infra: Supabase client (`database/supabaseClient.ts`), Redis client with in-memory fallback when `REDIS_URL` is missing (`database/redisClient.ts`).
-  - Feature example: Super-Admin OTP login flow under `src/super-admin/` with Joi schemas, controller, service, and router mounted at `/super-admin`.
+  - Feature examples:
+    - Super-Admin OTP login flow under `src/super-admin/` with Joi schemas, controller, service, and router mounted at `/super-admin`.
+    - Company Bookmarks & Categories feature under `src/company/` with Joi schemas, controllers, and services mounted at `/company` (secured by app secret).
   - Health/diagnostics: `GET /healthz`; `GET /test-database` performs a minimal Supabase query and reports reachability.
 - Frontend
   - Router: `app/` folder (expo-router) with grouped layouts. Root providers in `app/_layout.tsx`: ThemeMode, React Query, SafeArea, Toast.
     - `(auth)` group: unauthenticated screens (e.g., `super-admin/login`, `super-admin/otp-verify`). The group layout redirects to dashboard if a token exists.
-    - `(app)` group: authenticated screens (e.g., `super-admin/dashboard`). The group layout redirects to login if no token.
+    - `(app)` group: authenticated screens (e.g., `super-admin/dashboard`, `company/bookmarks`, `company/categories`). The group layout redirects to login if no token.
   - Theming: `src/theme/` with `ThemeModeProvider` and `getTheme`; `TopAppBar` exposes a mode switcher.
   - Utilities: `src/utils/logger.ts` (dev log collector + global error handlers), `src/utils/network.ts` (`fetchJson` wrapper with logging), `src/utils/ToastProvider.tsx` (Snackbar-based toasts with type icons).
-  - Super-Admin screens: `app/(auth)/super-admin/login.tsx`, `app/(auth)/super-admin/otp-verify.tsx`, `app/(app)/super-admin/dashboard.tsx` using `API_BASE_URL` from `config/index.ts`.
 
 ## Routing at a glance
 
@@ -55,6 +60,10 @@ app/
     _layout.tsx
     super-admin/
       dashboard.tsx
+    company/
+      dashboard.tsx
+      bookmarks.tsx
+      categories.tsx
 ```
 
 - Group names in parentheses are not part of the URL.
@@ -89,6 +98,13 @@ app/
 - GET `/super-admin/dashboard` — protected by `middleware/authenticate.ts` (Bearer token).
 - Example files: controller `super-admin/controllers/superAdmin.controller.ts`, service `super-admin/services/superAdmin.service.ts`, schemas `super-admin/schemas.ts`, router `super-admin/routes.ts`.
 
+## Company Bookmarks & Categories flow (reference pattern)
+
+- Sub-routes under `/company` are protected by `appSecretGuard` middleware.
+- POST `/company/bookmarks` — creates a new bookmark, fetches URL meta details (title, description, image) via urlMeta utility, and returns the metadata.
+- POST `/company/bookmarks/:id/refresh-meta` — refetches and updates metadata for an existing bookmark.
+- GET `/company/categories` and GET `/company/bookmarks` — lists categories and bookmarks.
+
 ## Frontend conventions
 
 - Use `frontend/config/index.ts` for configuration; call `assertApiBaseUrl()` in entry points if needed.
@@ -96,6 +112,37 @@ app/
 - Toasts: `useToast()` from `src/utils/toast` within `ToastProvider`. Prefer typed helpers: `showSuccess`, `showError`, `showWarning`, `showInfo`.
 - Theme: Wrap screens in providers from `app/_layout.tsx`. Use `useThemeMode()` for light/dark/system toggle.
 - Auth flow example: `app/(auth)/super-admin/login.tsx` (stores email in AsyncStorage) → `app/(auth)/super-admin/otp-verify.tsx` (verifies & stores `authToken`) → `app/(app)/super-admin/dashboard.tsx` (Authorization: Bearer). Group layouts enforce redirects based on token presence.
+
+## Administrative Registry UI Pattern (Single Source of Truth: `countries.tsx`)
+
+Every list/add/edit administrative registry module (e.g., Countries, States, Cities, etc.) MUST align 100% with the layout defined in [countries.tsx](file:///f:/AI_WORK/React-App/msuper-react-expo-app/frontend/app/(app)/super-admin/countries.tsx):
+
+1. **Header & Search Bar**:
+   - Toggles for search and list/table layout modes belong inside `TopAppBar` header actions.
+   - Search bar renders conditionally underneath the header with style `styles.searchbar`.
+   - Subheader text shows plain record count: `"Total records: X"`.
+
+2. **List View Card**:
+   - Render lists inside a single outer card (`listCard`) with `borderRadius: 12`, border, and shadow.
+   - Separate list items with a bottom divider line (`borderBottomWidth: 1`), removing the bottom line from the last item.
+
+3. **Table View Status Column**:
+   - Do NOT add interactive status switches in the table cells. Display a simple status text badge styled as: `{color: item.is_active ? theme.colors.primary : theme.colors.error}` showing `ACTIVE` or `DISABLED`.
+
+4. **Add/Edit Dialog positioning**:
+   - Set dialog positioning to top-anchored top-to-bottom layout: `position: 'absolute', top: 40, left: 0, right: 0, margin: 16`.
+   - Dialog titles must be centered.
+
+5. **Fields & Validation**:
+   - Format required labels with a red bold asterisk prefix: `<Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>`.
+   - Outlines must reflect error status color with standard fallback colors: `outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}`.
+   - Placeholders must have `'80'` opacity added to text color.
+   - Dialog Actions must stack layout vertically with Save button (`minWidth: 140`, secondary burnt orange theme color) centered, and Close button aligned to the bottom right.
+
+6. **Centralized Save Overlay**:
+   - Save/Update buttons inside dialog modals must NOT show local loading spinner indicators (`loading={saving}`). Instead, keep them `disabled={saving}` to prevent multiple updates.
+   - Integrate a centralized full-screen save progress overlay: wrap `<AppLoader message="..." icon="database-sync-outline" transparent />` inside a React Native Paper `<Portal>` rendering a theme-adaptive, semi-transparent backdrop color (`rgba(0,0,0,0.65)` in dark mode and `rgba(255,255,255,0.75)` in light mode) at the root level of the screen container wrapper view.
+
 
 ## Adding new features (apply these patterns)
 

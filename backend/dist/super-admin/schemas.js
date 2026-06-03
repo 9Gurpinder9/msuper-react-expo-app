@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onlineScanBillSchema = exports.resetPasswordConfirmSchema = exports.resetPasswordVerifyOtpSchema = exports.resetPasswordRequestSchema = exports.verifyOtpSchema = exports.emailOnlySchema = exports.loginSchema = void 0;
+exports.toggleCountryStatusSchema = exports.updateCountrySchema = exports.createCountrySchema = exports.onlineScanBillSchema = exports.resetPasswordConfirmSchema = exports.resetPasswordVerifyOtpSchema = exports.resetPasswordRequestSchema = exports.verifyOtpSchema = exports.emailOnlySchema = exports.loginSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 exports.loginSchema = joi_1.default.object({
@@ -83,4 +83,25 @@ exports.onlineScanBillSchema = joi_1.default.object({
     .messages({
     'object.missing': 'File is required.',
     'object.xor': 'Provide a single file or a list of files, not both.',
+});
+exports.createCountrySchema = joi_1.default.object({
+    name: joi_1.default.string().trim().min(2).max(100).required().messages({
+        'string.empty': 'Name is required.',
+        'string.min': 'Name must be at least 2 characters.',
+    }),
+    code: joi_1.default.string().trim().uppercase().min(2).max(10).required().messages({
+        'string.empty': 'Code is required.',
+        'string.min': 'Code must be at least 2 characters.',
+    }),
+    phone_code: joi_1.default.string().trim().min(1).max(10).optional().allow('', null),
+    is_active: joi_1.default.boolean().default(true),
+});
+exports.updateCountrySchema = joi_1.default.object({
+    name: joi_1.default.string().trim().min(2).max(100).required(),
+    code: joi_1.default.string().trim().uppercase().min(2).max(10).required(),
+    phone_code: joi_1.default.string().trim().min(1).max(10).optional().allow('', null),
+    is_active: joi_1.default.boolean().optional(),
+});
+exports.toggleCountryStatusSchema = joi_1.default.object({
+    is_active: joi_1.default.boolean().required(),
 });

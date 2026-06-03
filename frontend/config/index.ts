@@ -21,9 +21,27 @@ const normalize = (u?: string) => (u ?? '').trim().replace(/\/+$/, '');
 export const APP_VARIANT: 'company' | 'super-admin' =
   extra.appVariant ?? 'super-admin';
 
-export const API_BASE_URL: string = normalize(
-  extra.API_BASE_URL ?? extra.apiBaseUrl
-);
+const resolveApiBaseUrl = (): string => {
+  const envUrl = extra.API_BASE_URL ?? extra.apiBaseUrl;
+  if (envUrl && envUrl.trim() !== '') {
+    return normalize(envUrl);
+  }
+  // Automatic fallback
+  if (__DEV__) {
+    // Dynamically resolve computer's local network IP to support debugging on physical devices
+    const hostUri = Constants?.expoConfig?.hostUri;
+    if (hostUri) {
+      const ip = hostUri.split(':')[0];
+      if (ip) {
+        return `http://${ip}:4000`;
+      }
+    }
+    return 'http://localhost:4000';
+  }
+  return 'https://msuper-react-expo-app-backend.vercel.app';
+};
+
+export const API_BASE_URL: string = resolveApiBaseUrl();
 
 export const APP_SECRET: string = (extra.APP_SECRET ?? '').trim();
 

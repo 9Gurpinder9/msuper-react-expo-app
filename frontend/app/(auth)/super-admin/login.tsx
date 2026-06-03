@@ -47,16 +47,16 @@ export default function Login() {
   const styles = makeStyles(theme, layout);
   const isDark = theme.dark;
   const backgroundGradient: [string, string, string] = isDark
-    ? ['#0b1530', '#0b1633', '#0b1530']
-    : [theme.colors.surfaceVariant, theme.colors.primaryContainer, theme.colors.background];
-  const accentBg = isDark ? lightColors.primary : theme.colors.primary;
-  const accentFg = isDark ? lightColors.onPrimary : theme.colors.onPrimary;
+    ? ['#090D1A', '#0F172A', '#1E293B'] // Sleek dark Slate gradient
+    : ['#F8FAFC', '#F1F5F9', '#E2E8F0']; // Sleek light Slate gradient
+  const accentBg = theme.colors.primary;
+  const accentFg = theme.colors.onPrimary;
   const buttonColor = accentBg;
   const buttonTextColor = accentFg;
-  const inputOutlineColor = isDark ? '#2b3b64' : 'rgba(1, 34, 90, 0.12)';
+  const inputOutlineColor = isDark ? '#334155' : '#E2E8F0';
   const inputActiveOutlineColor = theme.colors.primary;
   const inputCursorColor = theme.colors.primary;
-  const inputPlaceholderColor = isDark ? 'rgba(199, 213, 240, 0.46)' : 'rgba(94, 74, 63, 0.42)';
+  const inputPlaceholderColor = isDark ? '#64748B' : '#94A3B8';
 
   const [kbVisible, setKbVisible] = useState(false);
   useEffect(() => {
@@ -166,7 +166,6 @@ export default function Login() {
         return;
       }
 
-      // Save email for OTP screen (backend expects email + otp)
       try {
         const expiresAt = String(Date.now() + OTP_EXPIRE_MS);
         await AsyncStorage.multiSet([
@@ -202,7 +201,7 @@ export default function Login() {
               <ProgressBar
                 indeterminate
                 style={[styles.topProgress, { top: insets.top }]}
-                color={theme.colors.secondary}
+                color={theme.colors.primary}
               />
             )}
           </Portal>
@@ -220,7 +219,7 @@ export default function Login() {
                 <View style={styles.brandWrap}>
                   <View style={[styles.logoShell, { backgroundColor: accentBg }]}>
                     <MaterialCommunityIcons
-                      name="shield-account"
+                      name="shield-lock-outline"
                       size={layout === 'mobile' ? 32 : 36}
                       color={accentFg}
                     />
@@ -232,7 +231,7 @@ export default function Login() {
                 </View>
 
                 <View style={styles.formCard}>
-                  <Text style={styles.fieldLabel}>Email</Text>
+                  <Text style={styles.fieldLabel}>Email Address</Text>
                   <TextInput
                     placeholder="admin@system.com"
                     placeholderTextColor={inputPlaceholderColor}
@@ -254,7 +253,7 @@ export default function Login() {
                     onSubmitEditing={() => passwordRef.current?.focus()}
                     left={
                       <TextInput.Icon
-                        icon="account-outline"
+                        icon="email-outline"
                       />
                     }
                     editable={!loading}
@@ -278,12 +277,12 @@ export default function Login() {
                       labelStyle={styles.forgotLabel}
                       style={styles.forgotButton}
                     >
-                      Forget Password?
+                      Forgot Password?
                     </Button>
                   </View>
 
                   <TextInput
-                    placeholder="********"
+                    placeholder="••••••••"
                     placeholderTextColor={inputPlaceholderColor}
                     value={password}
                     onChangeText={setPassword}
@@ -301,21 +300,13 @@ export default function Login() {
                     onSubmitEditing={handleLogin}
                     left={
                       <TextInput.Icon
-                        icon={({ size, color }) => (
-                          <MaterialCommunityIcons name="key" size={size} color={color} />
-                        )}
+                        icon="lock-outline"
                       />
                     }
                     right={
                       password.length > 0 ? (
                         <TextInput.Icon
-                          icon={({ size, color }) => (
-                            <MaterialCommunityIcons
-                              name={showPassword ? 'eye-off' : 'eye'}
-                              size={size}
-                              color={color}
-                            />
-                          )}
+                          icon={showPassword ? 'eye-off' : 'eye'}
                           onPress={() => setShowPassword((p) => !p)}
                           forceTextInputFocus={false}
                         />
@@ -334,7 +325,7 @@ export default function Login() {
 
                   {HCAPTCHA_ENABLED && !HCAPTCHA_SITE_KEY ? (
                     <HelperText type="error" style={styles.helperText}>
-                      Missing HCAPTCHA_SITE_KEY in frontend config.
+                      Missing HCAPTCHA_SITE_KEY in config.
                     </HelperText>
                   ) : null}
                   {!!captchaErr && (
@@ -354,11 +345,9 @@ export default function Login() {
                     textColor={buttonTextColor}
                     testID="login-button"
                     accessibilityLabel="Authorize"
-                    icon={({ size, color }) => (
-                      <MaterialCommunityIcons name="shield-check" size={size} color={color} />
-                    )}
+                    icon="login-variant"
                   >
-                    Authorize
+                    Authorize Session
                   </Button>
                 </View>
 
@@ -379,7 +368,7 @@ export default function Login() {
           <Pressable style={styles.captchaOverlay} onPress={() => setCaptchaOpen(false)}>
             <Pressable style={styles.captchaModal} onPress={() => {}}>
               <Text variant="titleMedium" style={styles.captchaTitle}>
-                hCaptcha Verification
+                Security Verification
               </Text>
               <ScrollView
                 contentContainerStyle={styles.captchaScrollContent}
@@ -418,7 +407,7 @@ export default function Login() {
 
 const makeStyles = (theme: MD3Theme, layout: 'mobile' | 'tablet' | 'desktop') =>
   StyleSheet.create({
-    wrapper: { flex: 1, backgroundColor: theme.dark ? '#0b1530' : theme.colors.surfaceVariant },
+    wrapper: { flex: 1, backgroundColor: theme.colors.background },
     backgroundGradient: {
       flex: 1,
     },
@@ -426,9 +415,9 @@ const makeStyles = (theme: MD3Theme, layout: 'mobile' | 'tablet' | 'desktop') =>
       flexGrow: 1,
       justifyContent: 'flex-start',
       alignItems: 'center',
-      paddingHorizontal: layout === 'mobile' ? 20 : 28,
-      paddingTop: layout === 'desktop' ? 112 : layout === 'tablet' ? 92 : 80,
-      paddingBottom: layout === 'desktop' ? 48 : 28,
+      paddingHorizontal: layout === 'mobile' ? 20 : 32,
+      paddingTop: layout === 'desktop' ? 80 : layout === 'tablet' ? 60 : 48,
+      paddingBottom: 40,
     },
     scrollContainerKeyboard: {
       justifyContent: 'flex-start',
@@ -436,80 +425,71 @@ const makeStyles = (theme: MD3Theme, layout: 'mobile' | 'tablet' | 'desktop') =>
     centerWrap: {
       width: '100%',
       alignItems: 'center',
-      maxWidth: layout === 'desktop' ? 470 : layout === 'tablet' ? 560 : 380,
-      marginTop: layout === 'desktop' ? 36 : 24,
+      maxWidth: layout === 'desktop' ? 440 : layout === 'tablet' ? 520 : 380,
     },
     brandWrap: {
       alignItems: 'center',
-      marginBottom: layout === 'mobile' ? 24 : 26,
+      marginBottom: 32,
     },
     logoShell: {
-      width: layout === 'mobile' ? 70 : 76,
-      height: layout === 'mobile' ? 70 : 76,
-      borderRadius: 20,
+      width: 72,
+      height: 72,
+      borderRadius: 16,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.colors.primary,
-      marginBottom: 12,
-      elevation: theme.dark ? 0 : 2,
-      shadowColor: '#000',
-      shadowOpacity: theme.dark ? 0.18 : 0.1,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 5 },
+      marginBottom: 16,
     },
     title: {
       color: theme.colors.onBackground,
-      fontSize: layout === 'desktop' ? 46 : layout === 'tablet' ? 36 : 28,
-      lineHeight: layout === 'desktop' ? 52 : layout === 'tablet' ? 42 : 34,
+      fontSize: layout === 'mobile' ? 28 : 34,
+      lineHeight: layout === 'mobile' ? 36 : 42,
       fontWeight: '800',
       marginBottom: 8,
       textAlign: 'center',
+      letterSpacing: -0.5,
     },
     subtitle: {
       color: theme.colors.onSurfaceVariant,
-      fontSize: layout === 'desktop' ? 20 : layout === 'tablet' ? 18 : 15,
-      lineHeight: layout === 'desktop' ? 28 : layout === 'tablet' ? 26 : 22,
+      fontSize: 15,
+      lineHeight: 22,
       textAlign: 'center',
-      maxWidth: 420,
-      paddingHorizontal: 8,
-      fontWeight: '600',
+      maxWidth: 380,
+      fontWeight: '500',
     },
     formCard: {
       width: '100%',
-      backgroundColor: theme.dark ? '#142a49' : theme.colors.surface,
-      borderRadius: 28,
-      paddingHorizontal: layout === 'mobile' ? 16 : 22,
-      paddingVertical: layout === 'mobile' ? 20 : 24,
-      borderWidth: theme.dark ? 1 : 0,
-      borderColor: theme.dark ? 'rgba(255,255,255,0.12)' : 'transparent',
-      elevation: theme.dark ? 0 : 3,
-      shadowColor: '#000',
-      shadowOpacity: theme.dark ? 0.28 : 0.1,
-      shadowRadius: 18,
-      shadowOffset: { width: 0, height: 8 },
+      backgroundColor: theme.colors.surface,
+      borderRadius: 24,
+      paddingHorizontal: layout === 'mobile' ? 20 : 28,
+      paddingVertical: layout === 'mobile' ? 24 : 32,
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
+      shadowColor: '#0F172A',
+      shadowOpacity: theme.dark ? 0.4 : 0.06,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 10 },
     },
     fieldHeaderRow: {
-      marginTop: 6,
-      marginBottom: 6,
+      marginTop: 12,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
     },
     fieldLabel: {
-      color: theme.dark ? theme.colors.onSurface : theme.colors.onSurface,
+      color: theme.colors.onSurface,
       fontWeight: '700',
-      fontSize: 16,
+      fontSize: 14,
       marginBottom: 8,
+      marginTop: 12,
     },
     forgotButton: {
-      marginRight: -6,
-      marginVertical: -6,
+      marginRight: -8,
+      marginVertical: -8,
     },
     forgotLabel: {
-      color: theme.colors.onSurfaceVariant,
-      fontWeight: '500',
-      opacity: theme.dark ? 0.72 : 0.62,
-      fontSize: layout === 'mobile' ? 13 : 14,
+      color: theme.colors.primary,
+      fontWeight: '600',
+      fontSize: 13,
     },
     topProgress: {
       position: 'absolute',
@@ -519,62 +499,58 @@ const makeStyles = (theme: MD3Theme, layout: 'mobile' | 'tablet' | 'desktop') =>
       zIndex: 1000,
     },
     input: {
-      marginBottom: 6,
-      backgroundColor: theme.dark ? '#1c2c46' : theme.colors.surface,
+      marginBottom: 4,
+      backgroundColor: theme.colors.surface,
     },
     inputOutline: {
-      borderRadius: 16,
+      borderRadius: 12,
       borderWidth: 1,
     },
     inputContent: {
-      minHeight: 54,
-      fontSize: 16,
+      minHeight: 50,
+      fontSize: 15,
       color: theme.colors.onSurface,
     },
     helperText: {
-      marginBottom: 8,
-      marginTop: 0,
+      marginBottom: 4,
+      marginTop: 2,
       paddingHorizontal: 2,
     },
     button: {
-      marginTop: 8,
-      borderRadius: 16,
-      overflow: 'hidden',
-      elevation: 5,
-      shadowColor: '#000',
-      shadowOpacity: 0.2,
-      shadowRadius: 10,
-      shadowOffset: { width: 0, height: 5 },
+      marginTop: 20,
+      borderRadius: 12,
     },
     buttonContent: {
-      height: 54,
+      height: 50,
     },
     accessOnlyText: {
-      marginTop: 26,
+      marginTop: 32,
       color: theme.colors.onSurfaceVariant,
-      opacity: theme.dark ? 0.55 : 0.45,
-      letterSpacing: 3.4,
-      fontSize: layout === 'mobile' ? 11 : 12,
+      letterSpacing: 3,
+      fontSize: 11,
       fontWeight: '700',
       textAlign: 'center',
+      opacity: 0.6,
     },
     captchaOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
+      backgroundColor: 'rgba(15, 23, 42, 0.6)',
       alignItems: 'center',
       justifyContent: 'center',
       padding: 20,
     },
     captchaModal: {
       width: '100%',
-      maxWidth: 420,
+      maxWidth: 400,
       backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      padding: 16,
-      maxHeight: '85%',
+      borderRadius: 20,
+      padding: 20,
+      maxHeight: '80%',
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
     },
-    captchaTitle: { marginBottom: 12 },
-    captchaClose: { marginTop: 8, alignSelf: 'flex-end' },
+    captchaTitle: { marginBottom: 12, fontWeight: '700' },
+    captchaClose: { marginTop: 12, alignSelf: 'flex-end' },
     captchaScrollContent: {
       flexGrow: 1,
       justifyContent: 'center',
