@@ -2,7 +2,8 @@ import React from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View } from "react-native";
-import { ActivityIndicator, useTheme } from "react-native-paper";
+import { useTheme } from "react-native-paper";
+import AppLoader from "@super-admin/components/AppLoader";
 
 export default function AppGroupLayout() {
   const theme = useTheme();
@@ -35,11 +36,7 @@ export default function AppGroupLayout() {
   }, []);
 
   if (checking) {
-    return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.colors.background }}>
-        <ActivityIndicator animating color={(theme as any).colors.info} />
-      </View>
-    );
+    return <AppLoader message="Authenticating session..." />;
   }
 
   return (

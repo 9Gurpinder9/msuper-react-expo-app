@@ -1,13 +1,8 @@
-// frontend/app/(app)/super-admin/countries.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ScrollView, FlatList, Pressable, Keyboard } from 'react-native';
 import {
   Text,
-  Card,
   Button,
-  ActivityIndicator,
-  Dialog,
-  Portal,
   TextInput,
   Switch,
   FAB,
@@ -15,7 +10,9 @@ import {
   useTheme,
   Avatar,
   Appbar,
+  ActivityIndicator,
   MD3Theme,
+  Portal,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,22 +25,22 @@ import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
 
-type Country = {
+type FeatureItem = {
   id: string;
   uuid: string;
   name: string;
-  code: string;
-  phone_code: string | null;
+  display_name: string;
+  description: string | null;
   is_active: boolean;
 };
 
-export default function CountriesRegistry() {
+export default function FeaturesRegistry() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const router = useRouter();
   const { showError, showSuccess } = useToast();
 
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [features, setFeatures] = useState<FeatureItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -62,13 +59,13 @@ export default function CountriesRegistry() {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; code?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; displayName?: string }>({});
 
-  const fetchCountries = async (query = '', pageNum = 1, isLoadMore = false) => {
+  const fetchFeatures = async (query = '', pageNum = 1, isLoadMore = false) => {
     if (pageNum === 1) {
       setLoading(true);
     } else {
@@ -76,7 +73,7 @@ export default function CountriesRegistry() {
     }
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const baseUrl = `${API_BASE_URL}/super-admin/countries`;
+      const baseUrl = `${API_BASE_URL}/super-admin/features`;
       const params = new URLSearchParams();
       if (query) params.append('search', query);
       params.append('page', String(pageNum));
@@ -91,18 +88,18 @@ export default function CountriesRegistry() {
       if (response.ok && response.data) {
         const newItems = response.data.data || [];
         if (isLoadMore) {
-          setCountries((prev) => [...prev, ...newItems]);
+          setFeatures((prev) => [...prev, ...newItems]);
         } else {
-          setCountries(newItems);
+          setFeatures(newItems);
         }
         setTotalRecords(response.data.pagination?.total || 0);
         setHasMore(response.data.pagination?.has_more ?? false);
         setPage(pageNum);
       } else {
-        showError(response.data?.message || 'Failed to load countries');
+        showError(response.data?.message || 'Failed to load features');
       }
     } catch {
-      showError('Network error loading countries');
+      showError('Network error loading features');
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -111,11 +108,11 @@ export default function CountriesRegistry() {
 
   const handleLoadMore = () => {
     if (loading || loadingMore || !hasMore) return;
-    fetchCountries(search, page + 1, true);
+    fetchFeatures(search, page + 1, true);
   };
 
   useEffect(() => {
-    fetchCountries(search, 1, false);
+    fetchFeatures(search, 1, false);
   }, [search]);
 
   useEffect(() => {
@@ -129,43 +126,44 @@ export default function CountriesRegistry() {
   const handleOpenAdd = () => {
     setEditId(null);
     setName('');
-    setCode('');
-    setPhoneCode('');
+    setDisplayName('');
+    setDescription('');
     setIsActive(true);
     setFieldErrors({});
     setDialogVisible(true);
   };
 
-  const handleOpenEdit = (item: Country) => {
+  const handleOpenEdit = (item: FeatureItem) => {
     setEditId(item.id);
     setName(item.name);
-    setCode(item.code);
-    setPhoneCode(item.phone_code || '');
+    setDisplayName(item.display_name);
+    setDescription(item.description || '');
     setIsActive(item.is_active);
     setFieldErrors({});
     setDialogVisible(true);
   };
 
   const handleSave = async () => {
-    const errors: { name?: string; code?: string } = {};
+    const errors: typeof fieldErrors = {};
     if (!name.trim() || name.trim().length < 2) {
-      errors.name = 'Country Name must be at least 2 characters.';
+      errors.name = 'Feature Name must be at least 2 characters.';
     }
-    if (!code.trim() || code.trim().length < 2) {
-      errors.code = 'ISO Code must be at least 2 characters.';
+    if (!displayName.trim() || displayName.trim().length < 2) {
+      errors.displayName = 'Display Name must be at least 2 characters.';
     }
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
     setFieldErrors({});
-
     setSaving(true);
+
     try {
       const token = await AsyncStorage.getItem('authToken');
       const url = editId
-        ? `${API_BASE_URL}/super-admin/countries/${editId}`
-        : `${API_BASE_URL}/super-admin/countries`;
+        ? `${API_BASE_URL}/super-admin/features/${editId}`
+        : `${API_BASE_URL}/super-admin/features`;
       const method = editId ? 'PUT' : 'POST';
 
       const response = await fetchJson(url, {
@@ -176,68 +174,135 @@ export default function CountriesRegistry() {
         },
         body: JSON.stringify({
           name: name.trim(),
-          code: code.trim().toUpperCase(),
-          phone_code: phoneCode.trim() || null,
+          display_name: displayName.trim(),
+          description: description.trim() || null,
           is_active: isActive,
         }),
       });
 
       if (response.ok) {
-        showSuccess(response.data?.message || 'Country saved successfully');
+        showSuccess(editId ? 'Feature updated successfully' : 'Feature registered successfully');
         setDialogVisible(false);
-        fetchCountries(search);
+        fetchFeatures(search, 1, false);
       } else {
-        // Handle duplicate record conflict or validation message
-        showError(response.data?.message || 'Failed to save country details.');
+        showError(response.data?.message || 'Error occurred during save');
       }
     } catch {
-      showError('Network error saving country.');
+      showError('Network error occurred during save');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleToggleStatus = async (item: Country, newStatus: boolean) => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const url = `${API_BASE_URL}/super-admin/countries/${item.id}/status`;
+  function renderTableHeader() {
+    return (
+      <View style={styles.tableHeader}>
+        <View style={[styles.headerCell, styles.cellId]}>
+          <Text style={styles.headerText}>ID</Text>
+        </View>
+        <View style={[styles.headerCell, styles.cellName]}>
+          <Text style={styles.headerText}>Code Name</Text>
+        </View>
+        <View style={[styles.headerCell, styles.cellDisplayName]}>
+          <Text style={styles.headerText}>Display Name</Text>
+        </View>
+        <View style={[styles.headerCell, styles.cellDescription]}>
+          <Text style={styles.headerText}>Description</Text>
+        </View>
+        <View style={[styles.headerCell, styles.cellStatus]}>
+          <Text style={styles.headerText}>Status</Text>
+        </View>
+        <View style={[styles.headerCell, styles.cellAction, { borderRightWidth: 0, alignItems: 'center' }]}>
+          <Text style={styles.headerText}>Action</Text>
+        </View>
+      </View>
+    );
+  }
 
-      // Update locally first for smooth UI UX
-      setCountries((prev) =>
-        prev.map((c) => (c.id === item.id ? { ...c, is_active: newStatus } : c))
-      );
+  function renderTableItem({ item, index }: { item: FeatureItem; index: number }) {
+    return (
+      <View style={styles.tableRow}>
+        <View style={[styles.tableCell, styles.cellId]}>
+          <Text style={styles.cellText}>{index + 1}</Text>
+        </View>
+        <View style={[styles.tableCell, styles.cellName]}>
+          <Text style={styles.codeName}>{item.name}</Text>
+        </View>
+        <View style={[styles.tableCell, styles.cellDisplayName]}>
+          <Text style={styles.cellText}>{item.display_name}</Text>
+        </View>
+        <View style={[styles.tableCell, styles.cellDescription]}>
+          <Text style={styles.cellText} numberOfLines={1}>{item.description || '-'}</Text>
+        </View>
+        <View style={[styles.tableCell, styles.cellStatus]}>
+          <Text style={[styles.statusText, { color: item.is_active ? theme.colors.primary : theme.colors.error }]}>
+            {item.is_active ? 'ACTIVE' : 'DISABLED'}
+          </Text>
+        </View>
+        <View style={[styles.tableCell, styles.cellAction, { borderRightWidth: 0, alignItems: 'center' }]}>
+          <Button
+            mode={theme.dark ? 'contained-tonal' : 'outlined'}
+            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
+            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
+            compact
+            onPress={() => handleOpenEdit(item)}
+            style={styles.editBtn}
+            labelStyle={styles.editBtnLabel}
+          >
+            Edit
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
-      const response = await fetchJson(url, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_active: newStatus }),
-      });
-
-      if (!response.ok) {
-        // Rollback
-        setCountries((prev) =>
-          prev.map((c) => (c.id === item.id ? { ...c, is_active: !newStatus } : c))
-        );
-        showError(response.data?.message || 'Failed to update status.');
-      } else {
-        showSuccess(response.data?.message || 'Status updated.');
-      }
-    } catch {
-      // Rollback
-      setCountries((prev) =>
-        prev.map((c) => (c.id === item.id ? { ...c, is_active: !newStatus } : c))
-      );
-      showError('Network error updating status.');
-    }
-  };
+  function renderListItem({ item, index }: { item: FeatureItem; index: number }) {
+    const isLast = index === features.length - 1;
+    return (
+      <View style={[styles.listItem, isLast && styles.listItemLast]}>
+        <Avatar.Text
+          size={36}
+          label={item.display_name.substring(0, 2).toUpperCase()}
+          style={{ backgroundColor: theme.colors.secondaryContainer }}
+          labelStyle={{ color: theme.colors.onSecondaryContainer, fontWeight: '700' }}
+        />
+        <View style={{ flex: 1, marginLeft: 12, marginRight: 8 }}>
+          <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
+            {item.display_name}
+          </Text>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
+            System Code: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.name}</Text>
+          </Text>
+          {item.description ? (
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }} numberOfLines={1}>
+              Info: <Text style={{ color: theme.colors.onSurface }}>{item.description}</Text>
+            </Text>
+          ) : null}
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
+            Status: <Text style={{ fontWeight: '700', color: item.is_active ? theme.colors.primary : theme.colors.error }}>{item.is_active ? 'ACTIVE' : 'DISABLED'}</Text>
+          </Text>
+        </View>
+        <View style={styles.listRightCol}>
+          <Button
+            mode={theme.dark ? 'contained-tonal' : 'outlined'}
+            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
+            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
+            compact
+            onPress={() => handleOpenEdit(item)}
+            style={styles.editBtn}
+            labelStyle={styles.editBtnLabel}
+          >
+            Edit
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrapper}>
       <TopAppBar
-        title="Countries"
+        title="Features"
         showBack
         onBackPress={() => router.back()}
         actions={
@@ -277,14 +342,14 @@ export default function CountriesRegistry() {
       </View>
 
       {loading ? (
-        <AppLoader message="Loading countries..." icon="database-sync-outline" />
+        <AppLoader message="Loading features..." icon="database-sync-outline" />
       ) : viewMode === 'table' ? (
         <View style={{ flex: 1, padding: 16 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View style={[styles.tableContainer, { width: 700 }]}>
+            <View style={[styles.tableContainer, { width: 780 }]}>
               {renderTableHeader()}
               <FlatList
-                data={countries}
+                data={features}
                 keyExtractor={(item) => item.id}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.3}
@@ -294,10 +359,10 @@ export default function CountriesRegistry() {
                   ) : null
                 }
                 ListEmptyComponent={
-                  <View style={[styles.emptyContainer, { width: 700 }]}>
+                  <View style={[styles.emptyContainer, { width: 780 }]}>
                     <MaterialCommunityIcons name="earth-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                     <Text variant="bodyLarge" style={styles.emptyText}>
-                      No countries registered yet.
+                      No features registered yet.
                     </Text>
                   </View>
                 }
@@ -309,7 +374,7 @@ export default function CountriesRegistry() {
       ) : (
         <View style={styles.listCard}>
           <FlatList
-            data={countries}
+            data={features}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             onEndReached={handleLoadMore}
@@ -323,7 +388,7 @@ export default function CountriesRegistry() {
               <View style={styles.emptyContainer}>
                 <MaterialCommunityIcons name="earth-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                 <Text variant="bodyLarge" style={styles.emptyText}>
-                  No countries registered yet.
+                  No features registered yet.
                 </Text>
               </View>
             }
@@ -339,10 +404,11 @@ export default function CountriesRegistry() {
         onPress={handleOpenAdd}
       />
 
+      {/* Features Add/Edit Dialog */}
       <TopSlideDialog
         visible={dialogVisible}
         onDismiss={() => setDialogVisible(false)}
-        title={editId ? 'Update Country Details' : 'Register New Country'}
+        title={editId ? 'Update Feature Details' : 'Register New Feature'}
         actions={
           <View style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
             <Button
@@ -370,55 +436,59 @@ export default function CountriesRegistry() {
         <View style={{ gap: 4 }}>
           <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
             <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            Country Name
+            System Code Name
           </Text>
           <TextInput
             value={name}
-            onChangeText={(v) => { setName(v); if (fieldErrors.name) setFieldErrors((e) => ({ ...e, name: undefined })); }}
+            onChangeText={(v) => { setName(v); if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined })); }}
             mode="outlined"
-            placeholder="E.g., India, United States"
+            placeholder="e.g. billing_module"
             placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
             textColor={theme.colors.onSurface}
             outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
             activeOutlineColor={fieldErrors.name ? theme.colors.error : theme.colors.primary}
+            autoCapitalize="none"
           />
           {fieldErrors.name ? (
             <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.name}</Text>
           ) : null}
         </View>
+
         <View style={{ gap: 4 }}>
           <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
             <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            ISO Abbreviated Code
+            Display Name
           </Text>
           <TextInput
-            value={code}
-            onChangeText={(v) => { setCode(v); if (fieldErrors.code) setFieldErrors((e) => ({ ...e, code: undefined })); }}
+            value={displayName}
+            onChangeText={(v) => { setDisplayName(v); if (fieldErrors.displayName) setFieldErrors((prev) => ({ ...prev, displayName: undefined })); }}
             mode="outlined"
-            placeholder="E.g., IN, US"
+            placeholder="e.g. Billing Module"
             placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            autoCapitalize="characters"
-            maxLength={10}
             textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.code ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.code ? theme.colors.error : theme.colors.primary}
+            outlineColor={fieldErrors.displayName ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+            activeOutlineColor={fieldErrors.displayName ? theme.colors.error : theme.colors.primary}
           />
-          {fieldErrors.code ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.code}</Text>
+          {fieldErrors.displayName ? (
+            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.displayName}</Text>
           ) : null}
         </View>
+
         <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Phone Dial Code</Text>
+          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Description</Text>
           <TextInput
-            value={phoneCode}
-            onChangeText={setPhoneCode}
+            value={description}
+            onChangeText={setDescription}
             mode="outlined"
-            placeholder="E.g., +91, +1"
+            placeholder="Provide brief details..."
             placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
             textColor={theme.colors.onSurface}
             outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
+            multiline
+            numberOfLines={2}
           />
         </View>
+
         <View style={{ gap: 4, alignItems: 'flex-start' }}>
           <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Enable/Disable</Text>
           <Switch value={isActive} onValueChange={setIsActive} color={theme.colors.primary} />
@@ -429,112 +499,12 @@ export default function CountriesRegistry() {
       {saving && (
         <Portal>
           <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999, backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)', justifyContent: 'center', alignItems: 'center' }]}>
-            <AppLoader message={editId ? 'Updating country details...' : 'Registering new country...'} icon="database-sync-outline" transparent />
+            <AppLoader message={editId ? 'Updating feature details...' : 'Registering new feature...'} icon="database-sync-outline" transparent />
           </View>
         </Portal>
       )}
     </View>
   );
-
-  function renderTableHeader() {
-    return (
-      <View style={styles.tableHeader}>
-        <View style={[styles.headerCell, styles.cellId]}>
-          <Text style={styles.headerText}>ID</Text>
-        </View>
-        <View style={[styles.headerCell, styles.cellCountry]}>
-          <Text style={styles.headerText}>Country</Text>
-        </View>
-        <View style={[styles.headerCell, styles.cellCode]}>
-          <Text style={styles.headerText}>Code</Text>
-        </View>
-        <View style={[styles.headerCell, styles.cellDial]}>
-          <Text style={styles.headerText}>Dial</Text>
-        </View>
-        <View style={[styles.headerCell, styles.cellStatus]}>
-          <Text style={styles.headerText}>Status</Text>
-        </View>
-        <View style={[styles.headerCell, styles.cellAction, { borderRightWidth: 0, alignItems: 'center' }]}>
-          <Text style={styles.headerText}>Action</Text>
-        </View>
-      </View>
-    );
-  }
-
-  function renderTableItem({ item, index }: { item: Country; index: number }) {
-    return (
-      <View style={styles.tableRow}>
-        <View style={[styles.tableCell, styles.cellId]}>
-          <Text style={styles.cellText}>{index + 1}</Text>
-        </View>
-        <View style={[styles.tableCell, styles.cellCountry]}>
-          <Text style={styles.countryName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
-        </View>
-        <View style={[styles.tableCell, styles.cellCode]}>
-          <Text style={styles.cellText}>{item.code}</Text>
-        </View>
-        <View style={[styles.tableCell, styles.cellDial]}>
-          <Text style={styles.cellText}>{item.phone_code || '-'}</Text>
-        </View>
-        <View style={[styles.tableCell, styles.cellStatus]}>
-          <Text style={[styles.statusText, { color: item.is_active ? theme.colors.primary : theme.colors.error }]}>
-            {item.is_active ? 'ACTIVE' : 'DISABLED'}
-          </Text>
-        </View>
-        <View style={[styles.tableCell, styles.cellAction, { borderRightWidth: 0, alignItems: 'center' }]}>
-          <Button
-            mode={theme.dark ? 'contained-tonal' : 'outlined'}
-            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
-            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
-            compact
-            onPress={() => handleOpenEdit(item)}
-            style={styles.editBtn}
-            labelStyle={styles.editBtnLabel}
-          >
-            Edit
-          </Button>
-        </View>
-      </View>
-    );
-  }
-
-  function renderListItem({ item, index }: { item: Country; index: number }) {
-    const isLast = index === countries.length - 1;
-    return (
-      <View style={[styles.listItem, isLast && styles.listItemLast]}>
-        <Avatar.Text
-          size={36}
-          label={item.code.substring(0, 2)}
-          style={{ backgroundColor: theme.colors.secondaryContainer }}
-          labelStyle={{ color: theme.colors.onSecondaryContainer, fontWeight: '700' }}
-        />
-        <View style={{ flex: 1, marginLeft: 12, marginRight: 8 }}>
-          <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
-            {item.name}
-          </Text>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Code: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.code}</Text> | Dial: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.phone_code || '-'}</Text>
-          </Text>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-            Status: <Text style={{ fontWeight: '700', color: item.is_active ? theme.colors.primary : theme.colors.error }}>{item.is_active ? 'ACTIVE' : 'DISABLED'}</Text>
-          </Text>
-        </View>
-        <View style={styles.listRightCol}>
-          <Button
-            mode={theme.dark ? 'contained-tonal' : 'outlined'}
-            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
-            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
-            compact
-            onPress={() => handleOpenEdit(item)}
-            style={styles.editBtn}
-            labelStyle={styles.editBtnLabel}
-          >
-            Edit
-          </Button>
-        </View>
-      </View>
-    );
-  }
 }
 
 const makeStyles = (theme: MD3Theme) =>
@@ -544,16 +514,14 @@ const makeStyles = (theme: MD3Theme) =>
       backgroundColor: theme.colors.background,
     },
     headerBar: {
-      padding: 16,
-      backgroundColor: theme.colors.surface,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outline,
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      paddingBottom: 4,
     },
     searchbar: {
-      elevation: 0,
-      backgroundColor: theme.colors.surfaceVariant,
-      borderRadius: 10,
-      height: 44,
+      borderRadius: 8,
+      height: 48,
+      backgroundColor: theme.colors.elevation.level1,
     },
     subHeader: {
       paddingHorizontal: 16,
@@ -566,11 +534,6 @@ const makeStyles = (theme: MD3Theme) =>
     totalText: {
       color: theme.colors.onSurfaceVariant,
       fontWeight: '600',
-    },
-    center: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
     listCard: {
       flex: 1,
@@ -589,7 +552,32 @@ const makeStyles = (theme: MD3Theme) =>
     listContent: {
       paddingBottom: 80,
     },
-    // Table View
+    listItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outlineVariant,
+    },
+    listItemLast: {
+      borderBottomWidth: 0,
+    },
+    listRightCol: {
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+    },
+    editBtn: {
+      margin: 0,
+      borderColor: theme.colors.primary,
+      borderRadius: 8,
+    },
+    editBtnLabel: {
+      fontSize: 11,
+      marginVertical: 2,
+      marginHorizontal: 8,
+    },
+    // Table View styles
     tableContainer: {
       borderWidth: 1,
       borderColor: theme.colors.outline,
@@ -614,14 +602,15 @@ const makeStyles = (theme: MD3Theme) =>
     },
     headerText: {
       fontWeight: '700',
-      fontSize: 12,
       color: theme.colors.onSurfaceVariant,
+      fontSize: 12,
       textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     tableRow: {
       flexDirection: 'row',
       borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outline,
+      borderBottomColor: theme.colors.outlineVariant,
       alignItems: 'stretch',
     },
     tableCell: {
@@ -630,73 +619,15 @@ const makeStyles = (theme: MD3Theme) =>
       borderRightWidth: 1,
       borderRightColor: theme.colors.outlineVariant,
       justifyContent: 'center',
-      minHeight: 44,
     },
     cellText: {
-      fontSize: 14,
       color: theme.colors.onSurface,
+      fontSize: 13,
     },
-    cellId: {
-      width: 60,
-    },
-    cellCountry: {
-      width: 190,
-    },
-    cellCode: {
-      width: 100,
-    },
-    cellDial: {
-      width: 100,
-    },
-    cellStatus: {
-      width: 130,
-    },
-    cellAction: {
-      width: 120,
-    },
-    countryName: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: theme.colors.onSurface,
-    },
-    countryCode: {
-      fontSize: 11,
-      color: theme.colors.onSurfaceVariant,
-    },
-    editBtn: {
-      margin: 0,
-      borderColor: theme.colors.primary,
-      borderRadius: 8,
-    },
-    editBtnLabel: {
-      fontSize: 11,
-      marginVertical: 2,
-      marginHorizontal: 8,
-    },
-    // List View
-    listItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 14,
-      paddingHorizontal: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outlineVariant,
-    },
-    listItemLast: {
-      borderBottomWidth: 0,
-    },
-    subDetailRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 4,
-    },
-    detailLabel: {
-      color: theme.colors.onSurfaceVariant,
-      opacity: 0.8,
-    },
-    listRightCol: {
-      alignItems: 'flex-end',
-      justifyContent: 'center',
+    codeName: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: theme.colors.primary,
     },
     statusText: {
       fontSize: 10,
@@ -719,20 +650,11 @@ const makeStyles = (theme: MD3Theme) =>
       bottom: 0,
       borderRadius: 12,
     },
-    dialog: {
-      backgroundColor: theme.colors.elevation.level3,
-      borderRadius: 16,
-      position: 'absolute',
-      top: 40,
-      left: 0,
-      right: 0,
-      margin: 16,
-    },
-    dialogSwitchRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 6,
-      paddingHorizontal: 4,
-    },
+    // Width definitions for columns matching 780 total width
+    cellId: { width: 50 },
+    cellName: { width: 180 },
+    cellDisplayName: { width: 180 },
+    cellDescription: { width: 160 },
+    cellStatus: { width: 100 },
+    cellAction: { width: 110 },
   });

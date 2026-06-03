@@ -18,6 +18,7 @@ import { useThemeMode } from '@theme';
 import { SegmentedButtons } from 'react-native-paper';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
+import AppLoader from '@super-admin/components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 
@@ -39,7 +40,7 @@ export default function Dashboard() {
   const { width } = useWindowDimensions();
   const [hoverKey, setHoverKey] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerX = useRef(new Animated.Value(0)).current; // 0..1 interpolation
@@ -148,6 +149,30 @@ export default function Dashboard() {
         to: '/super-admin/cities',
       },
       {
+        key: 'subscription-plans',
+        title: 'Subscription Plans',
+        subtitle: 'Manage system pricing models',
+        icon: 'card-bulleted-outline',
+        color: theme.colors.primary,
+        to: '/super-admin/subscription-plans',
+      },
+      {
+        key: 'features',
+        title: 'App Features',
+        subtitle: 'Manage system module features menu',
+        icon: 'menu-open',
+        color: theme.colors.secondary,
+        to: '/super-admin/features',
+      },
+      {
+        key: 'roles',
+        title: 'User Roles',
+        subtitle: 'Manage system access roles',
+        icon: 'account-key-outline',
+        color: theme.colors.primary,
+        to: '/super-admin/roles',
+      },
+      {
         key: 'scan',
         title: 'Document Scanner',
         subtitle: 'Upload and process documents via OCR',
@@ -175,13 +200,7 @@ export default function Dashboard() {
     } catch {}
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator animating color={theme.colors.primary} />
-      </View>
-    );
-  }
+
 
   const tx = drawerX.interpolate({ inputRange: [0, 1], outputRange: [-drawerWidth, 0] });
   const overlayOpacity = drawerX.interpolate({ inputRange: [0, 1], outputRange: [0, 0.35] });

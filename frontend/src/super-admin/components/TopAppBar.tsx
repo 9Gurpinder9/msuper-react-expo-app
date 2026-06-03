@@ -13,6 +13,7 @@ type Props = {
   showBack?: boolean;
   onMenuPress?: () => void;
   onBackPress?: () => void;
+  actions?: React.ReactNode;
 };
 
 export default function TopAppBar({
@@ -21,6 +22,7 @@ export default function TopAppBar({
   showBack = false,
   onMenuPress,
   onBackPress,
+  actions,
 }: Props) {
   const theme = useTheme();
   return (
@@ -46,6 +48,7 @@ export default function TopAppBar({
         color={theme.colors.onPrimary}
         titleStyle={styles.title}
       />
+      {actions}
     </Appbar.Header>
   );
 }

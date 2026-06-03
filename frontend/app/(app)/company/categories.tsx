@@ -58,8 +58,9 @@ export default function CompanyCategories() {
     refetch,
   } = useInfiniteQuery({
     queryKey: ['bookmark-categories', appliedQuery],
-    queryFn: ({ pageParam = 0 }) =>
+    queryFn: ({ pageParam }) =>
       listCategories({ limit: 20, offset: pageParam, query: appliedQuery }),
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       const loaded = allPages.reduce((sum, page) => sum + page.data.length, 0);
       return loaded < lastPage.total ? loaded : undefined;

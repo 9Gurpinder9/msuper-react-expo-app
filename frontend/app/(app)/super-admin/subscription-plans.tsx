@@ -1,21 +1,18 @@
-// frontend/app/(app)/super-admin/countries.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, ScrollView, FlatList, Pressable, Keyboard } from 'react-native';
 import {
   Text,
   Card,
   Button,
-  ActivityIndicator,
-  Dialog,
-  Portal,
   TextInput,
   Switch,
   FAB,
   Searchbar,
   useTheme,
   Avatar,
-  Appbar,
   MD3Theme,
+  ActivityIndicator,
+  Portal,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,22 +25,24 @@ import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
 
-type Country = {
+type SubscriptionPlan = {
   id: string;
   uuid: string;
   name: string;
-  code: string;
-  phone_code: string | null;
+  description: string | null;
+  price: string | number;
+  amc_price: string | number;
+  duration_days: number;
   is_active: boolean;
 };
 
-export default function CountriesRegistry() {
+export default function SubscriptionPlansRegistry() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const router = useRouter();
   const { showError, showSuccess } = useToast();
 
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -62,13 +61,22 @@ export default function CountriesRegistry() {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [amcPrice, setAmcPrice] = useState('');
+  const [durationDays, setDurationDays] = useState('30');
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; code?: string }>({});
 
-  const fetchCountries = async (query = '', pageNum = 1, isLoadMore = false) => {
+  // Field validation states
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    price?: string;
+    amcPrice?: string;
+    durationDays?: string;
+  }>({});
+
+  const fetchPlans = async (query = '', pageNum = 1, isLoadMore = false) => {
     if (pageNum === 1) {
       setLoading(true);
     } else {
@@ -76,7 +84,7 @@ export default function CountriesRegistry() {
     }
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const baseUrl = `${API_BASE_URL}/super-admin/countries`;
+      const baseUrl = `${API_BASE_URL}/super-admin/subscription-plans`;
       const params = new URLSearchParams();
       if (query) params.append('search', query);
       params.append('page', String(pageNum));
@@ -91,18 +99,18 @@ export default function CountriesRegistry() {
       if (response.ok && response.data) {
         const newItems = response.data.data || [];
         if (isLoadMore) {
-          setCountries((prev) => [...prev, ...newItems]);
+          setPlans((prev) => [...prev, ...newItems]);
         } else {
-          setCountries(newItems);
+          setPlans(newItems);
         }
         setTotalRecords(response.data.pagination?.total || 0);
         setHasMore(response.data.pagination?.has_more ?? false);
         setPage(pageNum);
       } else {
-        showError(response.data?.message || 'Failed to load countries');
+        showError(response.data?.message || 'Failed to load subscription plans');
       }
     } catch {
-      showError('Network error loading countries');
+      showError('Network error loading subscription plans');
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -111,11 +119,11 @@ export default function CountriesRegistry() {
 
   const handleLoadMore = () => {
     if (loading || loadingMore || !hasMore) return;
-    fetchCountries(search, page + 1, true);
+    fetchPlans(search, page + 1, true);
   };
 
   useEffect(() => {
-    fetchCountries(search, 1, false);
+    fetchPlans(search, 1, false);
   }, [search]);
 
   useEffect(() => {
@@ -129,130 +137,138 @@ export default function CountriesRegistry() {
   const handleOpenAdd = () => {
     setEditId(null);
     setName('');
-    setCode('');
-    setPhoneCode('');
+    setDescription('');
+    setPrice('');
+    setAmcPrice('');
+    setDurationDays('30');
     setIsActive(true);
     setFieldErrors({});
     setDialogVisible(true);
   };
 
-  const handleOpenEdit = (item: Country) => {
-    setEditId(item.id);
-    setName(item.name);
-    setCode(item.code);
-    setPhoneCode(item.phone_code || '');
-    setIsActive(item.is_active);
+  const handleOpenEdit = (plan: SubscriptionPlan) => {
+    setEditId(plan.id);
+    setName(plan.name);
+    setDescription(plan.description || '');
+    setPrice(String(plan.price));
+    setAmcPrice(String(plan.amc_price));
+    setDurationDays(String(plan.duration_days));
+    setIsActive(plan.is_active);
     setFieldErrors({});
     setDialogVisible(true);
   };
 
+  const validateFields = (): boolean => {
+    const errors: typeof fieldErrors = {};
+    let isValid = true;
+
+    if (!name.trim()) {
+      errors.name = 'Plan name is required.';
+      isValid = false;
+    } else if (name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters.';
+      isValid = false;
+    }
+
+    const priceNum = parseFloat(price);
+    const amcNum = parseFloat(amcPrice);
+    const isFree = name.trim().toLowerCase() === 'free';
+
+    if (isNaN(priceNum) || priceNum < 0) {
+      errors.price = 'Price must be a positive number.';
+      isValid = false;
+    } else if (!isFree && priceNum < 1000) {
+      errors.price = 'Paid plans must have a price of at least 1000.';
+      isValid = false;
+    }
+
+    if (isNaN(amcNum) || amcNum < 0) {
+      errors.amcPrice = 'AMC price must be a positive number.';
+      isValid = false;
+    } else if (!isFree && amcNum < 1000) {
+      errors.amcPrice = 'Paid plans must have an AMC price of at least 1000.';
+      isValid = false;
+    }
+
+    // Price must be strictly greater than AMC Price for paid plans
+    if (isValid && !isFree && priceNum <= amcNum) {
+      errors.price = 'Price must be strictly greater than AMC Price.';
+      isValid = false;
+    }
+
+    const durationNum = parseInt(durationDays, 10);
+    if (isNaN(durationNum) || durationNum < 7 || durationNum > 365) {
+      errors.durationDays = 'Duration must be between 7 and 365 days.';
+      isValid = false;
+    }
+
+    setFieldErrors(errors);
+    return isValid;
+  };
+
   const handleSave = async () => {
-    const errors: { name?: string; code?: string } = {};
-    if (!name.trim() || name.trim().length < 2) {
-      errors.name = 'Country Name must be at least 2 characters.';
-    }
-    if (!code.trim() || code.trim().length < 2) {
-      errors.code = 'ISO Code must be at least 2 characters.';
-    }
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-    setFieldErrors({});
+    if (!validateFields()) return;
 
     setSaving(true);
     try {
       const token = await AsyncStorage.getItem('authToken');
+      const payload = {
+        name: name.trim(),
+        description: description.trim() || null,
+        price: parseFloat(price),
+        amc_price: parseFloat(amcPrice),
+        duration_days: parseInt(durationDays, 10),
+        is_active: isActive,
+      };
+
       const url = editId
-        ? `${API_BASE_URL}/super-admin/countries/${editId}`
-        : `${API_BASE_URL}/super-admin/countries`;
+        ? `${API_BASE_URL}/super-admin/subscription-plans/${editId}`
+        : `${API_BASE_URL}/super-admin/subscription-plans`;
+
       const method = editId ? 'PUT' : 'POST';
 
       const response = await fetchJson(url, {
         method,
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: name.trim(),
-          code: code.trim().toUpperCase(),
-          phone_code: phoneCode.trim() || null,
-          is_active: isActive,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        showSuccess(response.data?.message || 'Country saved successfully');
+        showSuccess(editId ? 'Plan updated successfully' : 'Plan registered successfully');
         setDialogVisible(false);
-        fetchCountries(search);
+        fetchPlans(search);
       } else {
-        // Handle duplicate record conflict or validation message
-        showError(response.data?.message || 'Failed to save country details.');
+        showError(response.data?.message || 'Error occurred during save');
       }
     } catch {
-      showError('Network error saving country.');
+      showError('Network error occurred during save');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleToggleStatus = async (item: Country, newStatus: boolean) => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const url = `${API_BASE_URL}/super-admin/countries/${item.id}/status`;
-
-      // Update locally first for smooth UI UX
-      setCountries((prev) =>
-        prev.map((c) => (c.id === item.id ? { ...c, is_active: newStatus } : c))
-      );
-
-      const response = await fetchJson(url, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_active: newStatus }),
-      });
-
-      if (!response.ok) {
-        // Rollback
-        setCountries((prev) =>
-          prev.map((c) => (c.id === item.id ? { ...c, is_active: !newStatus } : c))
-        );
-        showError(response.data?.message || 'Failed to update status.');
-      } else {
-        showSuccess(response.data?.message || 'Status updated.');
-      }
-    } catch {
-      // Rollback
-      setCountries((prev) =>
-        prev.map((c) => (c.id === item.id ? { ...c, is_active: !newStatus } : c))
-      );
-      showError('Network error updating status.');
     }
   };
 
   return (
     <View style={styles.wrapper}>
       <TopAppBar
-        title="Countries"
+        title="Subscription Plans"
         showBack
         onBackPress={() => router.back()}
         actions={
-          <>
-            <Appbar.Action
-              icon="magnify"
-              color={theme.colors.onPrimary}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <AppbarActionIcon
+              icon={searchExpanded ? 'magnify-close' : 'magnify'}
               onPress={() => setSearchExpanded(!searchExpanded)}
+              theme={theme}
             />
-            <Appbar.Action
-              icon={viewMode === 'table' ? 'format-list-bulleted' : 'table-large'}
-              color={theme.colors.onPrimary}
-              onPress={() => setViewMode(viewMode === 'table' ? 'list' : 'table')}
+            <AppbarActionIcon
+              icon={viewMode === 'list' ? 'table-large' : 'format-list-bulleted'}
+              onPress={() => setViewMode(viewMode === 'list' ? 'table' : 'list')}
+              theme={theme}
             />
-          </>
+          </View>
         }
       />
 
@@ -260,7 +276,7 @@ export default function CountriesRegistry() {
         <View style={styles.headerBar}>
           <Searchbar
             ref={searchRef}
-            placeholder="Search by name or code..."
+            placeholder="Search plans..."
             onChangeText={setSearch}
             value={search}
             style={styles.searchbar}
@@ -277,14 +293,14 @@ export default function CountriesRegistry() {
       </View>
 
       {loading ? (
-        <AppLoader message="Loading countries..." icon="database-sync-outline" />
+        <AppLoader message="Loading plans..." icon="database-sync-outline" />
       ) : viewMode === 'table' ? (
         <View style={{ flex: 1, padding: 16 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View style={[styles.tableContainer, { width: 700 }]}>
+            <View style={[styles.tableContainer, { width: 900 }]}>
               {renderTableHeader()}
               <FlatList
-                data={countries}
+                data={plans}
                 keyExtractor={(item) => item.id}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.3}
@@ -294,10 +310,10 @@ export default function CountriesRegistry() {
                   ) : null
                 }
                 ListEmptyComponent={
-                  <View style={[styles.emptyContainer, { width: 700 }]}>
-                    <MaterialCommunityIcons name="earth-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
+                  <View style={[styles.emptyContainer, { width: 900 }]}>
+                    <MaterialCommunityIcons name="card-bulleted-off-outline" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                     <Text variant="bodyLarge" style={styles.emptyText}>
-                      No countries registered yet.
+                      No plans registered yet.
                     </Text>
                   </View>
                 }
@@ -309,9 +325,9 @@ export default function CountriesRegistry() {
       ) : (
         <View style={styles.listCard}>
           <FlatList
-            data={countries}
+            data={plans}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={{ paddingBottom: 80 }}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.3}
             ListFooterComponent={
@@ -321,9 +337,9 @@ export default function CountriesRegistry() {
             }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <MaterialCommunityIcons name="earth-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
+                <MaterialCommunityIcons name="card-bulleted-off-outline" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                 <Text variant="bodyLarge" style={styles.emptyText}>
-                  No countries registered yet.
+                  No plans registered yet.
                 </Text>
               </View>
             }
@@ -342,7 +358,7 @@ export default function CountriesRegistry() {
       <TopSlideDialog
         visible={dialogVisible}
         onDismiss={() => setDialogVisible(false)}
-        title={editId ? 'Update Country Details' : 'Register New Country'}
+        title={editId ? 'Update Plan Details' : 'Register New Plan'}
         actions={
           <View style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
             <Button
@@ -370,13 +386,13 @@ export default function CountriesRegistry() {
         <View style={{ gap: 4 }}>
           <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
             <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            Country Name
+            Plan Name
           </Text>
           <TextInput
             value={name}
             onChangeText={(v) => { setName(v); if (fieldErrors.name) setFieldErrors((e) => ({ ...e, name: undefined })); }}
             mode="outlined"
-            placeholder="E.g., India, United States"
+            placeholder="E.g., Free, Silver, Gold"
             placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
             textColor={theme.colors.onSurface}
             outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
@@ -386,39 +402,87 @@ export default function CountriesRegistry() {
             <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.name}</Text>
           ) : null}
         </View>
+
         <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            ISO Abbreviated Code
-          </Text>
+          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Description</Text>
           <TextInput
-            value={code}
-            onChangeText={(v) => { setCode(v); if (fieldErrors.code) setFieldErrors((e) => ({ ...e, code: undefined })); }}
+            value={description}
+            onChangeText={setDescription}
             mode="outlined"
-            placeholder="E.g., IN, US"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            autoCapitalize="characters"
-            maxLength={10}
-            textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.code ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.code ? theme.colors.error : theme.colors.primary}
-          />
-          {fieldErrors.code ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.code}</Text>
-          ) : null}
-        </View>
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Phone Dial Code</Text>
-          <TextInput
-            value={phoneCode}
-            onChangeText={setPhoneCode}
-            mode="outlined"
-            placeholder="E.g., +91, +1"
+            placeholder="Brief details about the plan"
             placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
             textColor={theme.colors.onSurface}
             outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
+            multiline
+            numberOfLines={2}
           />
         </View>
+
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
+              Price
+            </Text>
+            <TextInput
+              value={price}
+              onChangeText={(v) => { setPrice(v); if (fieldErrors.price) setFieldErrors((e) => ({ ...e, price: undefined })); }}
+              mode="outlined"
+              keyboardType="numeric"
+              placeholder="E.g., 0, 1500"
+              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+              textColor={theme.colors.onSurface}
+              outlineColor={fieldErrors.price ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+              activeOutlineColor={fieldErrors.price ? theme.colors.error : theme.colors.primary}
+            />
+            {fieldErrors.price ? (
+              <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.price}</Text>
+            ) : null}
+          </View>
+
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
+              AMC Price
+            </Text>
+            <TextInput
+              value={amcPrice}
+              onChangeText={(v) => { setAmcPrice(v); if (fieldErrors.amcPrice) setFieldErrors((e) => ({ ...e, amcPrice: undefined })); }}
+              mode="outlined"
+              keyboardType="numeric"
+              placeholder="E.g., 0, 1200"
+              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+              textColor={theme.colors.onSurface}
+              outlineColor={fieldErrors.amcPrice ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+              activeOutlineColor={fieldErrors.amcPrice ? theme.colors.error : theme.colors.primary}
+            />
+            {fieldErrors.amcPrice ? (
+              <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.amcPrice}</Text>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={{ gap: 4 }}>
+          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
+            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
+            Duration (Days)
+          </Text>
+          <TextInput
+            value={durationDays}
+            onChangeText={(v) => { setDurationDays(v); if (fieldErrors.durationDays) setFieldErrors((e) => ({ ...e, durationDays: undefined })); }}
+            mode="outlined"
+            keyboardType="numeric"
+            placeholder="Min 7, Max 365"
+            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+            textColor={theme.colors.onSurface}
+            outlineColor={fieldErrors.durationDays ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+            activeOutlineColor={fieldErrors.durationDays ? theme.colors.error : theme.colors.primary}
+          />
+          {fieldErrors.durationDays ? (
+            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.durationDays}</Text>
+          ) : null}
+        </View>
+
         <View style={{ gap: 4, alignItems: 'flex-start' }}>
           <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Enable/Disable</Text>
           <Switch value={isActive} onValueChange={setIsActive} color={theme.colors.primary} />
@@ -429,7 +493,7 @@ export default function CountriesRegistry() {
       {saving && (
         <Portal>
           <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999, backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)', justifyContent: 'center', alignItems: 'center' }]}>
-            <AppLoader message={editId ? 'Updating country details...' : 'Registering new country...'} icon="database-sync-outline" transparent />
+            <AppLoader message={editId ? 'Updating plan details...' : 'Registering new plan...'} icon="database-sync-outline" transparent />
           </View>
         </Portal>
       )}
@@ -442,14 +506,17 @@ export default function CountriesRegistry() {
         <View style={[styles.headerCell, styles.cellId]}>
           <Text style={styles.headerText}>ID</Text>
         </View>
-        <View style={[styles.headerCell, styles.cellCountry]}>
-          <Text style={styles.headerText}>Country</Text>
+        <View style={[styles.headerCell, styles.cellName]}>
+          <Text style={styles.headerText}>Plan Name</Text>
         </View>
-        <View style={[styles.headerCell, styles.cellCode]}>
-          <Text style={styles.headerText}>Code</Text>
+        <View style={[styles.headerCell, styles.cellPrice]}>
+          <Text style={styles.headerText}>Price</Text>
         </View>
-        <View style={[styles.headerCell, styles.cellDial]}>
-          <Text style={styles.headerText}>Dial</Text>
+        <View style={[styles.headerCell, styles.cellAmc]}>
+          <Text style={styles.headerText}>AMC Price</Text>
+        </View>
+        <View style={[styles.headerCell, styles.cellDuration]}>
+          <Text style={styles.headerText}>Duration</Text>
         </View>
         <View style={[styles.headerCell, styles.cellStatus]}>
           <Text style={styles.headerText}>Status</Text>
@@ -461,20 +528,23 @@ export default function CountriesRegistry() {
     );
   }
 
-  function renderTableItem({ item, index }: { item: Country; index: number }) {
+  function renderTableItem({ item, index }: { item: SubscriptionPlan; index: number }) {
     return (
       <View style={styles.tableRow}>
         <View style={[styles.tableCell, styles.cellId]}>
           <Text style={styles.cellText}>{index + 1}</Text>
         </View>
-        <View style={[styles.tableCell, styles.cellCountry]}>
-          <Text style={styles.countryName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+        <View style={[styles.tableCell, styles.cellName]}>
+          <Text style={styles.planTitle} numberOfLines={1}>{item.name}</Text>
         </View>
-        <View style={[styles.tableCell, styles.cellCode]}>
-          <Text style={styles.cellText}>{item.code}</Text>
+        <View style={[styles.tableCell, styles.cellPrice]}>
+          <Text style={styles.cellText}>₹{Number(item.price).toFixed(2)}</Text>
         </View>
-        <View style={[styles.tableCell, styles.cellDial]}>
-          <Text style={styles.cellText}>{item.phone_code || '-'}</Text>
+        <View style={[styles.tableCell, styles.cellAmc]}>
+          <Text style={styles.cellText}>₹{Number(item.amc_price).toFixed(2)}</Text>
+        </View>
+        <View style={[styles.tableCell, styles.cellDuration]}>
+          <Text style={styles.cellText}>{item.duration_days} Days</Text>
         </View>
         <View style={[styles.tableCell, styles.cellStatus]}>
           <Text style={[styles.statusText, { color: item.is_active ? theme.colors.primary : theme.colors.error }]}>
@@ -484,8 +554,6 @@ export default function CountriesRegistry() {
         <View style={[styles.tableCell, styles.cellAction, { borderRightWidth: 0, alignItems: 'center' }]}>
           <Button
             mode={theme.dark ? 'contained-tonal' : 'outlined'}
-            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
-            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
             compact
             onPress={() => handleOpenEdit(item)}
             style={styles.editBtn}
@@ -498,13 +566,13 @@ export default function CountriesRegistry() {
     );
   }
 
-  function renderListItem({ item, index }: { item: Country; index: number }) {
-    const isLast = index === countries.length - 1;
+  function renderListItem({ item, index }: { item: SubscriptionPlan; index: number }) {
+    const isLast = index === plans.length - 1;
     return (
       <View style={[styles.listItem, isLast && styles.listItemLast]}>
         <Avatar.Text
           size={36}
-          label={item.code.substring(0, 2)}
+          label={item.name.substring(0, 2).toUpperCase()}
           style={{ backgroundColor: theme.colors.secondaryContainer }}
           labelStyle={{ color: theme.colors.onSecondaryContainer, fontWeight: '700' }}
         />
@@ -512,18 +580,21 @@ export default function CountriesRegistry() {
           <Text variant="titleMedium" style={{ fontWeight: '700', color: theme.colors.onSurface }}>
             {item.name}
           </Text>
+          {item.description ? (
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }} numberOfLines={1}>
+              {item.description}
+            </Text>
+          ) : null}
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Code: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.code}</Text> | Dial: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.phone_code || '-'}</Text>
+            Price: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>₹{Number(item.price).toFixed(2)}</Text> | AMC: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>₹{Number(item.amc_price).toFixed(2)}</Text>
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
-            Status: <Text style={{ fontWeight: '700', color: item.is_active ? theme.colors.primary : theme.colors.error }}>{item.is_active ? 'ACTIVE' : 'DISABLED'}</Text>
+            Duration: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.duration_days} Days</Text> | Status: <Text style={{ fontWeight: '700', color: item.is_active ? theme.colors.primary : theme.colors.error }}>{item.is_active ? 'ACTIVE' : 'DISABLED'}</Text>
           </Text>
         </View>
         <View style={styles.listRightCol}>
           <Button
             mode={theme.dark ? 'contained-tonal' : 'outlined'}
-            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
-            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
             compact
             onPress={() => handleOpenEdit(item)}
             style={styles.editBtn}
@@ -535,6 +606,25 @@ export default function CountriesRegistry() {
       </View>
     );
   }
+}
+
+// Custom Helper for action icons
+function AppbarActionIcon({ icon, onPress, theme }: { icon: string; onPress: () => void; theme: MD3Theme }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        {
+          padding: 8,
+          borderRadius: 20,
+          backgroundColor: pressed ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+          marginLeft: 4,
+        },
+      ]}
+    >
+      <MaterialCommunityIcons name={icon as any} size={24} color={theme.colors.onPrimary} />
+    </Pressable>
+  );
 }
 
 const makeStyles = (theme: MD3Theme) =>
@@ -569,99 +659,62 @@ const makeStyles = (theme: MD3Theme) =>
     },
     center: {
       flex: 1,
-      justifyContent: 'center',
       alignItems: 'center',
+      justifyContent: 'center',
     },
-    listCard: {
-      flex: 1,
-      margin: 16,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: theme.colors.outline,
-      backgroundColor: theme.colors.surface,
-      overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 6,
-      elevation: 3,
-    },
-    listContent: {
-      paddingBottom: 80,
-    },
-    // Table View
+    // Table styling
     tableContainer: {
-      borderWidth: 1,
-      borderColor: theme.colors.outline,
-      borderRadius: 12,
-      overflow: 'hidden',
       backgroundColor: theme.colors.surface,
-      flex: 1,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
+      overflow: 'hidden',
+      marginBottom: 20,
     },
     tableHeader: {
       flexDirection: 'row',
       backgroundColor: theme.colors.surfaceVariant,
       borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outline,
-      alignItems: 'stretch',
+      borderBottomColor: theme.colors.outlineVariant,
+    },
+    tableRow: {
+      flexDirection: 'row',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outlineVariant,
     },
     headerCell: {
-      paddingHorizontal: 6,
-      paddingVertical: 12,
+      padding: 12,
+      borderRightWidth: 1,
+      borderRightColor: theme.colors.outlineVariant,
+      justifyContent: 'center',
+    },
+    tableCell: {
+      padding: 12,
       borderRightWidth: 1,
       borderRightColor: theme.colors.outlineVariant,
       justifyContent: 'center',
     },
     headerText: {
       fontWeight: '700',
-      fontSize: 12,
       color: theme.colors.onSurfaceVariant,
-      textTransform: 'uppercase',
-    },
-    tableRow: {
-      flexDirection: 'row',
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outline,
-      alignItems: 'stretch',
-    },
-    tableCell: {
-      paddingHorizontal: 6,
-      paddingVertical: 10,
-      borderRightWidth: 1,
-      borderRightColor: theme.colors.outlineVariant,
-      justifyContent: 'center',
-      minHeight: 44,
+      fontSize: 12,
     },
     cellText: {
-      fontSize: 14,
       color: theme.colors.onSurface,
+      fontSize: 13,
     },
-    cellId: {
-      width: 60,
-    },
-    cellCountry: {
-      width: 190,
-    },
-    cellCode: {
-      width: 100,
-    },
-    cellDial: {
-      width: 100,
-    },
-    cellStatus: {
-      width: 130,
-    },
-    cellAction: {
-      width: 120,
-    },
-    countryName: {
+    // Custom widths matching 900 total table size
+    cellId: { width: 50 },
+    cellName: { width: 180 },
+    cellPrice: { width: 120 },
+    cellAmc: { width: 120 },
+    cellDuration: { width: 120 },
+    cellStatus: { width: 150 },
+    cellAction: { width: 160 },
+    planTitle: {
       fontSize: 14,
       fontWeight: '600',
       color: theme.colors.onSurface,
-    },
-    countryCode: {
-      fontSize: 11,
-      color: theme.colors.onSurfaceVariant,
     },
     editBtn: {
       margin: 0,
@@ -673,7 +726,21 @@ const makeStyles = (theme: MD3Theme) =>
       marginVertical: 2,
       marginHorizontal: 8,
     },
-    // List View
+    // List View Card styling
+    listCard: {
+      flex: 1,
+      margin: 16,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+      overflow: 'hidden',
+    },
     listItem: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -684,15 +751,6 @@ const makeStyles = (theme: MD3Theme) =>
     },
     listItemLast: {
       borderBottomWidth: 0,
-    },
-    subDetailRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 4,
-    },
-    detailLabel: {
-      color: theme.colors.onSurfaceVariant,
-      opacity: 0.8,
     },
     listRightCol: {
       alignItems: 'flex-end',
@@ -718,21 +776,5 @@ const makeStyles = (theme: MD3Theme) =>
       right: 0,
       bottom: 0,
       borderRadius: 12,
-    },
-    dialog: {
-      backgroundColor: theme.colors.elevation.level3,
-      borderRadius: 16,
-      position: 'absolute',
-      top: 40,
-      left: 0,
-      right: 0,
-      margin: 16,
-    },
-    dialogSwitchRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 6,
-      paddingHorizontal: 4,
     },
   });

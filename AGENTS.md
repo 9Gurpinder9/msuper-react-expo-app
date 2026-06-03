@@ -113,6 +113,37 @@ app/
 - Theme: Wrap screens in providers from `app/_layout.tsx`. Use `useThemeMode()` for light/dark/system toggle.
 - Auth flow example: `app/(auth)/super-admin/login.tsx` (stores email in AsyncStorage) → `app/(auth)/super-admin/otp-verify.tsx` (verifies & stores `authToken`) → `app/(app)/super-admin/dashboard.tsx` (Authorization: Bearer). Group layouts enforce redirects based on token presence.
 
+## Administrative Registry UI Pattern (Single Source of Truth: `countries.tsx`)
+
+Every list/add/edit administrative registry module (e.g., Countries, States, Cities, etc.) MUST align 100% with the layout defined in [countries.tsx](file:///f:/AI_WORK/React-App/msuper-react-expo-app/frontend/app/(app)/super-admin/countries.tsx):
+
+1. **Header & Search Bar**:
+   - Toggles for search and list/table layout modes belong inside `TopAppBar` header actions.
+   - Search bar renders conditionally underneath the header with style `styles.searchbar`.
+   - Subheader text shows plain record count: `"Total records: X"`.
+
+2. **List View Card**:
+   - Render lists inside a single outer card (`listCard`) with `borderRadius: 12`, border, and shadow.
+   - Separate list items with a bottom divider line (`borderBottomWidth: 1`), removing the bottom line from the last item.
+
+3. **Table View Status Column**:
+   - Do NOT add interactive status switches in the table cells. Display a simple status text badge styled as: `{color: item.is_active ? theme.colors.primary : theme.colors.error}` showing `ACTIVE` or `DISABLED`.
+
+4. **Add/Edit Dialog positioning**:
+   - Set dialog positioning to top-anchored top-to-bottom layout: `position: 'absolute', top: 40, left: 0, right: 0, margin: 16`.
+   - Dialog titles must be centered.
+
+5. **Fields & Validation**:
+   - Format required labels with a red bold asterisk prefix: `<Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>`.
+   - Outlines must reflect error status color with standard fallback colors: `outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}`.
+   - Placeholders must have `'80'` opacity added to text color.
+   - Dialog Actions must stack layout vertically with Save button (`minWidth: 140`, secondary burnt orange theme color) centered, and Close button aligned to the bottom right.
+
+6. **Centralized Save Overlay**:
+   - Save/Update buttons inside dialog modals must NOT show local loading spinner indicators (`loading={saving}`). Instead, keep them `disabled={saving}` to prevent multiple updates.
+   - Integrate a centralized full-screen save progress overlay: wrap `<AppLoader message="..." icon="database-sync-outline" transparent />` inside a React Native Paper `<Portal>` rendering a theme-adaptive, semi-transparent backdrop color (`rgba(0,0,0,0.65)` in dark mode and `rgba(255,255,255,0.75)` in light mode) at the root level of the screen container wrapper view.
+
+
 ## Adding new features (apply these patterns)
 
 - Backend feature
