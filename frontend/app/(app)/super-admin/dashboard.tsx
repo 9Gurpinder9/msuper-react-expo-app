@@ -21,6 +21,7 @@ import TopAppBar from '@super-admin/components/TopAppBar';
 import AppLoader from '@super-admin/components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
+import { useDrawer } from '../../../src/super-admin/context/DrawerContext';
 
 type Widget = {
   key: string;
@@ -29,6 +30,7 @@ type Widget = {
   icon: string;
   color: string; // gradient start
   to?: string;
+  category: 'core' | 'registries';
 };
 
 export default function Dashboard() {
@@ -40,25 +42,14 @@ export default function Dashboard() {
   const { width } = useWindowDimensions();
   const [hoverKey, setHoverKey] = useState<string | null>(null);
 
+  const { openDrawer } = useDrawer();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const drawerX = useRef(new Animated.Value(0)).current; // 0..1 interpolation
   const authErrorShown = useRef(false);
 
   // Diagnostics states
   const [apiHealth, setApiHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
   const [dbHealth, setDbHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
-
-  const drawerWidth = Math.min(320, Math.max(260, Math.floor(width * 0.75)));
-
-  useEffect(() => {
-    Animated.timing(drawerX, {
-      toValue: drawerOpen ? 1 : 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [drawerOpen, drawerX]);
 
   const fetchDiagnostics = async () => {
     // Check API Health
@@ -131,6 +122,7 @@ export default function Dashboard() {
         icon: 'earth',
         color: theme.colors.primary,
         to: '/super-admin/countries',
+        category: 'registries',
       },
       {
         key: 'states',
@@ -139,6 +131,7 @@ export default function Dashboard() {
         icon: 'map-outline',
         color: theme.colors.primary,
         to: '/super-admin/states',
+        category: 'registries',
       },
       {
         key: 'cities',
@@ -147,6 +140,7 @@ export default function Dashboard() {
         icon: 'city-variant-outline',
         color: theme.colors.secondary,
         to: '/super-admin/cities',
+        category: 'registries',
       },
       {
         key: 'subscription-plans',
@@ -155,6 +149,7 @@ export default function Dashboard() {
         icon: 'card-bulleted-outline',
         color: theme.colors.primary,
         to: '/super-admin/subscription-plans',
+        category: 'core',
       },
       {
         key: 'features',
@@ -163,6 +158,7 @@ export default function Dashboard() {
         icon: 'menu-open',
         color: theme.colors.secondary,
         to: '/super-admin/features',
+        category: 'core',
       },
       {
         key: 'roles',
@@ -171,6 +167,7 @@ export default function Dashboard() {
         icon: 'account-key-outline',
         color: theme.colors.primary,
         to: '/super-admin/roles',
+        category: 'core',
       },
       {
         key: 'scan',
@@ -179,6 +176,7 @@ export default function Dashboard() {
         icon: 'file-document-outline',
         color: theme.colors.primary,
         to: '/super-admin/scan-bill',
+        category: 'core',
       },
       {
         key: 'online-scan',
@@ -187,10 +185,14 @@ export default function Dashboard() {
         icon: 'cloud-search-outline',
         color: theme.colors.secondary,
         to: '/super-admin/online-scan-bill',
+        category: 'core',
       },
     ],
     [theme.colors.primary, theme.colors.secondary]
   );
+
+  const coreWidgets = useMemo(() => widgets.filter((w) => w.category === 'core'), [widgets]);
+  const registryWidgets = useMemo(() => widgets.filter((w) => w.category === 'registries'), [widgets]);
 
   const handleLogout = async () => {
     try {
@@ -202,161 +204,18 @@ export default function Dashboard() {
 
 
 
-  const tx = drawerX.interpolate({ inputRange: [0, 1], outputRange: [-drawerWidth, 0] });
-  const overlayOpacity = drawerX.interpolate({ inputRange: [0, 1], outputRange: [0, 0.35] });
-
-  return (
-    <View style={styles.wrapper}>
-      <TopAppBar title="System Console" showMenu onMenuPress={() => setDrawerOpen(true)} />
-
-      {/* Drawer overlay (captures outside clicks) */}
-      {drawerOpen && (
-        <Pressable
-          style={styles.overlayHitArea}
-          pointerEvents="auto"
-          onPress={() => setDrawerOpen(false)}
-          accessibilityLabel="Close drawer by clicking outside"
-        >
-          <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} />
-        </Pressable>
-      )}
-      <Animated.View
-        style={[styles.drawer, { width: drawerWidth, transform: [{ translateX: tx }] }]}
-      >
-        <Surface elevation={0} style={StyleSheet.absoluteFill}>
-          <View style={styles.drawerHeader}>
-            <View style={styles.drawerHeaderLeft}>
-              <MaterialCommunityIcons
-                name="shield-account"
-                size={22}
-                color={theme.colors.onSurface}
-              />
-              <Text variant="titleMedium" style={{ marginLeft: 8, fontWeight: '700' }}>
-                Management Console
-              </Text>
-            </View>
-            <IconButton
-              icon={(p) => <MaterialCommunityIcons name="close" size={p.size} color={p.color} />}
-              size={20}
-              onPress={() => setDrawerOpen(false)}
-              accessibilityLabel="Close menu"
-            />
+  const renderCategorySection = (title: string, items: Widget[]) => {
+    if (items.length === 0) return null;
+    return (
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          <View style={styles.badgeCount}>
+            <Text style={styles.badgeCountText}>{items.length}</Text>
           </View>
-          <View style={styles.drawerItems}>
-            <Button
-              mode="text"
-              onPress={() => {
-                setDrawerOpen(false);
-                router.push('/super-admin/countries');
-              }}
-              icon="earth"
-              contentStyle={{ justifyContent: 'flex-start' }}
-              textColor={theme.colors.onSurface}
-            >
-              Countries Registry
-            </Button>
-            <Button
-              mode="text"
-              onPress={() => {
-                setDrawerOpen(false);
-                router.push('/super-admin/states');
-              }}
-              icon="map-outline"
-              contentStyle={{ justifyContent: 'flex-start' }}
-              textColor={theme.colors.onSurface}
-            >
-              States Registry
-            </Button>
-            <Button
-              mode="text"
-              onPress={() => {
-                setDrawerOpen(false);
-                router.push('/super-admin/cities');
-              }}
-              icon="city-variant-outline"
-              contentStyle={{ justifyContent: 'flex-start' }}
-              textColor={theme.colors.onSurface}
-            >
-              Cities Directory
-            </Button>
-            <Button
-              mode="text"
-              onPress={() => {
-                setDrawerOpen(false);
-                router.push('/super-admin/scan-bill');
-              }}
-              icon="file-document-outline"
-              contentStyle={{ justifyContent: 'flex-start' }}
-              textColor={theme.colors.onSurface}
-            >
-              Scan Bill
-            </Button>
-            <Button
-              mode="text"
-              onPress={() => {
-                setDrawerOpen(false);
-                router.push('/super-admin/online-scan-bill');
-              }}
-              icon="cloud-search-outline"
-              contentStyle={{ justifyContent: 'flex-start' }}
-              textColor={theme.colors.onSurface}
-            >
-              Online Scan Bill
-            </Button>
-            <Button
-              mode="text"
-              onPress={() => {
-                setDrawerOpen(false);
-                router.push('/super-admin/diagnostics');
-              }}
-              icon="pulse"
-              contentStyle={{ justifyContent: 'flex-start' }}
-              textColor={theme.colors.onSurface}
-            >
-              System Diagnostics
-            </Button>
-            <View style={styles.drawerDivider} />
-            <Button
-              mode="text"
-              onPress={() => {
-                setDrawerOpen(false);
-                handleLogout();
-              }}
-              icon="logout"
-              contentStyle={{ justifyContent: 'flex-start' }}
-              textColor={theme.colors.error}
-            >
-              Logout Session
-            </Button>
-            <View style={styles.drawerDivider} />
-            <Text variant="labelMedium" style={styles.drawerSectionHeader}>
-              Theme Color Mode
-            </Text>
-            <SegmentedButtons
-              value={mode}
-              onValueChange={(val) => setMode(val as any)}
-              style={styles.segmentedButtons}
-              buttons={[
-                { value: 'light', label: 'Light', icon: 'white-balance-sunny' },
-                { value: 'dark', label: 'Dark', icon: 'weather-night' },
-                { value: 'system', label: 'Auto', icon: 'theme-light-dark' },
-              ]}
-            />
-            <View style={{ flex: 1 }} />
-            <Text variant="bodySmall" style={styles.versionText}>
-              App Version: {Constants.expoConfig?.version || '1.0.0'}
-            </Text>
-          </View>
-        </Surface>
-      </Animated.View>
-
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.welcomeText}>
-          System Control Panel
-        </Text>
-        
+        </View>
         <View style={styles.grid}>
-          {widgets.map((w) => {
+          {items.map((w) => {
             const isHovered = hoverKey === w.key;
             return (
               <Pressable
@@ -405,6 +264,21 @@ export default function Dashboard() {
             );
           })}
         </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.wrapper}>
+      <TopAppBar title="System Console" showMenu onMenuPress={openDrawer} />
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.welcomeText}>
+          System Control Panel
+        </Text>
+        
+        {renderCategorySection('Core Management', coreWidgets)}
+        {renderCategorySection('Administrative Registries', registryWidgets)}
       </ScrollView>
     </View>
   );
@@ -434,6 +308,36 @@ const makeStyles = (theme: MD3Theme) =>
       fontWeight: '800',
       color: theme.colors.onBackground,
       letterSpacing: -0.3,
+    },
+    sectionContainer: {
+      gap: 12,
+      marginTop: 8,
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 4,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    badgeCount: {
+      backgroundColor: theme.colors.surfaceVariant,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeCountText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
     },
     diagnosticsCard: {
       backgroundColor: theme.colors.surface,
@@ -561,65 +465,5 @@ const makeStyles = (theme: MD3Theme) =>
       fontSize: 13,
       color: theme.colors.onSurfaceVariant,
       opacity: 0.8,
-    },
-    drawer: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      backgroundColor: theme.colors.surface,
-      zIndex: 1000,
-      elevation: 4,
-      borderRightWidth: 1,
-      borderRightColor: theme.colors.outlineVariant,
-    },
-    overlay: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: '#000',
-      zIndex: 900,
-    },
-    overlayHitArea: {
-      ...StyleSheet.absoluteFillObject,
-      zIndex: 900,
-    },
-    drawerHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outlineVariant,
-    },
-    drawerHeaderLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    drawerItems: {
-      paddingVertical: 12,
-      paddingHorizontal: 8,
-      gap: 4,
-      flex: 1,
-    },
-    drawerDivider: {
-      height: 1,
-      backgroundColor: theme.colors.outlineVariant,
-      marginVertical: 8,
-    },
-    drawerSectionHeader: {
-      marginHorizontal: 8,
-      marginVertical: 4,
-      color: theme.colors.onSurfaceVariant,
-      fontWeight: '600',
-    },
-    segmentedButtons: {
-      marginHorizontal: 8,
-      marginVertical: 8,
-    },
-    versionText: {
-      textAlign: 'center',
-      color: theme.colors.onSurfaceVariant,
-      opacity: 0.5,
-      paddingBottom: 16,
     },
   });
