@@ -12,7 +12,6 @@ import {
   Card,
   TextInput,
   Button,
-  HelperText,
   useTheme,
   MD3Theme,
   ActivityIndicator,
@@ -67,6 +66,8 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
   const [verified, setVerified] = useState(false); // for checkmark morph
   const [expiresIn, setExpiresIn] = useState<number | null>(null);
   const expireTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Guard: skip session check once OTP is already verified
+  const verifiedRef = useRef(false);
 
   // Resend state
   const [resendSeconds, setResendSeconds] = useState(RESEND_SECONDS);
@@ -78,6 +79,8 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
     useCallback(() => {
       let active = true;
       (async () => {
+        // Skip if we already verified — prevents false "session expired" toast on navigate
+        if (verifiedRef.current) return;
         const [storedEmail, expiresAtRaw] = await Promise.all([
           AsyncStorage.getItem("loginEmail"),
           AsyncStorage.getItem("loginOtpExpiresAt"),
@@ -166,6 +169,7 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
       } else {
         if (body.token) await AsyncStorage.setItem("authToken", body.token);
         await AsyncStorage.multiRemove(["loginEmail", "loginOtpExpiresAt"]);
+        verifiedRef.current = true; // prevent useFocusEffect from firing session-expired
         showSuccess(body.message || "Verified!");
         setVerified(true); // morph button icon to check
         await Haptics.notificationAsync(
@@ -249,16 +253,21 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
             <Card style={styles.card}>
               <Card.Content style={styles.cardContent}>
                 <Text style={styles.cardHint}>Enter the 6-digit verification code sent to your email.</Text>
+                <Text variant="bodyMedium" style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  OTP Verification Code
+                </Text>
                 <TextInput
-                  label="OTP Verification Code"
                   value={otp}
                   onChangeText={setOtp}
                   mode="outlined"
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
-                  activeOutlineColor={theme.colors.primary}
+                  placeholder="Enter 6-digit code"
+                  placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                  textColor={theme.colors.onSurface}
+                  outlineColor={error ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                  activeOutlineColor={error ? theme.colors.error : theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
-                  error={!!error}
                   keyboardType="number-pad"
                   inputMode="numeric"
                   maxLength={6}
@@ -268,14 +277,15 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
                   textContentType="oneTimeCode"
                   autoComplete="one-time-code"
                   left={
-                    <TextInput.Icon
-                      icon="lock-outline"
-                    />
+                    <TextInput.Icon icon="lock-outline" />
                   }
                   style={styles.input}
                   contentStyle={styles.inputContent}
                   outlineStyle={styles.inputOutline}
                 />
+                {!!error && (
+                  <Text variant="bodySmall" style={styles.errorText}>{error}</Text>
+                )}
                 
                 <View style={styles.expiresRow}>
                   {expiresIn !== null && (
@@ -308,23 +318,24 @@ const OTP_EXPIRE_MS = 3 * 60 * 1000;
                   </View>
                 </View>
 
-                <Button
-                  mode="contained"
-                  onPress={handleVerify}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.button}
-                  contentStyle={styles.buttonContent}
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
-                  icon={
-                    verified
-                      ? "check-circle"
-                      : "shield-check"
-                  }
-                >
-                  {verified ? "Verified" : "Verify Authenticity"}
-                </Button>
+                <View style={styles.actionContainer}>
+                  <Button
+                    mode="contained"
+                    onPress={handleVerify}
+                    disabled={loading}
+                    style={styles.saveBtn}
+                    contentStyle={styles.buttonContent}
+                    buttonColor={theme.colors.secondary}
+                    textColor={theme.colors.onSecondary}
+                    icon={
+                      verified
+                        ? "check-circle"
+                        : "shield-check"
+                    }
+                  >
+                    {verified ? "Verified" : "Verify Authenticity"}
+                  </Button>
+                </View>
               </Card.Content>
             </Card>
           </ScrollView>
@@ -392,6 +403,33 @@ const makeStyles = (theme: MD3Theme) =>
       fontSize: 15,
       color: theme.colors.onSurface,
     },
+    fieldLabel: {
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 4,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 12,
+      marginTop: 2,
+      marginBottom: 4,
+    },
+    actionContainer: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: 12,
+      marginTop: 12,
+    },
+    saveBtn: {
+      borderRadius: 8,
+      alignSelf: 'center',
+      minWidth: 140,
+    },
+    buttonContent: { height: 50 },
     expiresRow: {
       marginVertical: 10,
     },
@@ -403,7 +441,6 @@ const makeStyles = (theme: MD3Theme) =>
       fontWeight: '700',
       color: theme.colors.primary,
     },
-    helperText: { marginBottom: 8 },
     statusRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -424,6 +461,4 @@ const makeStyles = (theme: MD3Theme) =>
     },
     resendProgressWrap: { flex: 1 },
     resendProgress: { height: 4, borderRadius: 2 },
-    button: { marginTop: 12, borderRadius: 12 },
-    buttonContent: { height: 50 },
   });

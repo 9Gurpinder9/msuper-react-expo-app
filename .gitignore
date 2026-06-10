@@ -40,3 +40,28 @@ Thumbs.db
 
 # Frontend runtime logs
 frontend/src/utils/logs/
+
+# Root logs
+backend-dev.log
+expo-web.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# E2E generated data
+frontend/e2e/auth.json
+frontend/e2e/auth_company.json
+frontend/e2e/.playwright_profile/
+frontend/e2e/reports/*.html
+frontend/e2e/reports/*.xml
+frontend/e2e/reports/previous_*.json
+frontend/e2e/reports/previous_*.log
+
+# Server logs
+backend/server.log
+frontend/server.log
+backend/logs/
+
+# Screenshots
+frontend/screencap.png

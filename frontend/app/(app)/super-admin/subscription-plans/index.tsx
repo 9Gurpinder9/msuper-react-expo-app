@@ -1,26 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
+// frontend/app/(app)/super-admin/subscription-plans/index.tsx
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, ScrollView, FlatList, Pressable, Keyboard } from 'react-native';
 import {
   Text,
-  Card,
   Button,
-  TextInput,
-  Switch,
+  useTheme,
+  MD3Theme,
+  Avatar,
   FAB,
   Searchbar,
-  useTheme,
-  Avatar,
-  MD3Theme,
   ActivityIndicator,
-  Portal,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
-import TopSlideDialog from '@super-admin/components/TopSlideDialog';
-import AppLoader from '@super-admin/components/AppLoader';
+import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
@@ -40,7 +36,7 @@ export default function SubscriptionPlansRegistry() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const router = useRouter();
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,25 +52,17 @@ export default function SubscriptionPlansRegistry() {
   const [viewMode, setViewMode] = useState<'table' | 'list'>('list');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchRef = useRef<React.ComponentRef<typeof Searchbar>>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const listRef = useRef<FlatList>(null);
 
-  // Dialog state
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [amcPrice, setAmcPrice] = useState('');
-  const [durationDays, setDurationDays] = useState('30');
-  const [isActive, setIsActive] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollTop(offsetY > 300);
+  };
 
-  // Field validation states
-  const [fieldErrors, setFieldErrors] = useState<{
-    name?: string;
-    price?: string;
-    amcPrice?: string;
-    durationDays?: string;
-  }>({});
+  const scrollToTop = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
 
   const fetchPlans = async (query = '', pageNum = 1, isLoadMore = false) => {
     if (pageNum === 1) {
@@ -122,11 +110,13 @@ export default function SubscriptionPlansRegistry() {
     fetchPlans(search, page + 1, true);
   };
 
-  useEffect(() => {
-    fetchPlans(search, 1, false);
-  }, [search]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchPlans(search, 1, false);
+    }, [search])
+  );
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (searchExpanded) {
       setTimeout(() => searchRef.current?.focus(), 100);
     } else {
@@ -135,119 +125,22 @@ export default function SubscriptionPlansRegistry() {
   }, [searchExpanded]);
 
   const handleOpenAdd = () => {
-    setEditId(null);
-    setName('');
-    setDescription('');
-    setPrice('');
-    setAmcPrice('');
-    setDurationDays('30');
-    setIsActive(true);
-    setFieldErrors({});
-    setDialogVisible(true);
+    router.push('/super-admin/subscription-plans/add-plan');
   };
 
   const handleOpenEdit = (plan: SubscriptionPlan) => {
-    setEditId(plan.id);
-    setName(plan.name);
-    setDescription(plan.description || '');
-    setPrice(String(plan.price));
-    setAmcPrice(String(plan.amc_price));
-    setDurationDays(String(plan.duration_days));
-    setIsActive(plan.is_active);
-    setFieldErrors({});
-    setDialogVisible(true);
-  };
-
-  const validateFields = (): boolean => {
-    const errors: typeof fieldErrors = {};
-    let isValid = true;
-
-    if (!name.trim()) {
-      errors.name = 'Plan name is required.';
-      isValid = false;
-    } else if (name.trim().length < 2) {
-      errors.name = 'Name must be at least 2 characters.';
-      isValid = false;
-    }
-
-    const priceNum = parseFloat(price);
-    const amcNum = parseFloat(amcPrice);
-    const isFree = name.trim().toLowerCase() === 'free';
-
-    if (isNaN(priceNum) || priceNum < 0) {
-      errors.price = 'Price must be a positive number.';
-      isValid = false;
-    } else if (!isFree && priceNum < 1000) {
-      errors.price = 'Paid plans must have a price of at least 1000.';
-      isValid = false;
-    }
-
-    if (isNaN(amcNum) || amcNum < 0) {
-      errors.amcPrice = 'AMC price must be a positive number.';
-      isValid = false;
-    } else if (!isFree && amcNum < 1000) {
-      errors.amcPrice = 'Paid plans must have an AMC price of at least 1000.';
-      isValid = false;
-    }
-
-    // Price must be strictly greater than AMC Price for paid plans
-    if (isValid && !isFree && priceNum <= amcNum) {
-      errors.price = 'Price must be strictly greater than AMC Price.';
-      isValid = false;
-    }
-
-    const durationNum = parseInt(durationDays, 10);
-    if (isNaN(durationNum) || durationNum < 7 || durationNum > 365) {
-      errors.durationDays = 'Duration must be between 7 and 365 days.';
-      isValid = false;
-    }
-
-    setFieldErrors(errors);
-    return isValid;
-  };
-
-  const handleSave = async () => {
-    if (!validateFields()) return;
-
-    setSaving(true);
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const payload = {
-        name: name.trim(),
-        description: description.trim() || null,
-        price: parseFloat(price),
-        amc_price: parseFloat(amcPrice),
-        duration_days: parseInt(durationDays, 10),
-        is_active: isActive,
-      };
-
-      const url = editId
-        ? `${API_BASE_URL}/super-admin/subscription-plans/${editId}`
-        : `${API_BASE_URL}/super-admin/subscription-plans`;
-
-      const method = editId ? 'PUT' : 'POST';
-
-      const response = await fetchJson(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        showSuccess(editId ? 'Plan updated successfully' : 'Plan registered successfully');
-        setDialogVisible(false);
-        fetchPlans(search);
-      } else {
-        showError(response.data?.message || 'Error occurred during save');
-      }
-    } catch {
-      showError('Network error occurred during save');
-    } finally {
-      setSaving(false);
-    }
+    router.push({
+      pathname: '/super-admin/subscription-plans/edit-plan',
+      params: {
+        id: plan.id,
+        name: plan.name,
+        description: plan.description || '',
+        price: String(plan.price),
+        amcPrice: String(plan.amc_price),
+        durationDays: String(plan.duration_days),
+        isActive: String(plan.is_active),
+      },
+    });
   };
 
   return (
@@ -300,6 +193,9 @@ export default function SubscriptionPlansRegistry() {
             <View style={[styles.tableContainer, { width: 900 }]}>
               {renderTableHeader()}
               <FlatList
+                ref={listRef}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
                 data={plans}
                 keyExtractor={(item) => item.id}
                 onEndReached={handleLoadMore}
@@ -325,6 +221,9 @@ export default function SubscriptionPlansRegistry() {
       ) : (
         <View style={styles.listCard}>
           <FlatList
+            ref={listRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             data={plans}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingBottom: 80 }}
@@ -348,155 +247,24 @@ export default function SubscriptionPlansRegistry() {
         </View>
       )}
 
+      {showScrollTop && (
+        <View style={styles.scrollTopContainer}>
+          <FAB
+            icon="chevron-up"
+            style={styles.scrollTopFab}
+            customSize={40}
+            color={theme.colors.onSurface}
+            onPress={scrollToTop}
+          />
+        </View>
+      )}
+
       <FAB
         icon="plus"
         style={[styles.fab, { backgroundColor: theme.colors.secondary }]}
         color={theme.colors.onSecondary}
         onPress={handleOpenAdd}
       />
-
-      <TopSlideDialog
-        visible={dialogVisible}
-        onDismiss={() => setDialogVisible(false)}
-        title={editId ? 'Update Plan Details' : 'Register New Plan'}
-        actions={
-          <View style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-            <Button
-              onPress={handleSave}
-              disabled={saving}
-              mode="contained"
-              buttonColor={theme.colors.secondary}
-              textColor={theme.colors.onSecondary}
-              style={{ borderRadius: 8, alignSelf: 'center', minWidth: 140 }}
-            >
-              {editId ? 'Update' : 'Save'}
-            </Button>
-            <Button
-              onPress={() => setDialogVisible(false)}
-              disabled={saving}
-              mode="text"
-              textColor={theme.colors.onSurfaceVariant + 'B3'}
-              style={{ alignSelf: 'flex-end', marginTop: 4 }}
-            >
-              Close
-            </Button>
-          </View>
-        }
-      >
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            Plan Name
-          </Text>
-          <TextInput
-            value={name}
-            onChangeText={(v) => { setName(v); if (fieldErrors.name) setFieldErrors((e) => ({ ...e, name: undefined })); }}
-            mode="outlined"
-            placeholder="E.g., Free, Silver, Gold"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.name ? theme.colors.error : theme.colors.primary}
-          />
-          {fieldErrors.name ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.name}</Text>
-          ) : null}
-        </View>
-
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Description</Text>
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            mode="outlined"
-            placeholder="Brief details about the plan"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
-            multiline
-            numberOfLines={2}
-          />
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-              <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-              Price
-            </Text>
-            <TextInput
-              value={price}
-              onChangeText={(v) => { setPrice(v); if (fieldErrors.price) setFieldErrors((e) => ({ ...e, price: undefined })); }}
-              mode="outlined"
-              keyboardType="numeric"
-              placeholder="E.g., 0, 1500"
-              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-              textColor={theme.colors.onSurface}
-              outlineColor={fieldErrors.price ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-              activeOutlineColor={fieldErrors.price ? theme.colors.error : theme.colors.primary}
-            />
-            {fieldErrors.price ? (
-              <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.price}</Text>
-            ) : null}
-          </View>
-
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-              <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-              AMC Price
-            </Text>
-            <TextInput
-              value={amcPrice}
-              onChangeText={(v) => { setAmcPrice(v); if (fieldErrors.amcPrice) setFieldErrors((e) => ({ ...e, amcPrice: undefined })); }}
-              mode="outlined"
-              keyboardType="numeric"
-              placeholder="E.g., 0, 1200"
-              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-              textColor={theme.colors.onSurface}
-              outlineColor={fieldErrors.amcPrice ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-              activeOutlineColor={fieldErrors.amcPrice ? theme.colors.error : theme.colors.primary}
-            />
-            {fieldErrors.amcPrice ? (
-              <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.amcPrice}</Text>
-            ) : null}
-          </View>
-        </View>
-
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            Duration (Days)
-          </Text>
-          <TextInput
-            value={durationDays}
-            onChangeText={(v) => { setDurationDays(v); if (fieldErrors.durationDays) setFieldErrors((e) => ({ ...e, durationDays: undefined })); }}
-            mode="outlined"
-            keyboardType="numeric"
-            placeholder="Min 7, Max 365"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.durationDays ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.durationDays ? theme.colors.error : theme.colors.primary}
-          />
-          {fieldErrors.durationDays ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.durationDays}</Text>
-          ) : null}
-        </View>
-
-        <View style={{ gap: 4, alignItems: 'flex-start' }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Enable/Disable</Text>
-          <Switch value={isActive} onValueChange={setIsActive} color={theme.colors.primary} />
-        </View>
-      </TopSlideDialog>
-
-      {/* Centralized saving overlay */}
-      {saving && (
-        <Portal>
-          <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999, backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)', justifyContent: 'center', alignItems: 'center' }]}>
-            <AppLoader message={editId ? 'Updating plan details...' : 'Registering new plan...'} icon="database-sync-outline" transparent />
-          </View>
-        </Portal>
-      )}
     </View>
   );
 
@@ -554,6 +322,8 @@ export default function SubscriptionPlansRegistry() {
         <View style={[styles.tableCell, styles.cellAction, { borderRightWidth: 0, alignItems: 'center' }]}>
           <Button
             mode={theme.dark ? 'contained-tonal' : 'outlined'}
+            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
+            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
             compact
             onPress={() => handleOpenEdit(item)}
             style={styles.editBtn}
@@ -595,6 +365,8 @@ export default function SubscriptionPlansRegistry() {
         <View style={styles.listRightCol}>
           <Button
             mode={theme.dark ? 'contained-tonal' : 'outlined'}
+            buttonColor={theme.dark ? theme.colors.primaryContainer : undefined}
+            textColor={theme.dark ? theme.colors.onPrimaryContainer : theme.colors.primary}
             compact
             onPress={() => handleOpenEdit(item)}
             style={styles.editBtn}
@@ -608,7 +380,6 @@ export default function SubscriptionPlansRegistry() {
   }
 }
 
-// Custom Helper for action icons
 function AppbarActionIcon({ icon, onPress, theme }: { icon: string; onPress: () => void; theme: MD3Theme }) {
   return (
     <Pressable
@@ -657,11 +428,6 @@ const makeStyles = (theme: MD3Theme) =>
       color: theme.colors.onSurfaceVariant,
       fontWeight: '600',
     },
-    center: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     // Table styling
     tableContainer: {
       backgroundColor: theme.colors.surface,
@@ -703,7 +469,6 @@ const makeStyles = (theme: MD3Theme) =>
       color: theme.colors.onSurface,
       fontSize: 13,
     },
-    // Custom widths matching 900 total table size
     cellId: { width: 50 },
     cellName: { width: 180 },
     cellPrice: { width: 120 },
@@ -726,7 +491,6 @@ const makeStyles = (theme: MD3Theme) =>
       marginVertical: 2,
       marginHorizontal: 8,
     },
-    // List View Card styling
     listCard: {
       flex: 1,
       margin: 16,
@@ -772,9 +536,21 @@ const makeStyles = (theme: MD3Theme) =>
     },
     fab: {
       position: 'absolute',
-      margin: 16,
-      right: 0,
-      bottom: 0,
+      right: 24,
+      bottom: 24,
       borderRadius: 12,
+    },
+    scrollTopContainer: {
+      position: 'absolute',
+      bottom: 24,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 99,
+    },
+    scrollTopFab: {
+      backgroundColor: theme.dark ? 'rgba(30, 31, 59, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+      borderRadius: 20,
+      elevation: 3,
     },
   });

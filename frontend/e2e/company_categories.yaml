@@ -1,0 +1,295 @@
+appId: host.exp.exponent
+---
+# 1. Guarantee we start on the Super Admin Dashboard Console
+- runFlow: subflows/ensure_dashboard.yaml
+
+# 2. Scroll down to expose hidden widgets and tap on the 'Company Categories' card
+- scroll
+- tapOn: "Company Categories"
+
+# 3. Assert we arrived on the Company Categories listing screen
+- assertVisible: "Company Categories"
+
+# --- ENTRY 11: Agriculture & Farming ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Agriculture & Farming"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 12: Automotive & Transportation ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Automotive & Transportation"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 13: Aviation & Aerospace ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Aviation & Aerospace"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 14: Biotechnology ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Biotechnology"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 15: Chemicals & Materials ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Chemicals & Materials"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 16: Consulting Services ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Consulting Services"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 17: Entertainment & Media ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Entertainment & Media"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 18: Environmental Services ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Environmental Services"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 19: Fashion & Apparel ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Fashion & Apparel"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 20: Government Sector ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Government Sector"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 21: Insurance Agency ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Insurance Agency"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 22: Legal Services ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Legal Services"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 23: Marketing Agency ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Marketing Agency"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 24: Mining & Metals ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Mining & Metals"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 25: Non-Profit Org ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Non-Profit Org"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 26: Sports & Fitness ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Sports & Fitness"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 27: Telecommunications ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Telecommunications"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 28: Human Resources ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Human Resources"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 29: Security Services ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Security Services"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# --- ENTRY 30: Art & Design ---
+- assertVisible:
+    id: "add-category-fab"
+- tapOn:
+    id: "add-category-fab"
+- assertVisible: "Register New Category"
+- tapOn:
+    id: "category-name-input"
+- inputText: "Art & Design"
+- hideKeyboard
+- tapOn:
+    id: "save-category-button"
+- assertNotVisible: "Register New Category"
+
+# 11. Navigate back to the Dashboard
+- back
+- assertVisible: "System Console"

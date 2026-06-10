@@ -1,49 +1,43 @@
-// frontend/app/(app)/super-admin/countries.tsx
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, Pressable, Keyboard } from 'react-native';
+// frontend/app/(app)/super-admin/states/index.tsx
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, ScrollView, FlatList, Keyboard } from 'react-native';
 import {
   Text,
-  Card,
   Button,
   ActivityIndicator,
-  Dialog,
-  Portal,
-  TextInput,
-  Switch,
+  useTheme,
+  MD3Theme,
+  Avatar,
   FAB,
   Searchbar,
-  useTheme,
-  Avatar,
   Appbar,
-  MD3Theme,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
-import TopSlideDialog from '@super-admin/components/TopSlideDialog';
-import AppLoader from '@super-admin/components/AppLoader';
+import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
 
-type Country = {
+type StateItem = {
   id: string;
-  uuid: string;
   name: string;
   code: string;
-  phone_code: string | null;
+  country_id: string;
+  country_name: string;
   is_active: boolean;
 };
 
-export default function CountriesRegistry() {
+export default function StatesRegistry() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const router = useRouter();
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [states, setStates] = useState<StateItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -57,18 +51,19 @@ export default function CountriesRegistry() {
   const [viewMode, setViewMode] = useState<'table' | 'list'>('list');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchRef = useRef<React.ComponentRef<typeof Searchbar>>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const listRef = useRef<FlatList>(null);
 
-  // Dialog state
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; code?: string }>({});
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollTop(offsetY > 300);
+  };
 
-  const fetchCountries = async (query = '', pageNum = 1, isLoadMore = false) => {
+  const scrollToTop = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
+  const fetchStates = async (query = '', pageNum = 1, isLoadMore = false) => {
     if (pageNum === 1) {
       setLoading(true);
     } else {
@@ -76,7 +71,7 @@ export default function CountriesRegistry() {
     }
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const baseUrl = `${API_BASE_URL}/super-admin/countries`;
+      const baseUrl = `${API_BASE_URL}/super-admin/states`;
       const params = new URLSearchParams();
       if (query) params.append('search', query);
       params.append('page', String(pageNum));
@@ -91,18 +86,18 @@ export default function CountriesRegistry() {
       if (response.ok && response.data) {
         const newItems = response.data.data || [];
         if (isLoadMore) {
-          setCountries((prev) => [...prev, ...newItems]);
+          setStates((prev) => [...prev, ...newItems]);
         } else {
-          setCountries(newItems);
+          setStates(newItems);
         }
         setTotalRecords(response.data.pagination?.total || 0);
         setHasMore(response.data.pagination?.has_more ?? false);
         setPage(pageNum);
       } else {
-        showError(response.data?.message || 'Failed to load countries');
+        showError(response.data?.message || 'Failed to load states');
       }
     } catch {
-      showError('Network error loading countries');
+      showError('Network error loading states');
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -111,14 +106,16 @@ export default function CountriesRegistry() {
 
   const handleLoadMore = () => {
     if (loading || loadingMore || !hasMore) return;
-    fetchCountries(search, page + 1, true);
+    fetchStates(search, page + 1, true);
   };
 
-  useEffect(() => {
-    fetchCountries(search, 1, false);
-  }, [search]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchStates(search, 1, false);
+    }, [search])
+  );
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (searchExpanded) {
       setTimeout(() => searchRef.current?.focus(), 100);
     } else {
@@ -127,117 +124,27 @@ export default function CountriesRegistry() {
   }, [searchExpanded]);
 
   const handleOpenAdd = () => {
-    setEditId(null);
-    setName('');
-    setCode('');
-    setPhoneCode('');
-    setIsActive(true);
-    setFieldErrors({});
-    setDialogVisible(true);
+    router.push('/super-admin/states/add-state');
   };
 
-  const handleOpenEdit = (item: Country) => {
-    setEditId(item.id);
-    setName(item.name);
-    setCode(item.code);
-    setPhoneCode(item.phone_code || '');
-    setIsActive(item.is_active);
-    setFieldErrors({});
-    setDialogVisible(true);
-  };
-
-  const handleSave = async () => {
-    const errors: { name?: string; code?: string } = {};
-    if (!name.trim() || name.trim().length < 2) {
-      errors.name = 'Country Name must be at least 2 characters.';
-    }
-    if (!code.trim() || code.trim().length < 2) {
-      errors.code = 'ISO Code must be at least 2 characters.';
-    }
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-    setFieldErrors({});
-
-    setSaving(true);
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const url = editId
-        ? `${API_BASE_URL}/super-admin/countries/${editId}`
-        : `${API_BASE_URL}/super-admin/countries`;
-      const method = editId ? 'PUT' : 'POST';
-
-      const response = await fetchJson(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          code: code.trim().toUpperCase(),
-          phone_code: phoneCode.trim() || null,
-          is_active: isActive,
-        }),
-      });
-
-      if (response.ok) {
-        showSuccess(response.data?.message || 'Country saved successfully');
-        setDialogVisible(false);
-        fetchCountries(search);
-      } else {
-        // Handle duplicate record conflict or validation message
-        showError(response.data?.message || 'Failed to save country details.');
-      }
-    } catch {
-      showError('Network error saving country.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleToggleStatus = async (item: Country, newStatus: boolean) => {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const url = `${API_BASE_URL}/super-admin/countries/${item.id}/status`;
-
-      // Update locally first for smooth UI UX
-      setCountries((prev) =>
-        prev.map((c) => (c.id === item.id ? { ...c, is_active: newStatus } : c))
-      );
-
-      const response = await fetchJson(url, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_active: newStatus }),
-      });
-
-      if (!response.ok) {
-        // Rollback
-        setCountries((prev) =>
-          prev.map((c) => (c.id === item.id ? { ...c, is_active: !newStatus } : c))
-        );
-        showError(response.data?.message || 'Failed to update status.');
-      } else {
-        showSuccess(response.data?.message || 'Status updated.');
-      }
-    } catch {
-      // Rollback
-      setCountries((prev) =>
-        prev.map((c) => (c.id === item.id ? { ...c, is_active: !newStatus } : c))
-      );
-      showError('Network error updating status.');
-    }
+  const handleOpenEdit = (item: StateItem) => {
+    router.push({
+      pathname: '/super-admin/states/edit-state',
+      params: {
+        id: item.id,
+        name: item.name,
+        code: item.code,
+        countryId: String(item.country_id),
+        countryName: item.country_name,
+        isActive: String(item.is_active),
+      },
+    });
   };
 
   return (
     <View style={styles.wrapper}>
       <TopAppBar
-        title="Countries"
+        title="States"
         showBack
         onBackPress={() => router.back()}
         actions={
@@ -277,14 +184,17 @@ export default function CountriesRegistry() {
       </View>
 
       {loading ? (
-        <AppLoader message="Loading countries..." icon="database-sync-outline" />
+        <AppLoader message="Loading states..." icon="database-sync-outline" />
       ) : viewMode === 'table' ? (
         <View style={{ flex: 1, padding: 16 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={true}>
             <View style={[styles.tableContainer, { width: 700 }]}>
               {renderTableHeader()}
               <FlatList
-                data={countries}
+                ref={listRef}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                data={states}
                 keyExtractor={(item) => item.id}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.3}
@@ -295,9 +205,9 @@ export default function CountriesRegistry() {
                 }
                 ListEmptyComponent={
                   <View style={[styles.emptyContainer, { width: 700 }]}>
-                    <MaterialCommunityIcons name="earth-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
+                    <MaterialCommunityIcons name="map-marker-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                     <Text variant="bodyLarge" style={styles.emptyText}>
-                      No countries registered yet.
+                      No states registered yet.
                     </Text>
                   </View>
                 }
@@ -309,7 +219,10 @@ export default function CountriesRegistry() {
       ) : (
         <View style={styles.listCard}>
           <FlatList
-            data={countries}
+            ref={listRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            data={states}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             onEndReached={handleLoadMore}
@@ -321,13 +234,25 @@ export default function CountriesRegistry() {
             }
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
-                <MaterialCommunityIcons name="earth-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
+                <MaterialCommunityIcons name="map-marker-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                 <Text variant="bodyLarge" style={styles.emptyText}>
-                  No countries registered yet.
+                  No states registered yet.
                 </Text>
               </View>
             }
             renderItem={renderListItem}
+          />
+        </View>
+      )}
+
+      {showScrollTop && (
+        <View style={styles.scrollTopContainer}>
+          <FAB
+            icon="chevron-up"
+            style={styles.scrollTopFab}
+            customSize={40}
+            color={theme.colors.onSurface}
+            onPress={scrollToTop}
           />
         </View>
       )}
@@ -338,101 +263,6 @@ export default function CountriesRegistry() {
         color={theme.colors.onSecondary}
         onPress={handleOpenAdd}
       />
-
-      <TopSlideDialog
-        visible={dialogVisible}
-        onDismiss={() => setDialogVisible(false)}
-        title={editId ? 'Update Country Details' : 'Register New Country'}
-        actions={
-          <View style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-            <Button
-              onPress={handleSave}
-              disabled={saving}
-              mode="contained"
-              buttonColor={theme.colors.secondary}
-              textColor={theme.colors.onSecondary}
-              style={{ borderRadius: 8, alignSelf: 'center', minWidth: 140 }}
-            >
-              {editId ? 'Update' : 'Save'}
-            </Button>
-            <Button
-              onPress={() => setDialogVisible(false)}
-              disabled={saving}
-              mode="text"
-              textColor={theme.colors.onSurfaceVariant + 'B3'}
-              style={{ alignSelf: 'flex-end', marginTop: 4 }}
-            >
-              Close
-            </Button>
-          </View>
-        }
-      >
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            Country Name
-          </Text>
-          <TextInput
-            value={name}
-            onChangeText={(v) => { setName(v); if (fieldErrors.name) setFieldErrors((e) => ({ ...e, name: undefined })); }}
-            mode="outlined"
-            placeholder="E.g., India, United States"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.name ? theme.colors.error : theme.colors.primary}
-          />
-          {fieldErrors.name ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.name}</Text>
-          ) : null}
-        </View>
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            ISO Abbreviated Code
-          </Text>
-          <TextInput
-            value={code}
-            onChangeText={(v) => { setCode(v); if (fieldErrors.code) setFieldErrors((e) => ({ ...e, code: undefined })); }}
-            mode="outlined"
-            placeholder="E.g., IN, US"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            autoCapitalize="characters"
-            maxLength={10}
-            textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.code ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.code ? theme.colors.error : theme.colors.primary}
-          />
-          {fieldErrors.code ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.code}</Text>
-          ) : null}
-        </View>
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Phone Dial Code</Text>
-          <TextInput
-            value={phoneCode}
-            onChangeText={setPhoneCode}
-            mode="outlined"
-            placeholder="E.g., +91, +1"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
-          />
-        </View>
-        <View style={{ gap: 4, alignItems: 'flex-start' }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Enable/Disable</Text>
-          <Switch value={isActive} onValueChange={setIsActive} color={theme.colors.primary} />
-        </View>
-      </TopSlideDialog>
-
-      {/* Centralized saving overlay */}
-      {saving && (
-        <Portal>
-          <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999, backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)', justifyContent: 'center', alignItems: 'center' }]}>
-            <AppLoader message={editId ? 'Updating country details...' : 'Registering new country...'} icon="database-sync-outline" transparent />
-          </View>
-        </Portal>
-      )}
     </View>
   );
 
@@ -442,14 +272,14 @@ export default function CountriesRegistry() {
         <View style={[styles.headerCell, styles.cellId]}>
           <Text style={styles.headerText}>ID</Text>
         </View>
+        <View style={[styles.headerCell, styles.cellState]}>
+          <Text style={styles.headerText}>State</Text>
+        </View>
         <View style={[styles.headerCell, styles.cellCountry]}>
           <Text style={styles.headerText}>Country</Text>
         </View>
         <View style={[styles.headerCell, styles.cellCode]}>
           <Text style={styles.headerText}>Code</Text>
-        </View>
-        <View style={[styles.headerCell, styles.cellDial]}>
-          <Text style={styles.headerText}>Dial</Text>
         </View>
         <View style={[styles.headerCell, styles.cellStatus]}>
           <Text style={styles.headerText}>Status</Text>
@@ -461,20 +291,20 @@ export default function CountriesRegistry() {
     );
   }
 
-  function renderTableItem({ item, index }: { item: Country; index: number }) {
+  function renderTableItem({ item, index }: { item: StateItem; index: number }) {
     return (
       <View style={styles.tableRow}>
         <View style={[styles.tableCell, styles.cellId]}>
           <Text style={styles.cellText}>{index + 1}</Text>
         </View>
+        <View style={[styles.tableCell, styles.cellState]}>
+          <Text style={styles.stateName}>{item.name}</Text>
+        </View>
         <View style={[styles.tableCell, styles.cellCountry]}>
-          <Text style={styles.countryName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+          <Text style={styles.cellText}>{item.country_name}</Text>
         </View>
         <View style={[styles.tableCell, styles.cellCode]}>
           <Text style={styles.cellText}>{item.code}</Text>
-        </View>
-        <View style={[styles.tableCell, styles.cellDial]}>
-          <Text style={styles.cellText}>{item.phone_code || '-'}</Text>
         </View>
         <View style={[styles.tableCell, styles.cellStatus]}>
           <Text style={[styles.statusText, { color: item.is_active ? theme.colors.primary : theme.colors.error }]}>
@@ -498,8 +328,8 @@ export default function CountriesRegistry() {
     );
   }
 
-  function renderListItem({ item, index }: { item: Country; index: number }) {
-    const isLast = index === countries.length - 1;
+  function renderListItem({ item, index }: { item: StateItem; index: number }) {
+    const isLast = index === states.length - 1;
     return (
       <View style={[styles.listItem, isLast && styles.listItemLast]}>
         <Avatar.Text
@@ -513,7 +343,7 @@ export default function CountriesRegistry() {
             {item.name}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 4 }}>
-            Code: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.code}</Text> | Dial: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.phone_code || '-'}</Text>
+            Code: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.code}</Text> | Country: <Text style={{ fontWeight: '600', color: theme.colors.onSurface }}>{item.country_name}</Text>
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>
             Status: <Text style={{ fontWeight: '700', color: item.is_active ? theme.colors.primary : theme.colors.error }}>{item.is_active ? 'ACTIVE' : 'DISABLED'}</Text>
@@ -566,11 +396,6 @@ const makeStyles = (theme: MD3Theme) =>
     totalText: {
       color: theme.colors.onSurfaceVariant,
       fontWeight: '600',
-    },
-    center: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
     },
     listCard: {
       flex: 1,
@@ -639,13 +464,13 @@ const makeStyles = (theme: MD3Theme) =>
     cellId: {
       width: 60,
     },
-    cellCountry: {
+    cellState: {
       width: 190,
     },
-    cellCode: {
-      width: 100,
+    cellCountry: {
+      width: 150,
     },
-    cellDial: {
+    cellCode: {
       width: 100,
     },
     cellStatus: {
@@ -654,14 +479,10 @@ const makeStyles = (theme: MD3Theme) =>
     cellAction: {
       width: 120,
     },
-    countryName: {
+    stateName: {
       fontSize: 14,
       fontWeight: '600',
       color: theme.colors.onSurface,
-    },
-    countryCode: {
-      fontSize: 11,
-      color: theme.colors.onSurfaceVariant,
     },
     editBtn: {
       margin: 0,
@@ -685,15 +506,6 @@ const makeStyles = (theme: MD3Theme) =>
     listItemLast: {
       borderBottomWidth: 0,
     },
-    subDetailRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 4,
-    },
-    detailLabel: {
-      color: theme.colors.onSurfaceVariant,
-      opacity: 0.8,
-    },
     listRightCol: {
       alignItems: 'flex-end',
       justifyContent: 'center',
@@ -714,25 +526,21 @@ const makeStyles = (theme: MD3Theme) =>
     },
     fab: {
       position: 'absolute',
-      margin: 16,
-      right: 0,
-      bottom: 0,
+      right: 24,
+      bottom: 24,
       borderRadius: 12,
     },
-    dialog: {
-      backgroundColor: theme.colors.elevation.level3,
-      borderRadius: 16,
+    scrollTopContainer: {
       position: 'absolute',
-      top: 40,
+      bottom: 24,
       left: 0,
       right: 0,
-      margin: 16,
-    },
-    dialogSwitchRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
       alignItems: 'center',
-      paddingVertical: 6,
-      paddingHorizontal: 4,
+      zIndex: 99,
+    },
+    scrollTopFab: {
+      backgroundColor: theme.dark ? 'rgba(30, 31, 59, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+      borderRadius: 20,
+      elevation: 3,
     },
   });

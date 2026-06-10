@@ -18,7 +18,7 @@ import { useThemeMode } from '@theme';
 import { SegmentedButtons } from 'react-native-paper';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
-import AppLoader from '@super-admin/components/AppLoader';
+import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { useDrawer } from '../../../src/super-admin/context/DrawerContext';
@@ -89,7 +89,7 @@ export default function Dashboard() {
         const body = await res.json();
         if (!res.ok) {
           if (res.status === 401) {
-            if (!authErrorShown.current) {
+            if (!cancelled && !authErrorShown.current) {
               authErrorShown.current = true;
               showError(body.message || 'Session expired. Please log in again.');
             }
@@ -115,6 +115,24 @@ export default function Dashboard() {
 
   const widgets: Widget[] = useMemo(
     () => [
+      {
+        key: 'companies',
+        title: 'Companies',
+        subtitle: 'Manage registered business organizations',
+        icon: 'office-building-outline',
+        color: theme.colors.secondary,
+        to: '/super-admin/companies',
+        category: 'core',
+      },
+      {
+        key: 'company-categories',
+        title: 'Company Categories',
+        subtitle: 'Manage categories of companies',
+        icon: 'shape-outline',
+        color: theme.colors.primary,
+        to: '/super-admin/company-categories',
+        category: 'core',
+      },
       {
         key: 'countries',
         title: 'Countries Registry',
@@ -167,24 +185,6 @@ export default function Dashboard() {
         icon: 'account-key-outline',
         color: theme.colors.primary,
         to: '/super-admin/roles',
-        category: 'core',
-      },
-      {
-        key: 'scan',
-        title: 'Document Scanner',
-        subtitle: 'Upload and process documents via OCR',
-        icon: 'file-document-outline',
-        color: theme.colors.primary,
-        to: '/super-admin/scan-bill',
-        category: 'core',
-      },
-      {
-        key: 'online-scan',
-        title: 'Online Bill Scan',
-        subtitle: 'Advanced online scan & search integration',
-        icon: 'cloud-search-outline',
-        color: theme.colors.secondary,
-        to: '/super-admin/online-scan-bill',
         category: 'core',
       },
     ],

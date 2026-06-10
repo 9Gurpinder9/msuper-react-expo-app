@@ -13,7 +13,10 @@
     "lint": "eslint \"app\" \"src\" --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:e2e:report": "C:\\Users\\gurpi\\.maestro\\maestro\\bin\\maestro.bat test --format junit --output e2e/reports/company_categories_report.xml e2e/company_categories.yaml & xunit-viewer -r e2e/reports/company_categories_report.xml -o e2e/reports/index.html",
+    "test:e2e:playwright": "python e2e/bookmarks_categories_test.py",
+    "test:e2e:playwright:report": "python e2e/reports/generate_tailwind_report.py"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",

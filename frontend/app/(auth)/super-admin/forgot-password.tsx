@@ -6,12 +6,12 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
+  View,
 } from 'react-native';
 import {
   Card,
   TextInput,
   Button,
-  HelperText,
   useTheme,
   MD3Theme,
   ProgressBar,
@@ -169,16 +169,21 @@ export default function ForgotPassword() {
                 <Text variant="bodyMedium" style={styles.cardHint}>
                   Enter your registered email to receive a 6-digit OTP.
                 </Text>
+                <Text variant="bodyMedium" style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  Email Address
+                </Text>
                 <TextInput
-                  label="Email Address"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(v) => { setEmail(v); if (emailErr) setEmailErr(''); }}
                   mode="outlined"
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
-                  activeOutlineColor={theme.colors.primary}
+                  placeholder="admin@system.com"
+                  placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                  textColor={theme.colors.onSurface}
+                  outlineColor={emailErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                  activeOutlineColor={emailErr ? theme.colors.error : theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
-                  error={!!emailErr}
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType="email-address"
@@ -187,9 +192,7 @@ export default function ForgotPassword() {
                   returnKeyType="done"
                   onSubmitEditing={handleSendOtp}
                   left={
-                    <TextInput.Icon
-                      icon="email-outline"
-                    />
+                    <TextInput.Icon icon="email-outline" />
                   }
                   editable={!loading}
                   style={styles.input}
@@ -197,34 +200,35 @@ export default function ForgotPassword() {
                   outlineStyle={styles.inputOutline}
                 />
                 {!!emailErr && (
-                  <HelperText type="error" style={styles.helperText}>
-                    {emailErr}
-                  </HelperText>
+                  <Text variant="bodySmall" style={styles.errorText}>{emailErr}</Text>
                 )}
 
-                <Button
-                  mode="contained"
-                  onPress={handleSendOtp}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.button}
-                  contentStyle={styles.buttonContent}
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
-                  icon="send-outline"
-                >
-                  Send OTP Code
-                </Button>
-                <Button
-                  mode="text"
-                  onPress={async () => {
-                    await resetFlow();
-                    router.replace('/super-admin/login');
-                  }}
-                  style={{ marginTop: 8 }}
-                >
-                  Back to Login
-                </Button>
+                <View style={styles.actionContainer}>
+                  <Button
+                    mode="contained"
+                    onPress={handleSendOtp}
+                    loading={loading}
+                    disabled={loading}
+                    style={styles.saveBtn}
+                    contentStyle={styles.buttonContent}
+                    buttonColor={theme.colors.secondary}
+                    textColor={theme.colors.onSecondary}
+                    icon="send-outline"
+                  >
+                    Send OTP Code
+                  </Button>
+                  <Button
+                    mode="text"
+                    onPress={async () => {
+                      await resetFlow();
+                      router.replace('/super-admin/login');
+                    }}
+                    textColor={theme.colors.onSurfaceVariant + 'B3'}
+                    style={styles.closeBtn}
+                  >
+                    Back to Login
+                  </Button>
+                </View>
               </Card.Content>
             </Card>
           </ScrollView>
@@ -284,6 +288,21 @@ const makeStyles = (theme: MD3Theme) =>
       fontSize: 14,
       lineHeight: 20,
     },
+    fieldLabel: {
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 4,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 12,
+      marginTop: 2,
+      marginBottom: 4,
+    },
     input: {
       marginBottom: 4,
       backgroundColor: theme.colors.surface,
@@ -297,7 +316,19 @@ const makeStyles = (theme: MD3Theme) =>
       fontSize: 15,
       color: theme.colors.onSurface,
     },
-    helperText: { marginBottom: 4, marginTop: 2 },
-    button: { marginTop: 16, borderRadius: 12 },
+    actionContainer: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: 12,
+      marginTop: 16,
+    },
+    saveBtn: {
+      borderRadius: 8,
+      alignSelf: 'center',
+      minWidth: 140,
+    },
+    closeBtn: {
+      alignSelf: 'center',
+    },
     buttonContent: { height: 50 },
   });

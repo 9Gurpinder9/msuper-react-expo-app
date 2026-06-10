@@ -53,25 +53,25 @@ export const lightColors: MD3Theme['colors'] = {
 }
 
 export const darkColors: MD3Theme['colors'] = {
-  primary:              '#0046ff',
-  onPrimary:            '#ffffff',
-  primaryContainer:     '#001bb7',
-  onPrimaryContainer:   '#DBEAFE',
-  secondary:            '#ff8040',
-  onSecondary:          '#000000',
-  secondaryContainer:   '#812000',
-  onSecondaryContainer: '#FFE5D9',
-  tertiary:             '#818CF8',
-  onTertiary:           '#1E1B4B',
-  tertiaryContainer:    '#312E81',
-  onTertiaryContainer:  '#E0E7FF',
+  primary:              '#818CF8', // Softer, calmer indigo
+  onPrimary:            '#1E1B4B',
+  primaryContainer:     '#2A285C', // Muted deep dark indigo container
+  onPrimaryContainer:   '#E0E7FF', // Soft ice blue/lavender text
+  secondary:            '#FB923C', // Calm warm desaturated orange
+  onSecondary:          '#431407',
+  secondaryContainer:   '#5F2514', // Warm desaturated dark rust
+  onSecondaryContainer: '#FFEDD5', // Soft warm cream text
+  tertiary:             '#38BDF8', // Calm sky blue
+  onTertiary:           '#082F49',
+  tertiaryContainer:    '#0C4A6E',
+  onTertiaryContainer:  '#E0F2FE',
   error:                'rgb(255, 180, 171)',
   onError:              'rgb(105, 0, 5)',
   errorContainer:       'rgb(147, 0, 10)',
   onErrorContainer:     'rgb(255, 180, 171)',
-  background:           '#090a14',
-  onBackground:         '#f5f1dc',
-  surface:              '#111226',
+  background:           '#0B0C16', // Slightly warmer dark base
+  onBackground:         '#E2E8F0',
+  surface:              '#121324', // Warm dark card surface
   onSurface:            '#F8FAFC',
   surfaceVariant:       '#1E1F3B',
   onSurfaceVariant:     '#94A3B8',
@@ -81,14 +81,14 @@ export const darkColors: MD3Theme['colors'] = {
   scrim:                'rgb(0, 0, 0)',
   inverseSurface:       '#F8FAFC',
   inverseOnSurface:     '#0F172A',
-  inversePrimary:       '#0046ff',
+  inversePrimary:       '#818CF8',
   elevation: {
     level0: 'transparent',
-    level1: '#111226',
-    level2: '#161830',
-    level3: '#1B1D3B',
-    level4: '#202246',
-    level5: '#262952',
+    level1: '#121324',
+    level2: '#17182E',
+    level3: '#1C1D38',
+    level4: '#222342',
+    level5: '#27294D',
   },
   surfaceDisabled:      'rgba(248, 250, 252, 0.12)',
   onSurfaceDisabled:    'rgba(248, 250, 252, 0.38)',

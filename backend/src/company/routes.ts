@@ -1,6 +1,18 @@
 import { Router } from 'express';
 import { validate } from '../middleware/validate';
-import appSecretGuard from '../middleware/appSecret';
+import authenticateCompany from '../middleware/authenticateCompany';
+
+// Auth controllers
+import {
+  companyLoginHandler,
+  companyVerifyOtpHandler,
+  companyResendOtpHandler,
+  companyResetPasswordRequestHandler,
+  companyResetPasswordVerifyOtpHandler,
+  companyResetPasswordConfirmHandler
+} from './controllers/auth.controller';
+
+// Bookmarks / Categories controllers
 import {
   listBookmarksHandler,
   createBookmarkHandler,
@@ -8,12 +20,20 @@ import {
   deleteBookmarkHandler,
   refreshBookmarkMetaHandler,
 } from './controllers/bookmarks.controller';
+
 import {
   listCategoriesHandler,
   createCategoryHandler,
   updateCategoryHandler,
 } from './controllers/categories.controller';
+
+// Auth schemas
 import {
+  companyLoginSchema,
+  companyVerifyOtpSchema,
+  companyEmailOnlySchema,
+  companyResetPasswordVerifyOtpSchema,
+  companyResetPasswordConfirmSchema,
   createBookmarkSchema,
   updateBookmarkSchema,
   createCategorySchema,
@@ -22,7 +42,16 @@ import {
 
 const router = Router();
 
-router.use(appSecretGuard);
+// --- Public Auth Routes ---
+router.post('/auth/login', validate(companyLoginSchema), companyLoginHandler);
+router.post('/auth/verify-otp', validate(companyVerifyOtpSchema), companyVerifyOtpHandler);
+router.post('/auth/resend-otp', validate(companyEmailOnlySchema), companyResendOtpHandler);
+router.post('/auth/reset-password/request', validate(companyEmailOnlySchema), companyResetPasswordRequestHandler);
+router.post('/auth/reset-password/verify-otp', validate(companyResetPasswordVerifyOtpSchema), companyResetPasswordVerifyOtpHandler);
+router.post('/auth/reset-password/confirm', validate(companyResetPasswordConfirmSchema), companyResetPasswordConfirmHandler);
+
+// --- Protected Workspace Routes ---
+router.use(authenticateCompany);
 
 router.get('/bookmarks', listBookmarksHandler);
 router.post('/bookmarks', validate(createBookmarkSchema), createBookmarkHandler);

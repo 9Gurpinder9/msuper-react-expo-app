@@ -50,6 +50,24 @@ import {
     getRolePermissions,
     updateRolePermissions
 } from './controllers/roleFeature.controller';
+import {
+    getCompanyCategories,
+    createCompanyCategory,
+    updateCompanyCategory,
+    toggleCompanyCategoryStatus
+} from './controllers/companyCategory.controller';
+import {
+    getCompanies,
+    createCompany,
+    updateCompany,
+    toggleCompanyStatus,
+    sendCompanyVerification,
+    verifyCompanyEmail
+} from './controllers/company.controller';
+import {
+    getCompanyFeatures,
+    updateCompanyFeatures
+} from './controllers/companyFeature.controller';
 import { validate } from '../middleware/validate';
 import {
     loginSchema,
@@ -77,7 +95,15 @@ import {
     createRoleSchema,
     updateRoleSchema,
     toggleRoleStatusSchema,
-    updateRolePermissionsSchema
+    updateRolePermissionsSchema,
+    createCompanyCategorySchema,
+    updateCompanyCategorySchema,
+    toggleCompanyCategoryStatusSchema,
+    createCompanySchema,
+    updateCompanySchema,
+    toggleCompanyStatusSchema,
+    updateCompanyFeaturesSchema,
+    verifyCompanyEmailSchema
 } from './schemas';
 
 const router = Router();
@@ -129,4 +155,21 @@ router.patch('/roles/:id/status', authenticate, validate(toggleRoleStatusSchema)
 router.get('/roles/:roleId/permissions', authenticate, getRolePermissions);
 router.post('/roles/:roleId/permissions', authenticate, validate(updateRolePermissionsSchema), updateRolePermissions);
 
+// Company Categories CRUD
+router.get('/company-categories', authenticate, getCompanyCategories);
+router.post('/company-categories', authenticate, validate(createCompanyCategorySchema), createCompanyCategory);
+router.put('/company-categories/:id', authenticate, validate(updateCompanyCategorySchema), updateCompanyCategory);
+router.patch('/company-categories/:id/status', authenticate, validate(toggleCompanyCategoryStatusSchema), toggleCompanyCategoryStatus);
+
+// Companies CRUD
+router.get('/companies', authenticate, getCompanies);
+router.post('/companies', authenticate, validate(createCompanySchema), createCompany);
+router.put('/companies/:id', authenticate, validate(updateCompanySchema), updateCompany);
+router.patch('/companies/:id/status', authenticate, validate(toggleCompanyStatusSchema), toggleCompanyStatus);
+router.post('/companies/:id/send-verification', authenticate, sendCompanyVerification);
+router.post('/companies/:id/verify-email', authenticate, validate(verifyCompanyEmailSchema), verifyCompanyEmail);
+router.get('/companies/:companyId/features', authenticate, getCompanyFeatures);
+router.post('/companies/:companyId/features', authenticate, validate(updateCompanyFeaturesSchema), updateCompanyFeatures);
+
 export default router;
+

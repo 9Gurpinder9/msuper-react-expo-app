@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, APP_SECRET, assertApiBaseUrl } from '../../../config';
 import { fetchJson } from '../../utils/network';
 import type { Category } from './types';
@@ -11,13 +12,27 @@ type ListResponse = {
 };
 type ItemResponse = { success: boolean; data: Category };
 
-const authHeader = APP_SECRET ? { 'x-app-secret': APP_SECRET } : {};
-
 type ListCategoriesParams = {
   limit?: number;
   offset?: number;
   query?: string;
 };
+
+async function getHeaders(isJson = false) {
+  const token = await AsyncStorage.getItem('companyToken');
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } else if (APP_SECRET) {
+    headers['x-app-secret'] = APP_SECRET;
+  }
+  if (isJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+}
 
 export async function listCategories(params: ListCategoriesParams) {
   const base = assertApiBaseUrl();
@@ -31,11 +46,9 @@ export async function listCategories(params: ListCategoriesParams) {
   if (query) {
     searchParams.set('q', query);
   }
+  const headers = await getHeaders();
   const res = await fetchJson<ListResponse>(`${base}/company/categories?${searchParams}`, {
-    headers: {
-      Accept: 'application/json',
-      ...authHeader,
-    },
+    headers,
   });
   const message = (res.data as any)?.message as string | undefined;
   if (!res.ok || !res.data?.success) {
@@ -46,12 +59,10 @@ export async function listCategories(params: ListCategoriesParams) {
 
 export async function createCategory(name: string) {
   const base = assertApiBaseUrl();
+  const headers = await getHeaders(true);
   const res = await fetchJson<ItemResponse>(`${base}/company/categories`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeader,
-    },
+    headers,
     body: JSON.stringify({ name }),
   });
   const message = (res.data as any)?.message as string | undefined;
@@ -63,12 +74,10 @@ export async function createCategory(name: string) {
 
 export async function updateCategory(id: string, name: string) {
   const base = assertApiBaseUrl();
+  const headers = await getHeaders(true);
   const res = await fetchJson<ItemResponse>(`${base}/company/categories/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeader,
-    },
+    headers,
     body: JSON.stringify({ name }),
   });
   const message = (res.data as any)?.message as string | undefined;

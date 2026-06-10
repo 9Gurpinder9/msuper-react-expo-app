@@ -231,15 +231,18 @@ export default function Login() {
                 </View>
 
                 <View style={styles.formCard}>
-                  <Text style={styles.fieldLabel}>Email Address</Text>
+                  <Text style={styles.fieldLabel}>
+                    <Text style={styles.requiredAsterisk}>* </Text>
+                    Email Address
+                  </Text>
                   <TextInput
                     placeholder="admin@system.com"
                     placeholderTextColor={inputPlaceholderColor}
                     value={email}
                     onChangeText={setEmail}
                     mode="outlined"
-                    outlineColor={inputOutlineColor}
-                    activeOutlineColor={inputActiveOutlineColor}
+                    outlineColor={emailErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                    activeOutlineColor={emailErr ? theme.colors.error : inputActiveOutlineColor}
                     cursorColor={inputCursorColor}
                     selectionColor={inputCursorColor}
                     error={!!emailErr}
@@ -262,13 +265,14 @@ export default function Login() {
                     outlineStyle={styles.inputOutline}
                   />
                   {!!emailErr && (
-                    <HelperText type="error" style={styles.helperText}>
-                      {emailErr}
-                    </HelperText>
+                    <Text variant="bodySmall" style={styles.errorText}>{emailErr}</Text>
                   )}
 
                   <View style={styles.fieldHeaderRow}>
-                    <Text style={styles.fieldLabel}>Password</Text>
+                    <Text style={styles.fieldLabel}>
+                      <Text style={styles.requiredAsterisk}>* </Text>
+                      Password
+                    </Text>
                     <Button
                       mode="text"
                       compact
@@ -287,8 +291,8 @@ export default function Login() {
                     value={password}
                     onChangeText={setPassword}
                     mode="outlined"
-                    outlineColor={inputOutlineColor}
-                    activeOutlineColor={inputActiveOutlineColor}
+                    outlineColor={passwordErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                    activeOutlineColor={passwordErr ? theme.colors.error : inputActiveOutlineColor}
                     cursorColor={inputCursorColor}
                     selectionColor={inputCursorColor}
                     ref={passwordRef}
@@ -318,9 +322,7 @@ export default function Login() {
                     outlineStyle={styles.inputOutline}
                   />
                   {!!passwordErr && (
-                    <HelperText type="error" style={styles.helperText}>
-                      {passwordErr}
-                    </HelperText>
+                    <Text variant="bodySmall" style={styles.errorText}>{passwordErr}</Text>
                   )}
 
                   {HCAPTCHA_ENABLED && !HCAPTCHA_SITE_KEY ? (
@@ -329,9 +331,7 @@ export default function Login() {
                     </HelperText>
                   ) : null}
                   {!!captchaErr && (
-                    <HelperText type="error" style={styles.helperText}>
-                      {captchaErr}
-                    </HelperText>
+                    <Text variant="bodySmall" style={styles.errorText}>{captchaErr}</Text>
                   )}
 
                   <Button
@@ -341,8 +341,8 @@ export default function Login() {
                     disabled={loading}
                     style={styles.button}
                     contentStyle={styles.buttonContent}
-                    buttonColor={buttonColor}
-                    textColor={buttonTextColor}
+                    buttonColor={theme.colors.secondary}
+                    textColor={theme.colors.onSecondary}
                     testID="login-button"
                     accessibilityLabel="Authorize"
                     icon="login-variant"
@@ -519,6 +519,8 @@ const makeStyles = (theme: MD3Theme, layout: 'mobile' | 'tablet' | 'desktop') =>
     button: {
       marginTop: 20,
       borderRadius: 12,
+      alignSelf: 'center',
+      minWidth: 140,
     },
     buttonContent: {
       height: 50,
@@ -531,6 +533,17 @@ const makeStyles = (theme: MD3Theme, layout: 'mobile' | 'tablet' | 'desktop') =>
       fontWeight: '700',
       textAlign: 'center',
       opacity: 0.6,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 12,
+      marginTop: 2,
+      marginBottom: 4,
+      paddingHorizontal: 2,
     },
     captchaOverlay: {
       flex: 1,

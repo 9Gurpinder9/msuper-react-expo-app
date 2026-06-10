@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, APP_SECRET, assertApiBaseUrl } from '../../../config';
 import { fetchJson } from '../../utils/network';
 import type { Bookmark, BookmarkFilters, BookmarkInput, BookmarkUpdateInput } from './types';
@@ -17,17 +18,29 @@ const buildQuery = (filters: BookmarkFilters) => {
   return params.toString();
 };
 
-const authHeader = APP_SECRET ? { 'x-app-secret': APP_SECRET } : {};
+async function getHeaders(isJson = false) {
+  const token = await AsyncStorage.getItem('companyToken');
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } else if (APP_SECRET) {
+    headers['x-app-secret'] = APP_SECRET;
+  }
+  if (isJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+}
 
 export async function listBookmarks(filters: BookmarkFilters) {
   const base = assertApiBaseUrl();
   const query = buildQuery(filters);
   const url = `${base}/company/bookmarks${query ? `?${query}` : ''}`;
+  const headers = await getHeaders();
   const res = await fetchJson<ListResponse>(url, {
-    headers: {
-      Accept: 'application/json',
-      ...authHeader,
-    },
+    headers,
   });
   const message = (res.data as any)?.message as string | undefined;
   if (!res.ok || !res.data?.success) {
@@ -38,12 +51,10 @@ export async function listBookmarks(filters: BookmarkFilters) {
 
 export async function createBookmark(input: BookmarkInput) {
   const base = assertApiBaseUrl();
+  const headers = await getHeaders(true);
   const res = await fetchJson<ItemResponse>(`${base}/company/bookmarks`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeader,
-    },
+    headers,
     body: JSON.stringify(input),
   });
   const message = (res.data as any)?.message as string | undefined;
@@ -55,12 +66,10 @@ export async function createBookmark(input: BookmarkInput) {
 
 export async function updateBookmark(id: string, input: BookmarkUpdateInput) {
   const base = assertApiBaseUrl();
+  const headers = await getHeaders(true);
   const res = await fetchJson<ItemResponse>(`${base}/company/bookmarks/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeader,
-    },
+    headers,
     body: JSON.stringify(input),
   });
   const message = (res.data as any)?.message as string | undefined;
@@ -72,12 +81,10 @@ export async function updateBookmark(id: string, input: BookmarkUpdateInput) {
 
 export async function deleteBookmark(id: string) {
   const base = assertApiBaseUrl();
+  const headers = await getHeaders();
   const res = await fetchJson<ItemResponse>(`${base}/company/bookmarks/${id}`, {
     method: 'DELETE',
-    headers: {
-      Accept: 'application/json',
-      ...authHeader,
-    },
+    headers,
   });
   const message = (res.data as any)?.message as string | undefined;
   if (!res.ok || !res.data?.success) {
@@ -88,12 +95,10 @@ export async function deleteBookmark(id: string) {
 
 export async function refreshBookmarkMeta(id: string) {
   const base = assertApiBaseUrl();
+  const headers = await getHeaders();
   const res = await fetchJson<ItemResponse>(`${base}/company/bookmarks/${id}/refresh-meta`, {
     method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      ...authHeader,
-    },
+    headers,
   });
   const message = (res.data as any)?.message as string | undefined;
   if (!res.ok || !res.data?.success) {

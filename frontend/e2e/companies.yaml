@@ -1,0 +1,569 @@
+appId: com.anonymous.msuperapp
+---
+- launchApp
+- assertVisible:
+    text: "Choose Workspace"
+    optional: true
+# 1. Guarantee we start on the Super Admin Dashboard Console
+- runFlow: subflows/ensure_dashboard.yaml
+
+# 2. Navigate to Companies Registry
+- scroll
+- tapOn: "Companies Registry"
+- assertVisible: "Companies"
+- assertNotVisible: "Loading companies..."
+
+# ═══════════════════════════════════════════════
+# ENTRY 1: Test Company Alpha
+# ═══════════════════════════════════════════════
+- assertVisible:
+    id: "add-company-fab"
+- tapOn:
+    id: "add-company-fab"
+- assertVisible: "Register New Company"
+
+- tapOn:
+    id: "company-name-input"
+- inputText: "Test Company Alpha V2"
+- hideKeyboard
+- tapOn:
+    id: "owner-name-input"
+- inputText: "Alpha Owner V2"
+- hideKeyboard
+- tapOn:
+    id: "company-email-input"
+- inputText: "owner.alpha.v2@testcompany.com"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile1-input"
+- inputText: "9876543201"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile2-input"
+- inputText: "9876543211"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "select-category-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-category-trigger"
+- waitForAnimationToEnd
+- tapOn: "Agriculture & Farming"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-country-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-country-trigger"
+- waitForAnimationToEnd
+- tapOn: "India"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-state-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-state-trigger"
+- waitForAnimationToEnd
+- tapOn: "Punjab"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-city-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-city-trigger"
+- waitForAnimationToEnd
+- tapOn: "Muktsar"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-plan-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-plan-trigger"
+- waitForAnimationToEnd
+- tapOn: "Free"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "company-gst-input"
+    direction: DOWN
+- tapOn:
+    id: "company-gst-input"
+- inputText: "22ALPHA0000A1Z5"
+- hideKeyboard
+- tapOn:
+    id: "company-printname-input"
+- inputText: "Alpha Printing"
+- hideKeyboard
+- tapOn:
+    id: "company-address1-input"
+- inputText: "123 Alpha Street"
+- hideKeyboard
+- tapOn:
+    id: "company-address2-input"
+- inputText: "Sector A"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "save-company-button"
+    direction: DOWN
+- tapOn:
+    id: "save-company-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "add-company-fab"
+
+
+# ═══════════════════════════════════════════════
+# ENTRY 2: Test Company Beta
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "add-company-fab"
+- assertVisible: "Register New Company"
+
+- tapOn:
+    id: "company-name-input"
+- inputText: "Test Company Beta V2"
+- hideKeyboard
+- tapOn:
+    id: "owner-name-input"
+- inputText: "Beta Owner V2"
+- hideKeyboard
+- tapOn:
+    id: "company-email-input"
+- inputText: "owner.beta.v2@testcompany.com"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile1-input"
+- inputText: "9876543202"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile2-input"
+- inputText: "9876543212"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "select-category-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-category-trigger"
+- waitForAnimationToEnd
+- tapOn: "Art & Design"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-country-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-country-trigger"
+- waitForAnimationToEnd
+- tapOn: "India"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-state-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-state-trigger"
+- waitForAnimationToEnd
+- tapOn: "Punjab"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-city-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-city-trigger"
+- waitForAnimationToEnd
+- tapOn: "Muktsar"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-plan-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-plan-trigger"
+- waitForAnimationToEnd
+- tapOn: "Free"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "company-gst-input"
+    direction: DOWN
+- tapOn:
+    id: "company-gst-input"
+- inputText: "22BETA0000A1Z5"
+- hideKeyboard
+- tapOn:
+    id: "company-printname-input"
+- inputText: "Beta Printing"
+- hideKeyboard
+- tapOn:
+    id: "company-address1-input"
+- inputText: "456 Beta Street"
+- hideKeyboard
+- tapOn:
+    id: "company-address2-input"
+- inputText: "Sector B"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "save-company-button"
+    direction: DOWN
+- tapOn:
+    id: "save-company-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "add-company-fab"
+
+
+# ═══════════════════════════════════════════════
+# ENTRY 3: Test Company Gamma
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "add-company-fab"
+- assertVisible: "Register New Company"
+
+- tapOn:
+    id: "company-name-input"
+- inputText: "Test Company Gamma V2"
+- hideKeyboard
+- tapOn:
+    id: "owner-name-input"
+- inputText: "Gamma Owner V2"
+- hideKeyboard
+- tapOn:
+    id: "company-email-input"
+- inputText: "owner.gamma.v2@testcompany.com"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile1-input"
+- inputText: "9876543203"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile2-input"
+- inputText: "9876543213"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "select-category-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-category-trigger"
+- waitForAnimationToEnd
+- tapOn: "Automotive & Transportation"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-country-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-country-trigger"
+- waitForAnimationToEnd
+- tapOn: "India"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-state-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-state-trigger"
+- waitForAnimationToEnd
+- tapOn: "Punjab"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-city-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-city-trigger"
+- waitForAnimationToEnd
+- tapOn: "Muktsar"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-plan-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-plan-trigger"
+- waitForAnimationToEnd
+- tapOn: "Free"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "company-gst-input"
+    direction: DOWN
+- tapOn:
+    id: "company-gst-input"
+- inputText: "22GAMMA0000A1Z5"
+- hideKeyboard
+- tapOn:
+    id: "company-printname-input"
+- inputText: "Gamma Printing"
+- hideKeyboard
+- tapOn:
+    id: "company-address1-input"
+- inputText: "789 Gamma Street"
+- hideKeyboard
+- tapOn:
+    id: "company-address2-input"
+- inputText: "Sector G"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "save-company-button"
+    direction: DOWN
+- tapOn:
+    id: "save-company-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "add-company-fab"
+
+
+# ═══════════════════════════════════════════════
+# ENTRY 4: Test Company Delta
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "add-company-fab"
+- assertVisible: "Register New Company"
+
+- tapOn:
+    id: "company-name-input"
+- inputText: "Test Company Delta V2"
+- hideKeyboard
+- tapOn:
+    id: "owner-name-input"
+- inputText: "Delta Owner V2"
+- hideKeyboard
+- tapOn:
+    id: "company-email-input"
+- inputText: "owner.delta.v2@testcompany.com"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile1-input"
+- inputText: "9876543204"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile2-input"
+- inputText: "9876543214"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "select-category-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-category-trigger"
+- waitForAnimationToEnd
+- tapOn: "Aviation & Aerospace"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-country-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-country-trigger"
+- waitForAnimationToEnd
+- tapOn: "India"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-state-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-state-trigger"
+- waitForAnimationToEnd
+- tapOn: "Punjab"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-city-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-city-trigger"
+- waitForAnimationToEnd
+- tapOn: "Muktsar"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-plan-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-plan-trigger"
+- waitForAnimationToEnd
+- tapOn: "Free"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "company-gst-input"
+    direction: DOWN
+- tapOn:
+    id: "company-gst-input"
+- inputText: "22DELTA0000A1Z5"
+- hideKeyboard
+- tapOn:
+    id: "company-printname-input"
+- inputText: "Delta Printing"
+- hideKeyboard
+- tapOn:
+    id: "company-address1-input"
+- inputText: "101 Delta Street"
+- hideKeyboard
+- tapOn:
+    id: "company-address2-input"
+- inputText: "Sector D"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "save-company-button"
+    direction: DOWN
+- tapOn:
+    id: "save-company-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "add-company-fab"
+
+
+# ═══════════════════════════════════════════════
+# ENTRY 5: Test Company Epsilon
+# ═══════════════════════════════════════════════
+- tapOn:
+    id: "add-company-fab"
+- assertVisible: "Register New Company"
+
+- tapOn:
+    id: "company-name-input"
+- inputText: "Test Company Epsilon V2"
+- hideKeyboard
+- tapOn:
+    id: "owner-name-input"
+- inputText: "Epsilon Owner V2"
+- hideKeyboard
+- tapOn:
+    id: "company-email-input"
+- inputText: "owner.epsilon.v2@testcompany.com"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile1-input"
+- inputText: "9876543205"
+- hideKeyboard
+- tapOn:
+    id: "company-mobile2-input"
+- inputText: "9876543215"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "select-category-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-category-trigger"
+- waitForAnimationToEnd
+- tapOn: "Biotechnology"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-country-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-country-trigger"
+- waitForAnimationToEnd
+- tapOn: "India"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-state-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-state-trigger"
+- waitForAnimationToEnd
+- tapOn: "Punjab"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-city-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-city-trigger"
+- waitForAnimationToEnd
+- tapOn: "Muktsar"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-plan-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-plan-trigger"
+- waitForAnimationToEnd
+- tapOn: "Free"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "company-gst-input"
+    direction: DOWN
+- tapOn:
+    id: "company-gst-input"
+- inputText: "22EPSILON00A1Z5"
+- hideKeyboard
+- tapOn:
+    id: "company-printname-input"
+- inputText: "Epsilon Printing"
+- hideKeyboard
+- tapOn:
+    id: "company-address1-input"
+- inputText: "202 Epsilon Street"
+- hideKeyboard
+- tapOn:
+    id: "company-address2-input"
+- inputText: "Sector E"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "save-company-button"
+    direction: DOWN
+- tapOn:
+    id: "save-company-button"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "add-company-fab"
+
+# Done — back to dashboard
+- back
+- assertVisible: "System Console"

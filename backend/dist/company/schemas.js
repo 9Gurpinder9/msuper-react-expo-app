@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateCategorySchema = exports.createCategorySchema = exports.updateBookmarkSchema = exports.createBookmarkSchema = void 0;
+exports.companyResetPasswordConfirmSchema = exports.companyResetPasswordVerifyOtpSchema = exports.companyEmailOnlySchema = exports.companyVerifyOtpSchema = exports.companyLoginSchema = exports.updateCategorySchema = exports.createCategorySchema = exports.updateBookmarkSchema = exports.createBookmarkSchema = void 0;
 const joi_1 = __importDefault(require("joi"));
 exports.createBookmarkSchema = joi_1.default.object({
     title: joi_1.default.string().allow('', null).optional(),
@@ -36,4 +36,26 @@ exports.createCategorySchema = joi_1.default.object({
 });
 exports.updateCategorySchema = joi_1.default.object({
     name: joi_1.default.string().min(2).max(80).required(),
+});
+exports.companyLoginSchema = joi_1.default.object({
+    email: joi_1.default.string().email().lowercase().required(),
+    password: joi_1.default.string().required(),
+    captchaToken: joi_1.default.string().allow('', null).optional(),
+});
+exports.companyVerifyOtpSchema = joi_1.default.object({
+    email: joi_1.default.string().email().lowercase().required(),
+    otp: joi_1.default.string().length(6).required(),
+    rememberMe: joi_1.default.boolean().optional().default(false),
+});
+exports.companyEmailOnlySchema = joi_1.default.object({
+    email: joi_1.default.string().email().lowercase().required(),
+});
+exports.companyResetPasswordVerifyOtpSchema = joi_1.default.object({
+    email: joi_1.default.string().email().lowercase().required(),
+    otp: joi_1.default.string().length(6).required(),
+});
+exports.companyResetPasswordConfirmSchema = joi_1.default.object({
+    email: joi_1.default.string().email().lowercase().required(),
+    resetToken: joi_1.default.string().required(),
+    newPassword: joi_1.default.string().min(6).required(),
 });

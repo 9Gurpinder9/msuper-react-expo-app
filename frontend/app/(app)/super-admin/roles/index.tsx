@@ -1,5 +1,6 @@
+// frontend/app/(app)/super-admin/roles/index.tsx
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, Pressable, Keyboard } from 'react-native';
+import { View, StyleSheet, ScrollView, FlatList, Keyboard } from 'react-native';
 import {
   Text,
   Button,
@@ -13,10 +14,10 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
-import AppLoader from '@super-admin/components/AppLoader';
+import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
@@ -48,6 +49,17 @@ export default function RolesRegistry() {
   const [viewMode, setViewMode] = useState<'table' | 'list'>('list');
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchRef = useRef<React.ComponentRef<typeof Searchbar>>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const listRef = useRef<FlatList>(null);
+
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollTop(offsetY > 300);
+  };
+
+  const scrollToTop = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
 
   const fetchRoles = async (query = '', pageNum = 1, isLoadMore = false) => {
     if (pageNum === 1) {
@@ -95,9 +107,11 @@ export default function RolesRegistry() {
     fetchRoles(search, page + 1, true);
   };
 
-  useEffect(() => {
-    fetchRoles(search, 1, false);
-  }, [search]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchRoles(search, 1, false);
+    }, [search])
+  );
 
   useEffect(() => {
     if (searchExpanded) {
@@ -108,11 +122,11 @@ export default function RolesRegistry() {
   }, [searchExpanded]);
 
   const handleOpenAdd = () => {
-    router.push('/super-admin/roles/manage');
+    router.push('/super-admin/roles/add-role');
   };
 
   const handleOpenEdit = (item: RoleItem) => {
-    router.push(`/super-admin/roles/manage?roleId=${item.id}`);
+    router.push(`/super-admin/roles/edit-role?roleId=${item.id}`);
   };
 
   function renderTableHeader() {
@@ -157,6 +171,7 @@ export default function RolesRegistry() {
             onPress={() => handleOpenEdit(item)}
             style={styles.editBtn}
             labelStyle={styles.editBtnLabel}
+            testID={`edit-role-button-${index}`}
           >
             Edit
           </Button>
@@ -192,6 +207,7 @@ export default function RolesRegistry() {
             onPress={() => handleOpenEdit(item)}
             style={styles.editBtn}
             labelStyle={styles.editBtnLabel}
+            testID={`edit-role-button-${index}`}
           >
             Edit
           </Button>
@@ -250,6 +266,9 @@ export default function RolesRegistry() {
             <View style={[styles.tableContainer, { width: 440 }]}>
               {renderTableHeader()}
               <FlatList
+                ref={listRef}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
                 data={roles}
                 keyExtractor={(item) => item.id}
                 onEndReached={handleLoadMore}
@@ -275,6 +294,9 @@ export default function RolesRegistry() {
       ) : (
         <View style={styles.listCard}>
           <FlatList
+            ref={listRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             data={roles}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
@@ -294,6 +316,18 @@ export default function RolesRegistry() {
               </View>
             }
             renderItem={renderListItem}
+          />
+        </View>
+      )}
+
+      {showScrollTop && (
+        <View style={styles.scrollTopContainer}>
+          <FAB
+            icon="chevron-up"
+            style={styles.scrollTopFab}
+            customSize={40}
+            color={theme.colors.onSurface}
+            onPress={scrollToTop}
           />
         </View>
       )}
@@ -378,7 +412,6 @@ const makeStyles = (theme: MD3Theme) =>
       marginVertical: 2,
       marginHorizontal: 8,
     },
-    // Table View styles
     tableContainer: {
       borderWidth: 1,
       borderColor: theme.colors.outline,
@@ -446,12 +479,23 @@ const makeStyles = (theme: MD3Theme) =>
     },
     fab: {
       position: 'absolute',
-      margin: 16,
-      right: 0,
-      bottom: 0,
+      right: 24,
+      bottom: 24,
       borderRadius: 12,
     },
-    // Width definitions for columns matching 440 total width
+    scrollTopContainer: {
+      position: 'absolute',
+      bottom: 24,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 99,
+    },
+    scrollTopFab: {
+      backgroundColor: theme.dark ? 'rgba(30, 31, 59, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+      borderRadius: 20,
+      elevation: 3,
+    },
     cellId: { width: 50 },
     cellName: { width: 180 },
     cellStatus: { width: 100 },

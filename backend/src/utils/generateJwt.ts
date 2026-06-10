@@ -13,11 +13,12 @@ export interface JwtPayload {
 }
 
 /**
- * Create a signed JWT
+ * Create a signed JWT with optional overrides (e.g. custom expiry)
  */
-export function generateJwt(payload: object): string {
+export function generateJwt(payload: object, options?: jwt.SignOptions): string {
     return jwt.sign(payload, secret, {
         expiresIn: expiry,
+        ...options,
     });
 }
 

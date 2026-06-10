@@ -8,8 +8,9 @@ const path_1 = __importDefault(require("path"));
 const logDir = path_1.default.resolve(__dirname, '../../logs');
 const logger = (0, winston_1.createLogger)({
     level: 'info',
-    format: winston_1.format.combine(winston_1.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston_1.format.printf(({ timestamp, level, message }) => {
-        return `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+    format: winston_1.format.combine(winston_1.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston_1.format.printf(({ timestamp, level, message, ...meta }) => {
+        const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+        return `[${timestamp}] ${level.toUpperCase()}: ${message}${metaStr}`;
     })),
     transports: [
         new winston_1.transports.Console(),

@@ -20,7 +20,7 @@ import { useRouter } from 'expo-router';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
 import TopSlideDialog from '@super-admin/components/TopSlideDialog';
-import AppLoader from '@super-admin/components/AppLoader';
+import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';

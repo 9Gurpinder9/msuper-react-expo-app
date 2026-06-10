@@ -1,0 +1,32 @@
+appId: host.exp.exponent
+---
+# 1. Guarantee we start on the Super Admin Dashboard Console
+- runFlow: subflows/ensure_dashboard.yaml
+
+# 2. Tap on the 'User Roles' widget/card on the dashboard
+- tapOn: "User Roles"
+
+# 3. Assert we arrived on the Roles listing screen
+- assertVisible: "Roles"
+
+# 4. Tap the first Edit button in the roles list (index 0)
+- tapOn:
+    id: "edit-role-button-0"
+
+# 5. Assert we successfully navigated to the edit page
+- assertVisible: "Role Information"
+
+# 6. Toggle the bulk-all switch to enable or disable all feature permissions
+- tapOn:
+    id: "bulk-all-switch"
+
+# 7. Save the role modifications
+- tapOn:
+    id: "role-save-button"
+
+# 8. Wait for the submission to complete and return to the Roles screen
+- assertVisible: "Roles"
+
+# 9. Navigate back to the Dashboard
+- back
+- assertVisible: "System Control Panel"

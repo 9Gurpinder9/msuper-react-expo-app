@@ -7,6 +7,8 @@
       "@theme": ["src/theme/index.ts"],
       "@config": ["config/index.ts"],
       "@super-admin/*": ["src/super-admin/*"],
+      "@components/*": ["src/components/*"],
+      "@company/*": ["src/company/*"],
       "@utils/*": ["src/utils/*"]
     },
     "jsx": "react-native",

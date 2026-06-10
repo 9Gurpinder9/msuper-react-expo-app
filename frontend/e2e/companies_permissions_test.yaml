@@ -1,0 +1,150 @@
+appId: com.anonymous.msuperapp
+---
+- launchApp
+- assertVisible:
+    text: "Choose Workspace"
+    optional: true
+# 1. Ensure we are logged in and on the Super Admin Dashboard
+- runFlow: subflows/ensure_dashboard.yaml
+
+# 2. Navigate to Companies Registry
+- scroll
+- tapOn: "Companies Registry"
+- assertVisible: "Companies"
+- assertNotVisible: "Loading companies..."
+
+# 3. Open Register New Company form
+- assertVisible:
+    id: "add-company-fab"
+- tapOn:
+    id: "add-company-fab"
+- assertVisible: "Register New Company"
+
+# 4. Fill in Company Registration Details
+- tapOn:
+    id: "company-name-input"
+- inputText: "E2E Test Company 2"
+- hideKeyboard
+
+- tapOn:
+    id: "owner-name-input"
+- inputText: "E2E Owner"
+- hideKeyboard
+
+- tapOn:
+    id: "company-email-input"
+- inputText: "e2e.test.company.2@test.com"
+- hideKeyboard
+
+- tapOn:
+    id: "company-mobile1-input"
+- inputText: "9876543299"
+- hideKeyboard
+
+- scrollUntilVisible:
+    element:
+      id: "select-category-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-category-trigger"
+- waitForAnimationToEnd
+- tapOn: "Agriculture & Farming"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-country-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-country-trigger"
+- waitForAnimationToEnd
+- tapOn: "India"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-state-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-state-trigger"
+- waitForAnimationToEnd
+- tapOn: "Punjab"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-city-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-city-trigger"
+- waitForAnimationToEnd
+- tapOn: "Muktsar"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "select-plan-trigger"
+    direction: DOWN
+- tapOn:
+    id: "select-plan-trigger"
+- waitForAnimationToEnd
+- tapOn: "Free"
+- waitForAnimationToEnd
+
+- scrollUntilVisible:
+    element:
+      id: "save-company-button"
+    direction: DOWN
+- tapOn:
+    id: "save-company-button"
+- waitForAnimationToEnd
+
+# 5. Verify Auto-Redirect to Menu Permissions Screen
+- assertVisible: "Menu Permissions"
+- assertVisible: "Target Organization Details"
+- assertVisible: "E2E Test Company 2"
+
+# 6. Interact with Menu Permissions Configuration
+- tapOn:
+    id: "allow-all-menu-switch"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "menu-permissions-search"
+- inputText: "Dashboard"
+- hideKeyboard
+
+- tapOn:
+    id: "save-menu-permissions-button"
+- waitForAnimationToEnd
+
+# 7. Check redirected back to Companies registry list view
+- assertVisible: "Companies"
+
+# 8. Open 3-dot dropdown action menu for the registered company
+- tapOn:
+    id: "company-menu-button-0"
+- waitForAnimationToEnd
+- assertVisible: "Edit"
+- assertVisible: "Edit Menu Permissions"
+
+# 9. Navigate to Edit Company Form
+- tapOn: "Edit"
+- waitForAnimationToEnd
+- assertVisible: "Update Company Details"
+
+# 10. Verify Floating extended FAB Permissions button and click it
+- assertVisible:
+    id: "edit-menu-permissions-button"
+- tapOn:
+    id: "edit-menu-permissions-button"
+- waitForAnimationToEnd
+
+# 11. Verify back on Menu Permissions screen, then go back
+- assertVisible: "Menu Permissions"
+- back
+- waitForAnimationToEnd
+- assertVisible: "Update Company Details"
+- back
+- waitForAnimationToEnd
+- assertVisible: "Companies"

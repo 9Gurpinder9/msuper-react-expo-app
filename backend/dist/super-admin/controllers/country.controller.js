@@ -12,16 +12,35 @@ const logger_1 = __importDefault(require("../../utils/logger"));
 async function getCountries(req, res, next) {
     try {
         const search = req.query.search;
-        let query = supabaseClient_1.default.from('countries').select('*').order('name', { ascending: true });
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 20;
+        const offset = (page - 1) * limit;
+        let query = supabaseClient_1.default
+            .from('countries')
+            .select('*', { count: 'exact' })
+            .order('name', { ascending: true });
         if (search) {
             query = query.or(`name.ilike.%${search}%,code.ilike.%${search}%`);
         }
-        const { data, error } = await query;
+        // Apply pagination range
+        query = query.range(offset, offset + limit - 1);
+        const { data, error, count } = await query;
         if (error) {
             logger_1.default.error('Failed to fetch countries', { error });
             return res.status(500).json({ ok: false, message: 'Failed to fetch countries' });
         }
-        return res.status(200).json({ ok: true, data });
+        const total = count ?? 0;
+        const hasMore = offset + limit < total;
+        return res.status(200).json({
+            ok: true,
+            data,
+            pagination: {
+                page,
+                limit,
+                total,
+                has_more: hasMore,
+            },
+        });
     }
     catch (error) {
         next(error);

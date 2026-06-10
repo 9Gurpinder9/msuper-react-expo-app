@@ -13,8 +13,8 @@ export default function SystemDiagnostics() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
-  const [apiHealth, setApiHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
-  const [dbHealth, setDbHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
+  const [apiHealth, setApiHealth] = useState<'idle' | 'checking' | 'healthy' | 'down'>('idle');
+  const [dbHealth, setDbHealth] = useState<'idle' | 'checking' | 'healthy' | 'down'>('idle');
   const [dbDetails, setDbDetails] = useState<any>(null);
 
   const fetchDiagnostics = async () => {
@@ -51,9 +51,8 @@ export default function SystemDiagnostics() {
     }
   };
 
-  useEffect(() => {
-    fetchDiagnostics();
-  }, []);
+  // Do not fetch automatically on mount to avoid unwanted API calls.
+  // The user can run them manually by clicking the button.
 
   return (
     <View style={styles.wrapper}>
@@ -72,9 +71,33 @@ export default function SystemDiagnostics() {
             </View>
             <View style={styles.statusRow}>
               <Text variant="bodyMedium">Node Status:</Text>
-              <View style={[styles.badge, apiHealth === 'healthy' ? styles.badgeSuccess : styles.badgeError]}>
-                <Text style={[styles.badgeText, apiHealth === 'healthy' ? styles.textSuccess : styles.textError]}>
-                  {apiHealth === 'checking' ? 'CHECKING...' : apiHealth === 'healthy' ? 'ONLINE' : 'OFFLINE'}
+              <View
+                style={[
+                  styles.badge,
+                  apiHealth === 'healthy'
+                    ? styles.badgeSuccess
+                    : apiHealth === 'idle' || apiHealth === 'checking'
+                    ? { backgroundColor: theme.colors.surfaceVariant }
+                    : styles.badgeError,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.badgeText,
+                    apiHealth === 'healthy'
+                      ? styles.textSuccess
+                      : apiHealth === 'idle' || apiHealth === 'checking'
+                      ? { color: theme.colors.onSurfaceVariant }
+                      : styles.textError,
+                  ]}
+                >
+                  {apiHealth === 'idle'
+                    ? 'NOT TESTED'
+                    : apiHealth === 'checking'
+                    ? 'CHECKING...'
+                    : apiHealth === 'healthy'
+                    ? 'ONLINE'
+                    : 'OFFLINE'}
                 </Text>
               </View>
             </View>
@@ -92,9 +115,33 @@ export default function SystemDiagnostics() {
             </View>
             <View style={styles.statusRow}>
               <Text variant="bodyMedium">Connection State:</Text>
-              <View style={[styles.badge, dbHealth === 'healthy' ? styles.badgeSuccess : styles.badgeError]}>
-                <Text style={[styles.badgeText, dbHealth === 'healthy' ? styles.textSuccess : styles.textError]}>
-                  {dbHealth === 'checking' ? 'CHECKING...' : dbHealth === 'healthy' ? 'CONNECTED' : 'DISCONNECTED'}
+              <View
+                style={[
+                  styles.badge,
+                  dbHealth === 'healthy'
+                    ? styles.badgeSuccess
+                    : dbHealth === 'idle' || dbHealth === 'checking'
+                    ? { backgroundColor: theme.colors.surfaceVariant }
+                    : styles.badgeError,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.badgeText,
+                    dbHealth === 'healthy'
+                      ? styles.textSuccess
+                      : dbHealth === 'idle' || dbHealth === 'checking'
+                      ? { color: theme.colors.onSurfaceVariant }
+                      : styles.textError,
+                  ]}
+                >
+                  {dbHealth === 'idle'
+                    ? 'NOT TESTED'
+                    : dbHealth === 'checking'
+                    ? 'CHECKING...'
+                    : dbHealth === 'healthy'
+                    ? 'CONNECTED'
+                    : 'DISCONNECTED'}
                 </Text>
               </View>
             </View>
@@ -118,10 +165,10 @@ export default function SystemDiagnostics() {
           onPress={fetchDiagnostics}
           loading={loading}
           disabled={loading}
-          icon="refresh"
+          icon={apiHealth === 'idle' ? 'play-outline' : 'refresh'}
           style={styles.refreshBtn}
         >
-          Force Retest Telemetry
+          {apiHealth === 'idle' ? 'Run Telemetry Test' : 'Force Retest Telemetry'}
         </Button>
       </ScrollView>
     </View>

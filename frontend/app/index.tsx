@@ -152,33 +152,21 @@ function EntryCardView({ card, index, reveal, onPress, theme }: CardViewProps) {
     ]).start();
   };
 
-  const cardGradient: [string, string] = isDark
-    ? card.key === 'super-admin'
-      ? ['#0046ff', '#001bb7']
-      : ['#ff8040', '#812000']
-    : card.key === 'super-admin'
-      ? [theme.colors.primaryContainer, theme.colors.surface]
-      : [theme.colors.secondaryContainer, theme.colors.surface];
+  const cardGradient: [string, string] = card.key === 'super-admin'
+    ? [theme.colors.primaryContainer, theme.colors.surface]
+    : [theme.colors.secondaryContainer, theme.colors.surface];
 
-  const cardTextColor = isDark
-    ? '#ffffff'
-    : card.key === 'super-admin'
-      ? theme.colors.onPrimaryContainer
-      : theme.colors.onSecondaryContainer;
+  const cardTextColor = card.key === 'super-admin'
+    ? theme.colors.onPrimaryContainer
+    : theme.colors.onSecondaryContainer;
 
-  const cardDescriptionColor = isDark
-    ? 'rgba(255, 255, 255, 0.85)'
-    : cardTextColor;
+  const cardDescriptionColor = cardTextColor;
 
-  const iconShellColor = isDark
-    ? card.key === 'super-admin'
-      ? theme.colors.primary
-      : theme.colors.secondary
-    : card.key === 'super-admin'
-      ? theme.colors.onPrimaryContainer
-      : theme.colors.onSecondaryContainer;
+  const iconShellColor = card.key === 'super-admin'
+    ? theme.colors.primary
+    : theme.colors.secondary;
 
-  const iconShellBackground = isDark ? '#ffffff' : theme.colors.background;
+  const iconShellBackground = theme.colors.background;
 
   return (
     <Animated.View
@@ -274,6 +262,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 48,
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 640,
   },
   hero: {
     marginBottom: 32,

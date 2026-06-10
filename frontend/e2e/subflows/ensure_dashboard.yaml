@@ -1,0 +1,33 @@
+appId: com.anonymous.msuperapp
+---
+# This subflow ensures the test starts from the Super Admin dashboard console.
+# If the app is on the workspace selector screen, we enter the Super Admin workspace.
+# If the app is on a sub-screen, it presses back to return to the dashboard.
+
+- runFlow:
+    when:
+      visible: "Choose Workspace"
+    commands:
+      - tapOn: "Super Admin"
+
+- runFlow:
+    when:
+      notVisible: "System Console"
+    commands:
+      - back
+
+- runFlow:
+    when:
+      notVisible: "System Console"
+    commands:
+      - back
+
+- runFlow:
+    when:
+      notVisible: "System Console"
+    commands:
+      - back
+
+# Assert we are on the dashboard. If this fails, the user must manually log in.
+- assertVisible: "System Console"
+

@@ -271,5 +271,118 @@ export const updateRolePermissionsSchema = Joi.object({
   ).required(),
 });
 
+// Company Categories validation schemas
+export const createCompanyCategorySchema = Joi.object({
+  name: Joi.string().trim().min(2).max(100).required().messages({
+    'string.empty': 'Name is required.',
+    'string.min': 'Name must be at least 2 characters.',
+  }),
+  is_active: Joi.boolean().default(true),
+});
+
+export const updateCompanyCategorySchema = Joi.object({
+  name: Joi.string().trim().min(2).max(100).required(),
+  is_active: Joi.boolean().optional(),
+});
+
+export const toggleCompanyCategoryStatusSchema = Joi.object({
+  is_active: Joi.boolean().required(),
+});
+
+// Companies validation schemas
+export const createCompanySchema = Joi.object({
+  owner_name: Joi.string().trim().min(2).max(100).required().messages({
+    'string.empty': 'Owner Name is required.',
+  }),
+  name: Joi.string().trim().min(2).max(100).required().messages({
+    'string.empty': 'Company Name is required.',
+  }),
+  email: Joi.string().trim().lowercase().email().required().messages({
+    'string.empty': 'Email is required.',
+    'string.email': 'Email must be valid.',
+  }),
+  mobile1: Joi.string().trim().min(7).max(15).required().messages({
+    'string.empty': 'Mobile 1 is required.',
+  }),
+  mobile2: Joi.string().trim().max(15).optional().allow('', null),
+  country_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({
+    'any.required': 'Country selection is required.',
+  }),
+  country_name: Joi.string().trim().required().messages({
+    'string.empty': 'Country Name is required.',
+  }),
+  state_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({
+    'any.required': 'State selection is required.',
+  }),
+  state_name: Joi.string().trim().required().messages({
+    'string.empty': 'State Name is required.',
+  }),
+  city_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({
+    'any.required': 'City selection is required.',
+  }),
+  city_name: Joi.string().trim().required().messages({
+    'string.empty': 'City Name is required.',
+  }),
+  category_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({
+    'any.required': 'Category selection is required.',
+  }),
+  category_name: Joi.string().trim().required().messages({
+    'string.empty': 'Category Name is required.',
+  }),
+  plan_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({
+    'any.required': 'Subscription Plan selection is required.',
+  }),
+  gst_no: Joi.string().trim().max(20).optional().allow('', null),
+  address1: Joi.string().trim().max(255).optional().allow('', null),
+  address2: Joi.string().trim().max(255).optional().allow('', null),
+  print_name: Joi.string().trim().max(100).optional().allow('', null),
+  validity_date: Joi.date().iso().required().messages({
+    'any.required': 'Validity Date is required.',
+  }),
+  expiry_date: Joi.date().iso().min(Joi.ref('validity_date')).required().messages({
+    'any.required': 'Expiry Date is required.',
+    'date.min': 'Expiry Date must be after or equal to Validity Date.',
+  }),
+  is_active: Joi.boolean().default(true),
+});
+
+export const updateCompanySchema = createCompanySchema.keys({
+  password: Joi.string()
+    .trim()
+    .min(8)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
+    .optional()
+    .allow('', null)
+    .messages({
+      'string.min': 'Password must be at least 8 characters long.',
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+    }),
+  confirm_password: Joi.any()
+    .valid(Joi.ref('password'))
+    .optional()
+    .messages({
+      'any.only': 'Passwords do not match.',
+    }),
+});
+
+export const toggleCompanyStatusSchema = Joi.object({
+  is_active: Joi.boolean().required(),
+});
+
+export const updateCompanyFeaturesSchema = Joi.object({
+  feature_ids: Joi.array().items(Joi.number().integer()).required().messages({
+    'array.base': 'Features must be a list of feature IDs.',
+    'any.required': 'Features list is required.',
+  }),
+});
+
+export const verifyCompanyEmailSchema = Joi.object({
+  otp: Joi.string().trim().length(6).required().messages({
+    'string.empty': 'OTP is required.',
+    'string.length': 'OTP must be exactly 6 characters.',
+  }),
+});
+
+
 
 

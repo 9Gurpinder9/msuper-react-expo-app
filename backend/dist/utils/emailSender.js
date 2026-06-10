@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendOtpEmail = sendOtpEmail;
+exports.sendCompanyVerificationEmail = sendCompanyVerificationEmail;
 exports.sendPasswordResetOtpEmail = sendPasswordResetOtpEmail;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = __importDefault(require("dotenv"));
@@ -35,6 +36,46 @@ async function sendOtpEmail(to, otp) {
         from: `"${appName} Support" <${process.env.SMTP_USER}>`,
         to,
         subject: `${appName} Login OTP`,
+        html: htmlTemplate,
+    });
+}
+async function sendCompanyVerificationEmail(to, otp, companyName, ownerName) {
+    const transporter = nodemailer_1.default.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+        },
+    });
+    const htmlTemplate = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; background-color: #f8fafc; color: #1e293b;">
+      <div style="max-width: 550px; margin: auto; background: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h2 style="color: #ea580c; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-top: 0;">🏢 Company Email Verification</h2>
+        <p>Hello <strong>${ownerName}</strong>,</p>
+        <p>Thank you for registering your company on <strong>${appName}</strong>.</p>
+        <p>Please verify that the email address associated with your company registration profile is correct.</p>
+        
+        <div style="background-color: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0;">
+          <h4 style="margin: 0 0 8px 0; color: #475569; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Company Profile Details</h4>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Company Name:</strong> ${companyName}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Owner Name:</strong> ${ownerName}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Registered Email:</strong> ${to}</p>
+        </div>
+
+        <p>Enter the following 6-digit OTP verification code in the administration panel:</p>
+        <div style="font-size: 28px; font-weight: bold; background: #fef2f2; color: #991b1b; border: 1px dashed #fca5a5; padding: 12px 24px; border-radius: 8px; text-align: center; margin: 24px auto; max-width: 200px; letter-spacing: 0.1em;">
+          ${otp}
+        </div>
+        <p style="font-size: 13px; color: #64748b;">This OTP code is valid for 15 minutes. If you did not register this company profile, please ignore this email.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 0;">Best regards,<br/>The ${appName} Team</p>
+      </div>
+    </div>
+  `;
+    await transporter.sendMail({
+        from: `"${appName} Security" <${process.env.SMTP_USER}>`,
+        to,
+        subject: `Verify Email for ${companyName} - ${appName}`,
         html: htmlTemplate,
     });
 }

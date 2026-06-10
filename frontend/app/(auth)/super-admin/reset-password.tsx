@@ -6,12 +6,12 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
+  View,
 } from 'react-native';
 import {
   Card,
   TextInput,
   Button,
-  HelperText,
   useTheme,
   MD3Theme,
   ProgressBar,
@@ -217,18 +217,23 @@ export default function ResetPassword() {
                   contentStyle={styles.inputContent}
                   outlineStyle={styles.inputOutline}
                 />
+                <Text variant="bodyMedium" style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  New Password
+                </Text>
                 <TextInput
-                  label="New Password"
                   value={newPassword}
-                  onChangeText={setNewPassword}
+                  onChangeText={(v) => { setNewPassword(v); if (newPasswordErr) setNewPasswordErr(''); }}
                   mode="outlined"
+                  placeholder="Min 8 chars, upper, lower, number, symbol"
+                  placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                  textColor={theme.colors.onSurface}
                   secureTextEntry={!showNewPassword}
-                  error={!!newPasswordErr}
                   textContentType="newPassword"
                   autoComplete="new-password"
                   returnKeyType="next"
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
-                  activeOutlineColor={theme.colors.primary}
+                  outlineColor={newPasswordErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                  activeOutlineColor={newPasswordErr ? theme.colors.error : theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
                   left={
@@ -259,23 +264,26 @@ export default function ResetPassword() {
                   outlineStyle={styles.inputOutline}
                 />
                 {!!newPasswordErr && (
-                  <HelperText type="error" style={styles.helperText}>
-                    {newPasswordErr}
-                  </HelperText>
+                  <Text variant="bodySmall" style={styles.errorText}>{newPasswordErr}</Text>
                 )}
+                <Text variant="bodyMedium" style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  Confirm Password
+                </Text>
                 <TextInput
-                  label="Confirm Password"
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(v) => { setConfirmPassword(v); if (confirmPasswordErr) setConfirmPasswordErr(''); }}
                   mode="outlined"
+                  placeholder="Re-enter new password"
+                  placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                  textColor={theme.colors.onSurface}
                   secureTextEntry={!showConfirmPassword}
-                  error={!!confirmPasswordErr}
                   textContentType="password"
                   autoComplete="password"
                   returnKeyType="done"
                   onSubmitEditing={handleResetPassword}
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
-                  activeOutlineColor={theme.colors.primary}
+                  outlineColor={confirmPasswordErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                  activeOutlineColor={confirmPasswordErr ? theme.colors.error : theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
                   left={
@@ -306,36 +314,37 @@ export default function ResetPassword() {
                   outlineStyle={styles.inputOutline}
                 />
                 {!!confirmPasswordErr && (
-                  <HelperText type="error" style={styles.helperText}>
-                    {confirmPasswordErr}
-                  </HelperText>
+                  <Text variant="bodySmall" style={styles.errorText}>{confirmPasswordErr}</Text>
                 )}
 
-                <Button
-                  mode="contained"
-                  onPress={handleResetPassword}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.button}
-                  contentStyle={styles.buttonContent}
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
-                  icon={({ size, color }) => (
-                    <MaterialCommunityIcons name="check-circle" size={size} color={color} />
-                  )}
-                >
-                  Update Password
-                </Button>
-                <Button
-                  mode="text"
-                  onPress={async () => {
-                    await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
-                    router.replace('/super-admin/login');
-                  }}
-                  style={{ marginTop: 8 }}
-                >
-                  Back to Login
-                </Button>
+                <View style={styles.actionContainer}>
+                  <Button
+                    mode="contained"
+                    onPress={handleResetPassword}
+                    loading={loading}
+                    disabled={loading}
+                    style={styles.saveBtn}
+                    contentStyle={styles.buttonContent}
+                    buttonColor={theme.colors.secondary}
+                    textColor={theme.colors.onSecondary}
+                    icon={({ size, color }) => (
+                      <MaterialCommunityIcons name="check-circle" size={size} color={color} />
+                    )}
+                  >
+                    Update Password
+                  </Button>
+                  <Button
+                    mode="text"
+                    onPress={async () => {
+                      await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
+                      router.replace('/super-admin/login');
+                    }}
+                    textColor={theme.colors.onSurfaceVariant + 'B3'}
+                    style={styles.closeBtn}
+                  >
+                    Back to Login
+                  </Button>
+                </View>
               </Card.Content>
             </Card>
           </ScrollView>
@@ -408,7 +417,35 @@ const makeStyles = (theme: MD3Theme) =>
       fontSize: 15,
       color: theme.colors.onSurface,
     },
-    helperText: { marginBottom: 4, marginTop: 2 },
-    button: { marginTop: 16, borderRadius: 12 },
+    fieldLabel: {
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 4,
+      marginTop: 12,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 12,
+      marginTop: 2,
+      marginBottom: 4,
+    },
+    actionContainer: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: 12,
+      marginTop: 16,
+    },
+    saveBtn: {
+      borderRadius: 8,
+      alignSelf: 'center',
+      minWidth: 140,
+    },
+    closeBtn: {
+      alignSelf: 'center',
+    },
     buttonContent: { height: 50 },
   });

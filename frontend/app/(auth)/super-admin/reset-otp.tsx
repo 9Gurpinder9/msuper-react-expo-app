@@ -247,11 +247,17 @@ export default function ResetOtp() {
                 <Text style={styles.cardHint}>
                   Enter the 6-digit OTP sent to {email}.
                 </Text>
+                <Text variant="bodyMedium" style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  OTP Code
+                </Text>
                 <TextInput
-                  label="OTP Code"
                   value={otp}
                   onChangeText={setOtp}
                   mode="outlined"
+                  placeholder="Enter 6-digit code"
+                  placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                  textColor={theme.colors.onSurface}
                   keyboardType="number-pad"
                   inputMode="numeric"
                   maxLength={6}
@@ -260,7 +266,7 @@ export default function ResetOtp() {
                   editable={!loading && !resending}
                   textContentType="oneTimeCode"
                   autoComplete="one-time-code"
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
+                  outlineColor={isDark ? 'rgba(255,255,255,0.55)' : '#64748B'}
                   activeOutlineColor={theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
@@ -309,36 +315,38 @@ export default function ResetOtp() {
                   </View>
                 )}
 
-                <Button
-                  mode="contained"
-                  onPress={handleVerify}
-                  loading={loading}
-                  disabled={loading}
-                  style={styles.button}
-                  contentStyle={styles.buttonContent}
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
-                  icon={
-                    verified
-                      ? ({ size, color }) => (
-                          <MaterialCommunityIcons name="check-circle" size={size} color={color} />
-                        )
-                      : undefined
-                  }
-                >
-                  {verified ? 'Verified' : 'Verify'}
-                </Button>
-
-                <Button
-                  mode="text"
-                  onPress={async () => {
-                    await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
-                    router.replace('/super-admin/forgot-password');
-                  }}
-                  style={{ marginTop: 8 }}
-                >
-                  Back to Email
-                </Button>
+                <View style={styles.actionContainer}>
+                  <Button
+                    mode="contained"
+                    onPress={handleVerify}
+                    loading={loading}
+                    disabled={loading}
+                    style={styles.saveBtn}
+                    contentStyle={styles.buttonContent}
+                    buttonColor={theme.colors.secondary}
+                    textColor={theme.colors.onSecondary}
+                    icon={
+                      verified
+                        ? ({ size, color }) => (
+                            <MaterialCommunityIcons name="check-circle" size={size} color={color} />
+                          )
+                        : undefined
+                    }
+                  >
+                    {verified ? 'Verified' : 'Verify'}
+                  </Button>
+                  <Button
+                    mode="text"
+                    onPress={async () => {
+                      await AsyncStorage.multiRemove(['resetEmail', 'resetToken', 'resetStage', 'resetOtpExpiresAt']);
+                      router.replace('/super-admin/forgot-password');
+                    }}
+                    textColor={theme.colors.onSurfaceVariant + 'B3'}
+                    style={styles.closeBtn}
+                  >
+                    Back to Email
+                  </Button>
+                </View>
               </Card.Content>
             </Card>
           </ScrollView>
@@ -411,6 +419,30 @@ const makeStyles = (theme: MD3Theme) =>
       fontSize: 15,
       color: theme.colors.onSurface,
     },
+    fieldLabel: {
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 4,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
+    actionContainer: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: 12,
+      marginTop: 12,
+    },
+    saveBtn: {
+      borderRadius: 8,
+      alignSelf: 'center',
+      minWidth: 140,
+    },
+    closeBtn: {
+      alignSelf: 'center',
+    },
+    buttonContent: { height: 50 },
     expiryText: {
       marginTop: 4,
       marginBottom: 12,
@@ -433,6 +465,4 @@ const makeStyles = (theme: MD3Theme) =>
     },
     resendProgressWrap: { flex: 1 },
     resendProgress: { height: 4, borderRadius: 2 },
-    button: { marginTop: 12, borderRadius: 12 },
-    buttonContent: { height: 50 },
   });

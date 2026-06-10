@@ -1,0 +1,68 @@
+appId: com.anonymous.msuperreactexpoapp
+---
+- clearState
+- runFlow:
+    file: common/login_super_admin.yaml
+- tapOn: "Companies"
+- assertVisible: "Total records:"
+# Add a unique company
+- tapOn:
+    id: "add-company-fab"
+- inputText:
+    id: "company-name-input"
+    text: "E2E Verify Company"
+- inputText:
+    id: "owner-name-input"
+    text: "Maestro Owner"
+- inputText:
+    id: "company-email-input"
+    text: "verify-e2e@maestro.com"
+- inputText:
+    id: "company-mobile1-input"
+    text: "9876543210"
+# Select Category
+- tapOn:
+    id: "select-category-trigger"
+- tapOn:
+    id: "select-option-1"
+# Select Country, State, City
+- tapOn:
+    id: "select-country-trigger"
+- tapOn: "India"
+- tapOn:
+    id: "select-state-trigger"
+- tapOn: "Punjab"
+- tapOn:
+    id: "select-city-trigger"
+- tapOn:
+    id: "select-option-1"
+# Select Plan
+- tapOn:
+    id: "select-plan-trigger"
+- tapOn:
+    id: "select-option-1"
+- tapOn:
+    id: "save-company-button"
+- assertVisible: "Menu Permissions"
+# Navigate back to companies list
+- tapOn: "chevron-left"
+- assertVisible: "Total records:"
+# Search for the created company
+- tapOn:
+    id: "search-toggle-button"
+- inputText:
+    id: "companies-searchbar"
+    text: "E2E Verify Company"
+# Click three dots menu options
+- tapOn:
+    id: "company-menu-button-0"
+# Click Verify Email
+- tapOn:
+    id: "verify-email-item-0"
+# Fill code 123456 (default OTP or mock logic can check OTP verify console log)
+- assertVisible: "Email Verification"
+- inputText:
+    id: "verification-otp-input"
+    text: "123456"
+- tapOn:
+    id: "confirm-verification-button"

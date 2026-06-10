@@ -11,11 +11,12 @@ dotenv_1.default.config();
 const secret = (process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev-secret' : undefined));
 const expiry = process.env.JWT_EXPIRY || '1d';
 /**
- * Create a signed JWT
+ * Create a signed JWT with optional overrides (e.g. custom expiry)
  */
-function generateJwt(payload) {
+function generateJwt(payload, options) {
     return jsonwebtoken_1.default.sign(payload, secret, {
         expiresIn: expiry,
+        ...options,
     });
 }
 /**

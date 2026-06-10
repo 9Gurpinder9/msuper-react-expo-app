@@ -1,21 +1,21 @@
+// frontend/app/(app)/super-admin/roles/add.tsx
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, useWindowDimensions } from 'react-native';
 import {
   Text,
   Button,
   TextInput as PaperTextInput,
   Switch,
-  ActivityIndicator,
   Searchbar,
   useTheme,
   MD3Theme,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
-import AppLoader from '@super-admin/components/AppLoader';
+import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
@@ -27,16 +27,12 @@ type FeatureItem = {
   is_active: boolean;
 };
 
-type PermissionItem = {
-  feature_id: string;
-  actions: string[];
-};
-
-export default function ManageRolePage() {
+export default function AddRolePage() {
+  const { width } = useWindowDimensions();
+  const isLargeScreen = width >= 1024;
   const theme = useTheme();
   const styles = makeStyles(theme);
   const router = useRouter();
-  const { roleId } = useLocalSearchParams<{ roleId?: string }>();
   const { showError, showSuccess } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -51,7 +47,6 @@ export default function ManageRolePage() {
 
   // Role details states
   const [name, setName] = useState('');
-  const [isActive, setIsActive] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string }>({});
 
   // Permissions state
@@ -126,34 +121,6 @@ export default function ManageRolePage() {
         const activeFeatures = (featuresRes.data.data || []).filter((f: any) => f.is_active);
         setFeatures(activeFeatures);
       }
-
-      // If Edit Mode, load role metadata and current permissions
-      if (roleId) {
-        const [roleRes, permRes] = await Promise.all([
-          fetchJson(`${API_BASE_URL}/super-admin/roles?limit=1000`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }), // Get all roles to find the editing metadata
-          fetchJson(`${API_BASE_URL}/super-admin/roles/${roleId}/permissions`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        if (roleRes.ok && roleRes.data) {
-          const matchedRole = (roleRes.data.data || []).find((r: any) => String(r.id) === String(roleId));
-          if (matchedRole) {
-            setName(matchedRole.name);
-            setIsActive(matchedRole.is_active);
-          }
-        }
-
-        if (permRes.ok && permRes.data) {
-          const permMap: Record<string, string[]> = {};
-          (permRes.data.data || []).forEach((p: PermissionItem) => {
-            permMap[String(p.feature_id)] = (p.actions || []).map(a => a.toUpperCase());
-          });
-          setPermissions(permMap);
-        }
-      }
     } catch {
       showError('Failed to load metadata');
     } finally {
@@ -163,7 +130,7 @@ export default function ManageRolePage() {
 
   useEffect(() => {
     loadData();
-  }, [roleId]);
+  }, []);
 
   const togglePermission = (featureId: string, action: string) => {
     setPermissions((prev) => {
@@ -198,25 +165,22 @@ export default function ManageRolePage() {
 
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const url = roleId
-        ? `${API_BASE_URL}/super-admin/roles/${roleId}`
-        : `${API_BASE_URL}/super-admin/roles`;
-      const method = roleId ? 'PUT' : 'POST';
+      const url = `${API_BASE_URL}/super-admin/roles`;
 
       const response = await fetchJson(url, {
-        method,
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: name.trim(),
-          is_active: isActive,
+          is_active: true, // Default to true on creation
         }),
       });
 
       if (response.ok) {
-        const savedRoleId = roleId || response.data?.id;
+        const savedRoleId = response.data?.id;
         if (savedRoleId) {
           const payload = {
             permissions: Object.keys(permissions).map((fid) => ({
@@ -236,7 +200,7 @@ export default function ManageRolePage() {
             showError('Role saved, but failed to sync permissions');
           }
         }
-        showSuccess(roleId ? 'Role updated successfully' : 'Role registered successfully');
+        showSuccess('Role registered successfully');
         router.back();
       } else {
         showError(response.data?.message || 'Error occurred during save');
@@ -262,7 +226,7 @@ export default function ManageRolePage() {
   return (
     <View style={styles.wrapper}>
       <TopAppBar
-        title={roleId ? 'Update Role Settings' : 'Create Access Role'}
+        title="Create Access Role"
         showBack
         onBackPress={() => router.back()}
       />
@@ -279,11 +243,12 @@ export default function ManageRolePage() {
           />
         }
       >
-        {/* Role Metadata details card */}
-        <View style={styles.card}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
-            Role Information
-          </Text>
+        <View style={isLargeScreen ? { alignSelf: 'center', width: '70%', maxWidth: 1100, gap: 16 } : { gap: 16 }}>
+          {/* Role Metadata details card */}
+          <View style={styles.card}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Role Information
+            </Text>
           
           <View style={{ gap: 4 }}>
             <Text variant="bodyMedium" style={styles.label}>
@@ -303,11 +268,6 @@ export default function ManageRolePage() {
             {fieldErrors.name ? (
               <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.name}</Text>
             ) : null}
-          </View>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-            <Text variant="bodyMedium" style={styles.label}>Status</Text>
-            <Switch value={isActive} onValueChange={setIsActive} color={theme.colors.primary} />
           </View>
         </View>
 
@@ -361,6 +321,7 @@ export default function ManageRolePage() {
                       onValueChange={handleBulkAllToggle}
                       color={theme.colors.secondary}
                       style={{ transform: [{ scaleX: 0.75 }, { scaleY: 0.75 }] }}
+                      testID="bulk-all-switch"
                     />
                   </View>
                 </View>
@@ -454,7 +415,8 @@ export default function ManageRolePage() {
             </View>
           </ScrollView>
         </View>
-      </ScrollView>
+      </View>
+    </ScrollView>
 
       {/* Sticky Save Action Bar at bottom */}
       <View style={styles.bottomBar}>
@@ -466,15 +428,16 @@ export default function ManageRolePage() {
           textColor={theme.colors.onSecondary}
           style={styles.saveBtn}
           labelStyle={styles.saveBtnLabel}
+          testID="role-save-button"
         >
-          {roleId ? 'Update' : 'Save'}
+          Save
         </Button>
       </View>
 
       {/* Centralized saving overlay */}
       {saving && (
         <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999, backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)', justifyContent: 'center', alignItems: 'center' }]}>
-          <AppLoader message={roleId ? 'Updating role settings...' : 'Creating access role...'} icon="database-sync-outline" transparent />
+          <AppLoader message="Creating access role..." icon="database-sync-outline" transparent />
         </View>
       )}
     </View>
@@ -517,12 +480,6 @@ const makeStyles = (theme: MD3Theme) =>
       fontWeight: '700',
       color: theme.colors.onSurfaceVariant,
     },
-    switchContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginTop: 4,
-    },
     matrixHeadingText: {
       fontWeight: '800',
       color: theme.colors.onSurface,
@@ -550,7 +507,6 @@ const makeStyles = (theme: MD3Theme) =>
       borderRadius: 8,
       backgroundColor: theme.colors.elevation.level1,
     },
-    // Table Styling
     tableHeader: {
       flexDirection: 'row',
       backgroundColor: theme.colors.surfaceVariant,
@@ -599,7 +555,6 @@ const makeStyles = (theme: MD3Theme) =>
       color: theme.colors.onSurfaceVariant,
       marginTop: 2,
     },
-    // Column widths alignment mapping matching 640 total width
     headerColMenu: {
       width: 180,
       paddingHorizontal: 12,
