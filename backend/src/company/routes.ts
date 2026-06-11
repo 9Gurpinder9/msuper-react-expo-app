@@ -27,6 +27,8 @@ import {
   updateCategoryHandler,
 } from './controllers/categories.controller';
 
+import { getMenuPermissionsHandler } from './controllers/menuPermissions.controller';
+
 // Auth schemas
 import {
   companyLoginSchema,
@@ -52,6 +54,8 @@ router.post('/auth/reset-password/confirm', validate(companyResetPasswordConfirm
 
 // --- Protected Workspace Routes ---
 router.use(authenticateCompany);
+
+router.get('/features', getMenuPermissionsHandler);
 
 router.get('/bookmarks', listBookmarksHandler);
 router.post('/bookmarks', validate(createBookmarkSchema), createBookmarkHandler);

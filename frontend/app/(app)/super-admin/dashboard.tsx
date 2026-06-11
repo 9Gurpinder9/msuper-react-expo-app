@@ -21,7 +21,6 @@ import TopAppBar from '@super-admin/components/TopAppBar';
 import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
-import { useDrawer } from '../../../src/super-admin/context/DrawerContext';
 
 type Widget = {
   key: string;
@@ -42,7 +41,6 @@ export default function Dashboard() {
   const { width } = useWindowDimensions();
   const [hoverKey, setHoverKey] = useState<string | null>(null);
 
-  const { openDrawer } = useDrawer();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const authErrorShown = useRef(false);
@@ -270,7 +268,7 @@ export default function Dashboard() {
 
   return (
     <View style={styles.wrapper}>
-      <TopAppBar title="System Console" showMenu onMenuPress={openDrawer} />
+      <TopAppBar title="System Console" />
 
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.welcomeText}>

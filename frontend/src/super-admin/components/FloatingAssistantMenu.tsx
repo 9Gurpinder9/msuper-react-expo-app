@@ -13,18 +13,17 @@ import { useDrawer } from '../context/DrawerContext';
 
 export default function FloatingAssistantMenu() {
   const theme = useTheme();
-  const { toggleDrawer } = useDrawer();
+  const { toggleDrawer, mode } = useDrawer();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  // Floating button dimensions
+  if (mode === 'persistent') return null;
+
   const BUTTON_SIZE = 50;
   const MARGIN = 16;
 
-  // Track if hovering on web
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
 
-  // Initial position: Bottom right (above standard FAB positions)
   const pan = useRef(
     new Animated.ValueXY({
       x: screenWidth - BUTTON_SIZE - MARGIN,
@@ -32,24 +31,20 @@ export default function FloatingAssistantMenu() {
     })
   ).current;
 
-  // Store drag state to distinguish taps from drags
   const dragStart = useRef({ x: 0, y: 0 });
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Only take control if there is actual movement to avoid stealing taps
         return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
       },
       onPanResponderGrant: (e, gestureState) => {
         setIsPressed(true);
-        // Record starting position
         dragStart.current = {
           x: (pan.x as any)._value,
           y: (pan.y as any)._value,
         };
-        // Set offset so moving is relative to current location
         pan.setOffset({
           x: (pan.x as any)._value,
           y: (pan.y as any)._value,
@@ -61,21 +56,17 @@ export default function FloatingAssistantMenu() {
       }),
       onPanResponderRelease: (e, gestureState) => {
         setIsPressed(false);
-        // Flatten the offset into value
         pan.flattenOffset();
 
-        // Calculate absolute gesture distance to detect static tap
         const dist = Math.sqrt(
           gestureState.dx * gestureState.dx + gestureState.dy * gestureState.dy
         );
 
         if (dist < 6) {
-          // It's a tap
           toggleDrawer();
           return;
         }
 
-        // Snap to nearest horizontal edge (left or right)
         const currentX = (pan.x as any)._value;
         const middle = screenWidth / 2;
         let targetX = MARGIN;
@@ -84,10 +75,9 @@ export default function FloatingAssistantMenu() {
           targetX = screenWidth - BUTTON_SIZE - MARGIN;
         }
 
-        // Keep vertical bounds within screen
         const currentY = (pan.y as any)._value;
-        const minY = MARGIN + 40; // Avoid header
-        const maxY = screenHeight - BUTTON_SIZE - MARGIN - 40; // Avoid footer
+        const minY = MARGIN + 40;
+        const maxY = screenHeight - BUTTON_SIZE - MARGIN - 40;
         const targetY = Math.max(minY, Math.min(maxY, currentY));
 
         Animated.parallel([
@@ -108,7 +98,6 @@ export default function FloatingAssistantMenu() {
     })
   ).current;
 
-  // Calculate dynamic style properties
   const isDark = theme.dark;
   const idleOpacity = Platform.OS === 'web' ? (isHovered ? 1.0 : 0.45) : (isPressed ? 1.0 : 0.55);
 

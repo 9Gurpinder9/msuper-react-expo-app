@@ -1,297 +1,216 @@
-// frontend/app/(app)/company/dashboard.tsx
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, Animated, Pressable, useWindowDimensions, ScrollView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, StyleSheet, useWindowDimensions, ScrollView, Pressable } from 'react-native';
 import {
   Text,
   useTheme,
   MD3Theme,
   Card,
   Button,
-  Surface,
-  IconButton,
-  Tooltip,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useRouter, useSegments } from 'expo-router';
-import Constants from 'expo-constants';
-import { useThemeMode } from '@theme';
+import { useRouter } from 'expo-router';
+import TopAppBar from '@company/components/TopAppBar';
+import { API_BASE_URL } from '@config';
+import { fetchJson } from '@utils/network';
+import { useToast } from '@utils/toast';
+import { useCompanyNavItems } from '../../../src/company/hooks/useCompanyNavItems';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import TopAppBar from '@company/components/TopAppBar';
-import { useToast } from '@utils/toast';
+type HealthStatus = 'checking' | 'online' | 'offline';
 
-
-type Widget = {
-  key: string;
-  title: string;
-  subtitle?: string;
-  icon: string;
-  color: string;
-  to?: string;
-  category: 'workspace';
+type TeamMember = {
+  name: string;
+  action: string;
+  time: string;
 };
+
+const TEAM_MEMBERS: TeamMember[] = [
+  { name: 'Alex J.', action: 'Updated: Marketing Assets', time: '2m ago' },
+  { name: 'Sarah W.', action: 'Added: New Category', time: '15m ago' },
+  { name: 'Michael K.', action: 'Logged in', time: '1h ago' },
+];
 
 export default function CompanyDashboard() {
   const theme = useTheme();
-  const { mode, setMode } = useThemeMode();
   const styles = makeStyles(theme);
   const router = useRouter();
-  const segments = useSegments();
-  const currentRoute = '/' + segments.join('/');
   const { width } = useWindowDimensions();
   const { showSuccess } = useToast();
-  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  const { allowedFeatures } = useCompanyNavItems();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const drawerX = useRef(new Animated.Value(0)).current; // 0..1 interpolation
-  const drawerWidth = Math.min(320, Math.max(260, Math.floor(width * 0.75)));
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  const [healthStatus, setHealthStatus] = useState<HealthStatus>('checking');
+
+  const isDesktop = width >= 768;
 
   useEffect(() => {
-    Animated.timing(drawerX, {
-      toValue: drawerOpen ? 1 : 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [drawerOpen, drawerX]);
+    checkSystemHealth();
+  }, []);
 
-  const widgets: Widget[] = useMemo(
-    () => [
-      {
-        key: 'bookmarks',
-        title: 'Bookmarks',
-        subtitle: 'Your saved links and collections',
-        icon: 'bookmark-multiple-outline',
-        color: theme.colors.primary,
-        to: '/company/bookmarks',
-        category: 'workspace',
-      },
-      {
-        key: 'categories',
-        title: 'Categories',
-        subtitle: 'Manage bookmark categories',
-        icon: 'shape-outline',
-        color: theme.colors.secondary,
-        to: '/company/categories',
-        category: 'workspace',
-      },
-    ],
-    [theme.colors.primary, theme.colors.secondary]
-  );
-  const workspaceWidgets = useMemo(() => widgets.filter((w) => w.category === 'workspace'), [widgets]);
-
-  const renderDrawerButton = (label: string, iconName: string, path: string, colorKey: string) => {
-    const isActive = currentRoute === path;
-    const iconColor = getIconColor(colorKey, theme.dark);
-    return (
-      <Button
-        mode="text"
-        onPress={() => {
-          setDrawerOpen(false);
-          if (currentRoute !== path) router.push(path as any);
-        }}
-        icon={(p) => (
-          <MaterialCommunityIcons
-            name={iconName as any}
-            size={p.size}
-            color={isActive ? theme.colors.primary : iconColor}
-          />
-        )}
-        contentStyle={{ justifyContent: 'flex-start', height: 40 }}
-        textColor={isActive ? theme.colors.primary : theme.colors.onSurface}
-        labelStyle={{ fontWeight: isActive ? '700' : '500' as any }}
-        style={[styles.drawerItem, isActive && { backgroundColor: theme.colors.primaryContainer }]}
-      >
-        {label}
-      </Button>
-    );
+  const checkSystemHealth = async () => {
+    setHealthStatus('checking');
+    try {
+      const res = await fetchJson(`${API_BASE_URL}/healthz`);
+      setHealthStatus(res.ok ? 'online' : 'offline');
+    } catch {
+      setHealthStatus('offline');
+    }
   };
 
-  const renderCategorySection = (title: string, items: Widget[]) => {
-    if (items.length === 0) return null;
-    return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <View style={styles.badgeCount}>
-            <Text style={styles.badgeCountText}>{items.length}</Text>
+  const healthDisplay = useMemo(() => {
+    switch (healthStatus) {
+      case 'online': return { label: 'All Systems Online', icon: 'check-circle' as const, color: theme.colors.primary };
+      case 'offline': return { label: 'Service Disruption', icon: 'alert-circle' as const, color: theme.colors.error };
+      case 'checking': return { label: 'Checking...', icon: 'sync' as const, color: theme.colors.onSurfaceVariant };
+    }
+  }, [healthStatus, theme]);
+
+  const cards = useMemo(() => [
+    {
+      key: 'activity',
+      title: 'Activity Log',
+      subtitle: 'View recent workspace updates and collaborative changes.',
+      icon: 'history' as const,
+      iconBg: theme.colors.tertiaryContainer,
+      iconColor: theme.colors.tertiary,
+      linkColor: theme.colors.tertiary,
+      actionLabel: 'View Logs',
+      onPress: () => {},
+    },
+    {
+      key: 'health',
+      title: 'System Health',
+      subtitle: healthDisplay.label,
+      icon: healthDisplay.icon,
+      iconBg: theme.colors.errorContainer,
+      iconColor: theme.colors.error,
+      linkColor: theme.colors.error,
+      actionLabel: 'Check Status',
+      onPress: checkSystemHealth,
+    },
+  ], [theme, healthDisplay]);
+
+  return (
+    <View style={styles.wrapper}>
+      <TopAppBar title="Company Dashboard" />
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.dashboardContent}>
+        {/* Hero Header */}
+        <View style={styles.heroSection}>
+          <Text style={styles.welcomeText}>Company Control Panel</Text>
+          <View style={styles.badgeRow}>
+            <View style={[styles.badge, styles.badgePrimary]}>
+              <Text style={styles.badgePrimaryText}>Workspace</Text>
+            </View>
+            <View style={[styles.badge, styles.badgeCount]}>
+              <Text style={styles.badgeCountText}>{allowedFeatures.length} Modules Active</Text>
+            </View>
           </View>
         </View>
-        <View style={styles.grid}>
-          {items.map((w) => {
-            const isHovered = hoverKey === w.key;
+
+        {/* Bento Grid */}
+        <View style={[styles.grid, isDesktop && styles.desktopGrid]}>
+          {cards.map((c) => {
+            const isHovered = hoverKey === c.key;
             return (
               <Pressable
-                key={w.key}
-                onHoverIn={() => setHoverKey(w.key)}
-                onHoverOut={() => setHoverKey((k) => (k === w.key ? null : k))}
-                style={styles.gridItem}
-                onPress={() => w.to && router.push(w.to)}
+                key={c.key}
+                onHoverIn={() => setHoverKey(c.key)}
+                onHoverOut={() => setHoverKey((k) => (k === c.key ? null : k))}
+                style={[styles.gridItem, isDesktop && styles.desktopGridItem]}
+                onPress={c.onPress}
               >
                 <Card
                   mode="outlined"
-                  style={[styles.widget, isHovered && styles.widgetHover]}
+                  style={[styles.card, isHovered && styles.cardHovered]}
                 >
-                  <Card.Content style={styles.widgetContent}>
-                    {isHovered && <View style={styles.hoverIndicator} />}
-                    <View style={styles.widgetMeta}>
-                      <View style={styles.widgetHeaderRow}>
-                        <MaterialCommunityIcons
-                          name={w.icon as any}
-                          size={22}
-                          color={isHovered ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                        />
-                        <Text style={styles.widgetTitle}>{w.title}</Text>
-                      </View>
-                      {!!w.subtitle && (
-                        <Text style={styles.widgetSubtitle}>{w.subtitle}</Text>
-                      )}
+                  <Card.Content style={styles.cardContent}>
+                    <View style={[styles.iconBox, { backgroundColor: c.iconBg }]}>
+                      <MaterialCommunityIcons
+                        name={c.icon}
+                        size={24}
+                        color={c.iconColor}
+                      />
                     </View>
-                    <MaterialCommunityIcons
-                      name="chevron-right"
-                      size={20}
-                      color={theme.colors.onSurfaceVariant}
-                    />
+                    <Text style={styles.cardTitle}>{c.title}</Text>
+                    <Text style={styles.cardSubtitle}>{c.subtitle}</Text>
+                    <View style={styles.cardLink}>
+                      <Text style={[styles.cardLinkText, { color: c.linkColor }]}>
+                        {c.actionLabel}
+                      </Text>
+                      <MaterialCommunityIcons
+                        name="arrow-right"
+                        size={18}
+                        color={c.linkColor}
+                      />
+                    </View>
                   </Card.Content>
                 </Card>
               </Pressable>
             );
           })}
         </View>
-      </View>
-    );
-  };
 
-  const tx = drawerX.interpolate({ inputRange: [0, 1], outputRange: [-drawerWidth, 0] });
-  const overlayOpacity = drawerX.interpolate({ inputRange: [0, 1], outputRange: [0, 0.35] });
-
-  return (
-    <View style={styles.wrapper}>
-      <TopAppBar title="Company Dashboard" showMenu onMenuPress={() => setDrawerOpen(true)} />
-
-      {drawerOpen && (
-        <Pressable
-          style={styles.overlayHitArea}
-          pointerEvents="auto"
-          onPress={() => setDrawerOpen(false)}
-          accessibilityLabel="Close drawer by clicking outside"
-        >
-          <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} />
-        </Pressable>
-      )}
-      <Animated.View
-        style={[styles.drawer, { width: drawerWidth, transform: [{ translateX: tx }] }]}
-      >
-        <Surface elevation={0} style={StyleSheet.absoluteFill}>
-          <View style={styles.drawerHeader}>
-            <View style={styles.drawerHeaderLeft}>
-              <MaterialCommunityIcons
-                name="shield-account"
-                size={22}
-                color={theme.colors.onSurface}
-              />
-              <Text variant="titleMedium" style={styles.headerTitle}>
-                Company Workspace
-              </Text>
-            </View>
-            <IconButton
-              icon={(p) => <MaterialCommunityIcons name="close" size={p.size} color={p.color} />}
-              size={20}
-              onPress={() => setDrawerOpen(false)}
-              accessibilityLabel="Close menu"
-            />
-          </View>
-
-          <ScrollView
-            style={styles.scrollContainer}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={true}
-          >
-            <Text variant="labelSmall" style={styles.drawerSectionHeader}>
-              NAVIGATION
-            </Text>
-            {renderDrawerButton('Bookmarks', 'bookmark-multiple-outline', '/company/bookmarks', 'bookmarks')}
-            {renderDrawerButton('Categories', 'shape-outline', '/company/categories', 'categories')}
-
-            <View style={styles.drawerDivider} />
-
-            {/* Footer: logout + theme */}
-            <View style={styles.footerRow}>
-              <Button
-                mode="text"
-                onPress={async () => {
-                  setDrawerOpen(false);
-                  await AsyncStorage.multiRemove(['companyToken', 'companyEmail']);
-                  showSuccess('Logged out');
-                  router.replace('/company/login');
-                }}
-                icon={(p) => (
-                  <MaterialCommunityIcons name="logout" size={16} color={theme.colors.error} style={{ opacity: 0.65 }} />
-                )}
-                contentStyle={styles.minimalButtonContent}
-                textColor={theme.colors.error}
-                labelStyle={styles.minimalButtonLabel}
-                style={styles.minimalLogoutBtn}
-              >
-                Logout
-              </Button>
-
-              <View style={styles.themeRow}>
-                <Tooltip title="Light Mode">
-                  <IconButton
-                    icon="white-balance-sunny"
-                    size={16}
-                    onPress={() => setMode('light')}
-                    iconColor={mode === 'light' ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                    style={[styles.themeBtn, mode === 'light' && styles.themeBtnActive]}
-                  />
-                </Tooltip>
-                <Tooltip title="Dark Mode">
-                  <IconButton
-                    icon="weather-night"
-                    size={16}
-                    onPress={() => setMode('dark')}
-                    iconColor={mode === 'dark' ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                    style={[styles.themeBtn, mode === 'dark' && styles.themeBtnActive]}
-                  />
-                </Tooltip>
-                <Tooltip title="Auto / System Mode">
-                  <IconButton
-                    icon="theme-light-dark"
-                    size={16}
-                    onPress={() => setMode('system')}
-                    iconColor={mode === 'system' ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                    style={[styles.themeBtn, mode === 'system' && styles.themeBtnActive]}
-                  />
-                </Tooltip>
+        {/* Featured Section */}
+        <View style={[styles.featuredRow, isDesktop && styles.desktopFeaturedRow]}>
+          {/* Workspace Efficiency */}
+          <Card mode="outlined" style={[styles.featuredCard, styles.efficiencyCard]}>
+            <Card.Content style={styles.efficiencyContent}>
+              <View>
+                <Text style={styles.efficiencyTitle}>Workspace Efficiency</Text>
+                <Text style={styles.efficiencySubtitle}>
+                  Your team has increased productivity by 24% this month through organized bookmark sharing.
+                </Text>
               </View>
-            </View>
+              <Button
+                mode="contained"
+                style={styles.efficiencyBtn}
+                textColor={theme.colors.onPrimary}
+                onPress={() => showSuccess('Analytics up-to-date')}
+              >
+                View Full Analytics
+              </Button>
+              <View style={styles.efficiencyDecor} />
+            </Card.Content>
+          </Card>
 
-            <Text variant="bodySmall" style={styles.versionText}>
-              App Version: {Constants.expoConfig?.version || '1.0.0'}
-            </Text>
-          </ScrollView>
-        </Surface>
-      </Animated.View>
-
-      <ScrollView style={styles.container} contentContainerStyle={styles.dashboardContent}>
-        <Text style={styles.welcomeText}>
-          Company Control Panel
-        </Text>
-        {renderCategorySection('Workspace', workspaceWidgets)}
+          {/* Team Sync */}
+          <Card
+            mode="outlined"
+            style={[styles.featuredCard, styles.teamCard]}
+          >
+            <Card.Content>
+              <Text style={styles.teamTitle}>Team Sync</Text>
+              <View style={styles.teamList}>
+                {TEAM_MEMBERS.map((member, index) => (
+                  <View
+                    key={member.name}
+                    style={[
+                      styles.teamItem,
+                      { backgroundColor: theme.colors.primary },
+                      index === 2 && { opacity: 0.65 },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name="account-circle"
+                      size={32}
+                      color={theme.colors.onPrimary}
+                    />
+                    <View style={styles.teamMeta}>
+                      <Text style={styles.memberName}>{member.name}</Text>
+                      <Text style={styles.memberAction}>{member.action}</Text>
+                    </View>
+                    <Text style={styles.memberTime}>{member.time}</Text>
+                  </View>
+                ))}
+              </View>
+            </Card.Content>
+          </Card>
+        </View>
       </ScrollView>
     </View>
   );
 }
-
-const getIconColor = (key: string, isDark: boolean) => {
-  const colors: Record<string, { light: string; dark: string }> = {
-    bookmarks: { light: '#4F46E5', dark: '#818CF8' },
-    categories: { light: '#A21CAF', dark: '#E879F9' },
-    logout: { light: '#DC2626', dark: '#F87171' },
-  };
-  const pair = colors[key] || { light: '#64748B', dark: '#94A3B8' };
-  return isDark ? pair.dark : pair.light;
-};
 
 const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
@@ -303,206 +222,186 @@ const makeStyles = (theme: MD3Theme) =>
       flex: 1,
     },
     dashboardContent: {
-      padding: 20,
-      gap: 20,
+      padding: 24,
+      gap: 24,
+    },
+    heroSection: {
+      gap: 10,
     },
     welcomeText: {
-      fontSize: 18,
+      fontSize: 28,
       fontWeight: '800',
       color: theme.colors.onBackground,
-      letterSpacing: -0.3,
+      letterSpacing: -0.6,
     },
-    sectionContainer: {
-      gap: 12,
-      marginTop: 8,
-    },
-    sectionHeaderRow: {
+    badgeRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-      marginBottom: 4,
     },
-    sectionTitle: {
-      fontSize: 14,
+    badge: {
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 999,
+    },
+    badgePrimary: {
+      backgroundColor: theme.colors.primary,
+    },
+    badgePrimaryText: {
+      fontSize: 12,
       fontWeight: '700',
-      color: theme.colors.onSurfaceVariant,
-      letterSpacing: 0.5,
+      color: theme.colors.onPrimary,
       textTransform: 'uppercase',
     },
     badgeCount: {
-      backgroundColor: theme.colors.surfaceVariant,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
+      backgroundColor: theme.colors.primaryContainer,
     },
     badgeCountText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: '700',
-      color: theme.colors.onSurfaceVariant,
+      color: theme.colors.onPrimaryContainer,
     },
     grid: {
+      flexDirection: 'column',
+      gap: 16,
+    },
+    desktopGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 12,
     },
     gridItem: {
       width: '100%',
-      maxWidth: 360,
     },
-    widget: {
+    desktopGridItem: {
+      width: '48.5%',
+      maxWidth: 500,
+    },
+    card: {
       borderRadius: 14,
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.outlineVariant,
       borderWidth: 1,
       overflow: 'hidden',
     },
-    widgetHover: {
+    cardHovered: {
       borderColor: theme.colors.primary,
     },
-    widgetContent: {
+    cardContent: {
+      padding: 24,
+      gap: 12,
+    },
+    iconBox: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 24,
+    },
+    cardTitle: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+    },
+    cardSubtitle: {
+      fontSize: 13,
+      color: theme.colors.onSurfaceVariant,
+      marginBottom: 8,
+    },
+    cardLink: {
       flexDirection: 'row',
       alignItems: 'center',
+      gap: 6,
+    },
+    cardLinkText: {
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    featuredRow: {
+      flexDirection: 'column',
+      gap: 20,
+    },
+    desktopFeaturedRow: {
+      flexDirection: 'row',
+    },
+    featuredCard: {
+      borderRadius: 16,
+      borderColor: theme.colors.outlineVariant,
+      borderWidth: 1,
+      overflow: 'hidden',
+    },
+    efficiencyCard: {
+      flex: 3,
+      backgroundColor: theme.colors.surfaceVariant,
+    },
+    teamCard: {
+      flex: 2,
+      backgroundColor: theme.colors.primaryContainer,
+      borderColor: theme.colors.primary,
+    },
+    efficiencyContent: {
       justifyContent: 'space-between',
-      padding: 16,
+      minHeight: 180,
+      gap: 16,
       position: 'relative',
     },
-    hoverIndicator: {
+    efficiencyTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.onSurface,
+      marginBottom: 8,
+    },
+    efficiencySubtitle: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      lineHeight: 20,
+    },
+    efficiencyBtn: {
+      borderRadius: 999,
+      alignSelf: 'flex-start',
+    },
+    efficiencyDecor: {
       position: 'absolute',
-      left: 0,
+      right: 0,
       top: 0,
       bottom: 0,
-      width: 4,
+      width: '33%',
+      opacity: 0.08,
       backgroundColor: theme.colors.primary,
     },
-    widgetMeta: {
-      flex: 1,
-      gap: 4,
-      paddingLeft: 4,
+    teamTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      color: theme.colors.onPrimaryContainer,
+      marginBottom: 16,
     },
-    widgetHeaderRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
+    teamList: {
       gap: 8,
     },
-    widgetTitle: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.colors.onSurface,
-    },
-    widgetSubtitle: {
-      fontSize: 13,
-      color: theme.colors.onSurfaceVariant,
-      opacity: 0.8,
-    },
-    drawer: {
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      left: 0,
-      backgroundColor: theme.colors.surface,
-      zIndex: 1000,
-      elevation: 4,
-      borderRightWidth: 1,
-      borderRightColor: theme.colors.outlineVariant,
-    },
-    overlay: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: '#000',
-      zIndex: 900,
-    },
-    overlayHitArea: {
-      ...StyleSheet.absoluteFillObject,
-      zIndex: 900,
-    },
-    drawerHeader: {
+    teamItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outlineVariant,
+      gap: 12,
+      padding: 12,
+      borderRadius: 12,
     },
-    drawerHeaderLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flexShrink: 1,
-    },
-    headerTitle: {
-      marginLeft: 8,
-      fontWeight: '700',
-      color: theme.colors.onSurface,
-    },
-    scrollContainer: {
+    teamMeta: {
       flex: 1,
+      gap: 2,
     },
-    scrollContent: {
-      paddingVertical: 12,
-      paddingHorizontal: 8,
-    },
-    drawerSectionHeader: {
-      marginHorizontal: 8,
-      marginTop: 12,
-      marginBottom: 6,
-      color: theme.colors.onSurfaceVariant,
+    memberName: {
+      fontSize: 14,
       fontWeight: '700',
-      letterSpacing: 0.5,
+      color: theme.colors.onPrimary,
     },
-    drawerItem: {
-      borderRadius: 6,
-      backgroundColor: theme.dark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-      borderBottomWidth: 1,
-      borderBottomColor: theme.dark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-      marginBottom: 4,
+    memberAction: {
+      fontSize: 12,
+      color: theme.colors.onPrimary,
+      opacity: 0.9,
     },
-    drawerDivider: {
-      height: 1,
-      backgroundColor: theme.colors.outlineVariant,
-      marginVertical: 10,
-    },
-    footerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: 8,
-      marginTop: 4,
-      marginBottom: 12,
-    },
-    themeRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.dark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
-      borderRadius: 20,
-      padding: 2,
-    },
-    themeBtn: {
-      margin: 0,
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-    },
-    themeBtnActive: {
-      backgroundColor: theme.colors.surfaceVariant,
-      elevation: 1,
-    },
-    minimalLogoutBtn: {
-      borderRadius: 6,
+    memberTime: {
+      fontSize: 11,
+      color: theme.colors.onPrimary,
       opacity: 0.8,
-      margin: 0,
-    },
-    minimalButtonContent: {
-      height: 36,
-      justifyContent: 'flex-start',
-    },
-    minimalButtonLabel: {
-      fontSize: 13,
-      fontWeight: '600',
-    },
-    versionText: {
-      textAlign: 'center',
-      color: theme.colors.onSurfaceVariant,
-      opacity: 0.6,
-      paddingBottom: 16,
     },
   });

@@ -5,35 +5,48 @@ import { View } from "react-native";
 import { useTheme } from "react-native-paper";
 import AppLoader from "@components/AppLoader";
 import { DrawerProvider, useDrawer } from "../../src/super-admin/context/DrawerContext";
-import SidebarDrawer from "../../src/super-admin/components/SidebarDrawer";
+import ResponsiveSidebarLayout from "@components/ResponsiveSidebarLayout";
 import FloatingAssistantMenu from "../../src/super-admin/components/FloatingAssistantMenu";
+import { SUPER_ADMIN_NAV_ITEMS } from "../../src/super-admin/sidebarNavItems";
+import { useToast } from "@utils/toast";
 
-function AppContent() {
+function SuperAdminContent() {
   const theme = useTheme();
   const segments = useSegments();
-  const { open, closeDrawer } = useDrawer();
+  const router = useRouter();
+  const { showSuccess } = useToast();
+  const { mode } = useDrawer();
 
   const isSuperAdmin = segments.includes("super-admin");
   const currentRoute = "/" + segments.filter((s) => s !== "(app)").join("/");
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("authToken");
+      showSuccess("Logged out");
+      router.replace("/super-admin/login");
+    } catch {}
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.background },
-        }}
-      />
-      {isSuperAdmin && (
-        <>
-          <SidebarDrawer
-            open={open}
-            onClose={closeDrawer}
-            currentRoute={currentRoute}
-          />
-          <FloatingAssistantMenu />
-        </>
-      )}
+      <ResponsiveSidebarLayout
+        showSidebar={isSuperAdmin}
+        navSections={SUPER_ADMIN_NAV_ITEMS}
+        headerTitle="Management Console"
+        headerIcon="shield-account"
+        headerSubtitle="Enterprise Admin"
+        currentRoute={currentRoute}
+        onLogout={handleLogout}
+      >
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: theme.colors.background },
+          }}
+        />
+      </ResponsiveSidebarLayout>
+      {isSuperAdmin && mode === "overlay" && <FloatingAssistantMenu />}
     </View>
   );
 }
@@ -47,7 +60,6 @@ export default function AppGroupLayout() {
     let cancelled = false;
     (async () => {
       try {
-        // Company routes have their own auth check in company/_layout.tsx
         if (segments.includes("company")) {
           if (!cancelled) setChecking(false);
           return;
@@ -73,7 +85,7 @@ export default function AppGroupLayout() {
 
   return (
     <DrawerProvider>
-      <AppContent />
+      <SuperAdminContent />
     </DrawerProvider>
   );
 }

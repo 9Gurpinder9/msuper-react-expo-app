@@ -1,26 +1,17 @@
-// frontend/src/super-admin/components/TopAppBar.tsx
-
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Appbar, Menu, Text, useTheme } from 'react-native-paper';
-// import from expo/vector-icons
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useThemeMode } from '@theme';
+import { StyleSheet } from 'react-native';
+import { Appbar, useTheme } from 'react-native-paper';
 
 type Props = {
   title: string;
-  showMenu?: boolean;
   showBack?: boolean;
-  onMenuPress?: () => void;
   onBackPress?: () => void;
   actions?: React.ReactNode;
 };
 
 export default function TopAppBar({
   title,
-  showMenu = false,
   showBack = false,
-  onMenuPress,
   onBackPress,
   actions,
 }: Props) {
@@ -28,24 +19,21 @@ export default function TopAppBar({
   return (
     <Appbar.Header
       mode="small"
-      style={{ backgroundColor: theme.colors.primary }}
+      style={{
+        backgroundColor: theme.colors.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.outlineVariant,
+      }}
     >
       {showBack && (
         <Appbar.BackAction
-          color={theme.colors.onPrimary}
+          color={theme.colors.primary}
           onPress={onBackPress}
-        />
-      )}
-      {showMenu && (
-        <Appbar.Action
-          icon="menu"
-          color={theme.colors.onPrimary}
-          onPress={onMenuPress}
         />
       )}
       <Appbar.Content
         title={title}
-        color={theme.colors.onPrimary}
+        color={theme.colors.primary}
         titleStyle={styles.title}
       />
       {actions}
@@ -55,7 +43,7 @@ export default function TopAppBar({
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '600',
   },
 });

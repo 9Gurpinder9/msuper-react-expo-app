@@ -4,9 +4,51 @@ import { View } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppLoader from '@components/AppLoader';
+import { DrawerProvider } from '../../../src/super-admin/context/DrawerContext';
+import ResponsiveSidebarLayout from '@components/ResponsiveSidebarLayout';
+import { useCompanyNavItems } from '../../../src/company/hooks/useCompanyNavItems';
+import { useToast } from '@utils/toast';
+
+function CompanyAppContent() {
+  const theme = useTheme();
+  const router = useRouter();
+  const segments = useSegments();
+  const { showSuccess } = useToast();
+  const currentRoute = '/' + segments.filter((s) => s !== '(app)').join('/');
+  const { navSections } = useCompanyNavItems();
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.multiRemove(['companyToken', 'companyEmail']);
+      showSuccess('Logged out');
+      router.replace('/company/login');
+    } catch {}
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ResponsiveSidebarLayout
+        navSections={navSections}
+        headerTitle="Control Panel"
+        headerIcon="apps"
+        headerSubtitle="Enterprise Admin"
+        currentRoute={currentRoute}
+        onLogout={handleLogout}
+        animatedMode
+        floatCollapseButton
+      >
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: theme.colors.background },
+          }}
+        />
+      </ResponsiveSidebarLayout>
+    </View>
+  );
+}
 
 export default function CompanyGroupLayout() {
-  const theme = useTheme();
   const router = useRouter();
   const segments = useSegments();
   const [checking, setChecking] = React.useState(true);
@@ -35,13 +77,8 @@ export default function CompanyGroupLayout() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.background },
-        }}
-      />
-    </View>
+    <DrawerProvider>
+      <CompanyAppContent />
+    </DrawerProvider>
   );
 }
