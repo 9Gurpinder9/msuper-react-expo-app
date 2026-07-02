@@ -361,7 +361,7 @@ export default function CompanyLogin() {
                     accessibilityLabel="Authorize Company"
                     icon="login-variant"
                   >
-                    Authorize Session
+                    Login
                   </Button>
                 </View>
 

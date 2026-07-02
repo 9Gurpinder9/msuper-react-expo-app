@@ -164,7 +164,12 @@ export default function CompanyOTPVerify() {
           await AsyncStorage.setItem("companyToken", body.token);
           await AsyncStorage.setItem("companyEmail", email);
         }
-        await AsyncStorage.multiRemove(["companyLoginEmail", "companyLoginOtpExpiresAt", "companyRememberMe"]);
+        await AsyncStorage.multiRemove([
+          "companyLoginEmail",
+          "companyLoginOtpExpiresAt",
+          "companyRememberMe",
+          "company_permissions_cache",
+        ]);
         verifiedRef.current = true;
         showSuccess(body.message || "Verified!");
         setVerified(true);

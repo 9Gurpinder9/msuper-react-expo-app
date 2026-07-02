@@ -2,11 +2,12 @@
 import {
   MD3LightTheme as DefaultLight,
   MD3DarkTheme as DefaultDark,
+  configureFonts,
 } from 'react-native-paper';
 import type { ColorSchemeName } from 'react-native';
 
 import { lightColors, darkColors } from './colors';
-import { fontSizes, fontWeights } from './typography';
+import { fontSizes, fontWeights, md3FontConfig } from './typography';
 import { spacing } from './spacing';
 import type { AppTheme } from './types';
 
@@ -31,6 +32,7 @@ const darkSemantic = {
 export const lightTheme: AppTheme = {
   ...(DefaultLight as any),
   colors: { ...(lightColors as any), ...lightSemantic },
+  fonts: configureFonts({ config: md3FontConfig }),
   typography: { fontSizes, fontWeights },
   spacing,
 };
@@ -38,6 +40,7 @@ export const lightTheme: AppTheme = {
 export const darkTheme: AppTheme = {
   ...(DefaultDark as any),
   colors: { ...(darkColors as any), ...darkSemantic },
+  fonts: configureFonts({ config: md3FontConfig }),
   typography: { fontSizes, fontWeights },
   spacing,
 };
@@ -45,3 +48,4 @@ export const darkTheme: AppTheme = {
 export function getTheme(scheme: ColorSchemeName): AppTheme {
   return scheme === 'dark' ? darkTheme : lightTheme;
 }
+

@@ -1,0 +1,301 @@
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import {
+  Text,
+  Button,
+  TextInput,
+  Switch,
+  Portal,
+  useTheme,
+  MD3Theme,
+} from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+
+import TopAppBar from '@super-admin/components/TopAppBar';
+import AppLoader from '@components/AppLoader';
+import { useToast } from '@utils/toast';
+import { API_BASE_URL } from '@config';
+import { fetchJson } from '@utils/network';
+
+export default function EditFeaturePage() {
+  const theme = useTheme();
+  const styles = makeStyles(theme);
+  const router = useRouter();
+  const { showError, showSuccess } = useToast();
+  const { width } = useWindowDimensions();
+  const isLargeScreen = width >= 1024;
+  const { featureId } = useLocalSearchParams<{ featureId: string }>();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [name, setName] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [description, setDescription] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; displayName?: string }>({});
+
+  const loadData = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      // Fetch feature list to find the matching item
+      const response = await fetchJson(`${API_BASE_URL}/super-admin/features?limit=1000`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok && response.data) {
+        const matched = (response.data.data || []).find((f: any) => String(f.id) === String(featureId));
+        if (matched) {
+          setName(matched.name);
+          setDisplayName(matched.display_name);
+          setDescription(matched.description || '');
+          setIsActive(matched.is_active);
+        } else {
+          showError('Feature details not found.');
+          router.back();
+        }
+      } else {
+        showError('Failed to load feature details.');
+      }
+    } catch {
+      showError('Network error loading feature details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (featureId) {
+      loadData();
+    }
+  }, [featureId]);
+
+  const handleSave = async () => {
+    const errors: typeof fieldErrors = {};
+    if (!name.trim() || name.trim().length < 2) {
+      errors.name = 'Feature Name must be at least 2 characters.';
+    }
+    if (!displayName.trim() || displayName.trim().length < 2) {
+      errors.displayName = 'Display Name must be at least 2 characters.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+    setSaving(true);
+
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const url = `${API_BASE_URL}/super-admin/features/${featureId}`;
+
+      const response = await fetchJson(url, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          display_name: displayName.trim(),
+          description: description.trim() || null,
+          is_active: isActive,
+        }),
+      });
+
+      if (response.ok) {
+        showSuccess('Feature updated successfully');
+        router.back();
+      } else {
+        showError(response.data?.message || 'Failed to update feature.');
+      }
+    } catch {
+      showError('Network error updating feature.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <AppLoader message="Loading feature details..." icon="database-sync-outline" />;
+  }
+
+  return (
+    <View style={styles.wrapper}>
+      <TopAppBar
+        title="Update Feature Settings"
+        showBack
+        onBackPress={() => router.back()}
+      />
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={isLargeScreen ? { alignSelf: 'center', width: '70%', maxWidth: 1100, gap: 16 } : { gap: 16 }}>
+          <View style={styles.formContainer}>
+            <Text variant="titleMedium" style={styles.formTitle}>
+              Modify Feature Details
+            </Text>
+
+            {/* System Code Name */}
+            <View style={styles.fieldRow}>
+              <Text variant="bodyMedium" style={styles.fieldLabel}>
+                <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
+                System Code Name
+              </Text>
+              <TextInput
+                value={name}
+                onChangeText={(v) => {
+                  setName(v);
+                  if (fieldErrors.name) setFieldErrors((e) => ({ ...e, name: undefined }));
+                }}
+                mode="outlined"
+                placeholder="e.g. billing_module"
+                placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                textColor={theme.colors.onSurface}
+                outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                activeOutlineColor={fieldErrors.name ? theme.colors.error : theme.colors.primary}
+                autoCapitalize="none"
+                testID="feature-name-input"
+              />
+              {fieldErrors.name ? (
+                <Text variant="bodySmall" style={styles.errorText}>{fieldErrors.name}</Text>
+              ) : null}
+            </View>
+
+            {/* Display Name */}
+            <View style={styles.fieldRow}>
+              <Text variant="bodyMedium" style={styles.fieldLabel}>
+                <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
+                Display Name
+              </Text>
+              <TextInput
+                value={displayName}
+                onChangeText={(v) => {
+                  setDisplayName(v);
+                  if (fieldErrors.displayName) setFieldErrors((e) => ({ ...e, displayName: undefined }));
+                }}
+                mode="outlined"
+                placeholder="e.g. Billing Module"
+                placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                textColor={theme.colors.onSurface}
+                outlineColor={fieldErrors.displayName ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                activeOutlineColor={fieldErrors.displayName ? theme.colors.error : theme.colors.primary}
+                testID="feature-display-name-input"
+              />
+              {fieldErrors.displayName ? (
+                <Text variant="bodySmall" style={styles.errorText}>{fieldErrors.displayName}</Text>
+              ) : null}
+            </View>
+
+            {/* Description */}
+            <View style={styles.fieldRow}>
+              <Text variant="bodyMedium" style={styles.fieldLabel}>Description</Text>
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                mode="outlined"
+                placeholder="Provide brief details..."
+                placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                textColor={theme.colors.onSurface}
+                outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
+                activeOutlineColor={theme.colors.primary}
+                multiline
+                numberOfLines={3}
+                testID="feature-description-input"
+              />
+            </View>
+
+            {/* Enable/Disable */}
+            <View style={[styles.fieldRow, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }]}>
+              <Text variant="bodyMedium" style={styles.fieldLabel}>Enable/Disable</Text>
+              <Switch value={isActive} onValueChange={setIsActive} color={theme.colors.primary} testID="feature-status-switch" />
+            </View>
+
+            <View style={styles.actionContainer}>
+              <Button
+                onPress={handleSave}
+                disabled={saving}
+                mode="contained"
+                buttonColor={theme.colors.secondary}
+                textColor={theme.colors.onSecondary}
+                style={styles.saveBtn}
+                testID="save-feature-button"
+              >
+                Update
+              </Button>
+              <Button
+                onPress={() => router.back()}
+                disabled={saving}
+                mode="text"
+                textColor={theme.colors.onSurfaceVariant + 'B3'}
+                style={styles.closeBtn}
+              >
+                Cancel
+              </Button>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Centralized saving overlay */}
+      {saving && (
+        <Portal>
+          <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999, backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)', justifyContent: 'center', alignItems: 'center' }]}>
+            <AppLoader message="Updating feature details..." icon="database-sync-outline" transparent />
+          </View>
+        </Portal>
+      )}
+    </View>
+  );
+}
+
+const makeStyles = (theme: MD3Theme) =>
+  StyleSheet.create({
+    wrapper: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
+      padding: 16,
+    },
+    formContainer: {
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
+      borderRadius: 12,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      gap: 16,
+    },
+    formTitle: {
+      fontWeight: '700',
+      textAlign: 'center',
+      color: theme.colors.onSurface,
+      marginBottom: 8,
+    },
+    fieldRow: {
+      gap: 6,
+    },
+    fieldLabel: {
+      fontWeight: '700',
+      color: theme.colors.onSurfaceVariant,
+    },
+    errorText: {
+      color: theme.colors.error,
+      marginTop: 2,
+    },
+    actionContainer: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: 12,
+      marginTop: 16,
+    },
+    saveBtn: {
+      borderRadius: 8,
+      alignSelf: 'center',
+      minWidth: 140,
+    },
+    closeBtn: {
+      alignSelf: 'center',
+    },
+  });

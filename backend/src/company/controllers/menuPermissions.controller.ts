@@ -5,9 +5,33 @@ import logger from '../../utils/logger';
 export const getMenuPermissionsHandler: RequestHandler = async (req, res) => {
   try {
     const companyId = (req as any).user?.id;
+    logger.info(`[MenuPermissions] Fetching features for companyId: ${companyId}`);
 
     if (!companyId) {
       res.status(401).json({ success: false, message: 'Unauthorized: missing company context.' });
+      return;
+    }
+
+    // Fetch current company permissions version
+    const { data: companyData, error: compErr } = await supabase
+      .from('companies')
+      .select('permissions_version')
+      .eq('id', companyId)
+      .maybeSingle();
+
+    if (compErr) {
+      logger.error('Failed to query company details for permissions version check', compErr);
+    }
+
+    const dbVersion = companyData?.permissions_version || 1;
+    const clientVersion = req.query.version ? parseInt(req.query.version as string, 10) : null;
+
+    if (clientVersion !== null && clientVersion === dbVersion) {
+      logger.info(`[MenuPermissions] Version ${clientVersion} matches database. Returning notModified.`);
+      res.json({
+        success: true,
+        notModified: true,
+      });
       return;
     }
 
@@ -31,46 +55,53 @@ export const getMenuPermissionsHandler: RequestHandler = async (req, res) => {
       display_name: String(row.features.display_name),
     }));
 
-    // 2. Query the role named 'COMPANY'
-    const { data: companyRole, error: roleErr } = await supabase
-      .from('roles')
-      .select('id')
-      .eq('name', 'COMPANY')
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (roleErr) {
-      logger.error('Failed to query COMPANY role settings', roleErr);
-      res.status(500).json({ success: false, message: 'Failed to retrieve role parameters' });
-      return;
-    }
-
+    const userRole = (req as any).user?.role;
     let allowedFeatures = companyAllowedFeatures;
 
-    if (companyRole?.id) {
-      // 3. Query role features for the 'COMPANY' role
-      const { data: roleFeatures, error: roleFeatErr } = await supabase
-        .from('role_features')
-        .select('feature_id, actions')
-        .eq('role_id', companyRole.id);
+    // If user has a valid role string, query role features for intersection
+    if (userRole && typeof userRole === 'string') {
+      logger.info(`[MenuPermissions] Checking permissions for role name: ${userRole}`);
 
-      if (roleFeatErr) {
-        logger.error('Failed to query role feature mappings', roleFeatErr);
-        res.status(500).json({ success: false, message: 'Failed to retrieve role permissions' });
+      const { data: companyRole, error: roleErr } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', userRole.toUpperCase())
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (roleErr) {
+        logger.error(`Failed to query ${userRole} role settings`, roleErr);
+        res.status(500).json({ success: false, message: 'Failed to retrieve role parameters' });
         return;
       }
 
-      const rolePermissionMap = new Map<number, string[]>(
-        (roleFeatures || []).map((row: any) => [Number(row.feature_id), row.actions || []])
-      );
+      if (companyRole?.id) {
+        const { data: roleFeatures, error: roleFeatErr } = await supabase
+          .from('role_features')
+          .select('feature_id, actions')
+          .eq('role_id', companyRole.id);
 
-      // Filter: intersection of company-level enabled features and role-level permitted features
-      allowedFeatures = companyAllowedFeatures.filter((f) => rolePermissionMap.has(f.id));
+        if (roleFeatErr) {
+          logger.error('Failed to query role feature mappings', roleFeatErr);
+          res.status(500).json({ success: false, message: 'Failed to retrieve role permissions' });
+          return;
+        }
+
+        const rolePermissionMap = new Map<number, string[]>(
+          (roleFeatures || []).map((row: any) => [Number(row.feature_id), row.actions || []])
+        );
+
+        // Filter: intersection of company-level enabled features and role-level permitted features
+        allowedFeatures = companyAllowedFeatures.filter((f) => rolePermissionMap.has(f.id));
+      }
     }
+
+    logger.info(`[MenuPermissions] Final permitted features: ${JSON.stringify(allowedFeatures)}`);
 
     res.json({
       success: true,
       allowedFeatures: allowedFeatures.map((f) => f.name),
+      version: dbVersion,
     });
   } catch (err: any) {
     logger.error('Error fetching menu permissions', err);

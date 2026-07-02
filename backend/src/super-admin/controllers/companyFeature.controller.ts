@@ -84,6 +84,21 @@ export async function updateCompanyFeatures(req: Request, res: Response, next: N
       }
     }
 
+    // 3. Increment company permissions version to trigger client cache updates
+    const { data: comp, error: fetchErr } = await supabase
+      .from('companies')
+      .select('permissions_version')
+      .eq('id', companyId)
+      .maybeSingle();
+
+    if (!fetchErr && comp) {
+      const nextVersion = (comp.permissions_version || 0) + 1;
+      await supabase
+        .from('companies')
+        .update({ permissions_version: nextVersion })
+        .eq('id', companyId);
+    }
+
     return res.status(200).json({ ok: true, message: 'Company menu permissions updated successfully' });
   } catch (error) {
     next(error);

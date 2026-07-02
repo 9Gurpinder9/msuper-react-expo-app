@@ -20,6 +20,8 @@ import {
   MD3Theme,
   Surface,
   Divider,
+  IconButton,
+  Tooltip,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -166,21 +168,35 @@ export default function AddBookmark() {
                 <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
                 Category
               </Text>
-              <Pressable onPress={openCategorySelector} style={{ position: 'relative' }} testID="bookmark-category-selector">
-                <TextInput
-                  value={selectedCategory?.name ?? ''}
-                  mode="outlined"
-                  placeholder="Tap to select Category..."
-                  placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-                  textColor={theme.colors.onSurface}
-                  editable={false}
-                  outlineColor={fieldErrors.category_id ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-                  style={{ pointerEvents: 'none' as any }}
-                />
-                <View style={{ position: 'absolute', right: 12, top: 0, bottom: 0, justifyContent: 'center', pointerEvents: 'none' }}>
-                  <MaterialCommunityIcons name="chevron-down" size={24} color={theme.colors.onSurfaceVariant} />
-                </View>
-              </Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Pressable onPress={openCategorySelector} style={{ flex: 1, position: 'relative' }} testID="bookmark-category-selector">
+                  <TextInput
+                    value={selectedCategory?.name ?? ''}
+                    mode="outlined"
+                    placeholder="Tap to select Category..."
+                    placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                    textColor={theme.colors.onSurface}
+                    editable={false}
+                    outlineColor={fieldErrors.category_id ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                    style={{ pointerEvents: 'none' as any }}
+                  />
+                  <View style={{ position: 'absolute', right: 12, top: 0, bottom: 0, justifyContent: 'center', pointerEvents: 'none' }}>
+                    <MaterialCommunityIcons name="chevron-down" size={24} color={theme.colors.onSurfaceVariant} />
+                  </View>
+                </Pressable>
+                <Tooltip title="Manage Categories">
+                  <IconButton
+                    icon="folder-cog-outline"
+                    mode="outlined"
+                    size={24}
+                    iconColor={theme.colors.primary}
+                    containerColor={theme.colors.surfaceVariant}
+                    onPress={() => router.push('/company/bookmark-categories')}
+                    accessibilityLabel="Manage Categories"
+                    style={{ margin: 0, alignSelf: 'center', height: 48, width: 48, borderRadius: 8 }}
+                  />
+                </Tooltip>
+              </View>
               {fieldErrors.category_id ? (
                 <Text variant="bodySmall" style={styles.errorText}>{fieldErrors.category_id}</Text>
               ) : null}
@@ -453,7 +469,7 @@ const makeStyles = (theme: MD3Theme) =>
       padding: 16,
     },
     formContainer: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       padding: 20,
       borderWidth: 1,

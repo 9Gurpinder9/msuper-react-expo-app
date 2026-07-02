@@ -11,6 +11,7 @@ import {
   FAB,
   Searchbar,
   Appbar,
+  Menu,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -49,6 +50,7 @@ export default function CitiesRegistry() {
 
   // Layout and Search Toggle states
   const [viewMode, setViewMode] = useState<'table' | 'list'>('list');
+  const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchRef = useRef<React.ComponentRef<typeof Searchbar>>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -150,14 +152,37 @@ export default function CitiesRegistry() {
           <>
             <Appbar.Action
               icon="magnify"
-              color={theme.colors.onPrimary}
+              color={theme.colors.primary}
               onPress={() => setSearchExpanded(!searchExpanded)}
             />
-            <Appbar.Action
-              icon={viewMode === 'table' ? 'format-list-bulleted' : 'table-large'}
-              color={theme.colors.onPrimary}
-              onPress={() => setViewMode(viewMode === 'table' ? 'list' : 'table')}
-            />
+            <Menu
+              visible={layoutMenuOpen}
+              onDismiss={() => setLayoutMenuOpen(false)}
+              anchor={
+                <Appbar.Action
+                  icon={viewMode === 'table' ? 'table-large' : 'format-list-bulleted'}
+                  color={theme.colors.primary}
+                  onPress={() => setLayoutMenuOpen(true)}
+                />
+              }
+            >
+              <Menu.Item
+                leadingIcon="format-list-bulleted"
+                title="List"
+                onPress={() => {
+                  setViewMode('list');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+              <Menu.Item
+                leadingIcon="table-large"
+                title="Table"
+                onPress={() => {
+                  setViewMode('table');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+            </Menu>
           </>
         }
       />
@@ -186,8 +211,8 @@ export default function CitiesRegistry() {
         <AppLoader message="Loading cities..." icon="database-sync-outline" />
       ) : viewMode === 'table' ? (
         <View style={{ flex: 1, padding: 16 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View style={[styles.tableContainer, { width: 740 }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ minWidth: '100%' }}>
+            <View style={styles.tableContainer}>
               {renderTableHeader()}
               <FlatList
                 ref={listRef}
@@ -203,7 +228,7 @@ export default function CitiesRegistry() {
                   ) : null
                 }
                 ListEmptyComponent={
-                  <View style={[styles.emptyContainer, { width: 740 }]}>
+                  <View style={styles.emptyContainer}>
                     <MaterialCommunityIcons name="map-marker-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                     <Text variant="bodyLarge" style={styles.emptyText}>
                       No cities registered yet.
@@ -402,7 +427,7 @@ const makeStyles = (theme: MD3Theme) =>
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outline,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
@@ -419,8 +444,9 @@ const makeStyles = (theme: MD3Theme) =>
       borderColor: theme.colors.outline,
       borderRadius: 12,
       overflow: 'hidden',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       flex: 1,
+      minWidth: 740,
     },
     tableHeader: {
       flexDirection: 'row',
@@ -465,6 +491,7 @@ const makeStyles = (theme: MD3Theme) =>
     },
     cellCity: {
       width: 180,
+      flexGrow: 1,
     },
     cellState: {
       width: 150,

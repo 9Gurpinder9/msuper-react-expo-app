@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import {
   IconButton,
   useTheme,
   MD3Theme,
   Tooltip,
+  Menu,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
@@ -26,18 +27,13 @@ export default function SidebarRail({ currentRoute, navSections, onLogout }: Pro
   const styles = makeStyles(theme);
   const { toggleDrawer } = useDrawer();
   const { mode, setMode } = useThemeMode();
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
   const router = useRouter();
 
   const navigateTo = (path: string) => {
     if (currentRoute !== path) {
       router.push(path as any);
     }
-  };
-
-  const themeCycle = () => {
-    const modes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
-    const idx = modes.indexOf(mode);
-    setMode(modes[(idx + 1) % modes.length]);
   };
 
   return (
@@ -50,6 +46,7 @@ export default function SidebarRail({ currentRoute, navSections, onLogout }: Pro
             onPress={toggleDrawer}
             accessibilityLabel="Expand sidebar"
             iconColor={theme.colors.onSurface}
+            style={styles.outlineNone}
           />
         </Tooltip>
       </View>
@@ -83,20 +80,61 @@ export default function SidebarRail({ currentRoute, navSections, onLogout }: Pro
       </ScrollView>
 
       <View style={styles.bottomSection}>
-        <Tooltip title={`Theme: ${mode}`}>
-          <IconButton
-            icon={(p) => <MaterialCommunityIcons name="theme-light-dark" size={p.size} color={p.color} />}
-            size={20}
-            onPress={themeCycle}
-            iconColor={theme.colors.onSurfaceVariant}
+        <Menu
+          visible={showThemeMenu}
+          onDismiss={() => setShowThemeMenu(false)}
+          anchor={
+            <Tooltip title={`Theme: ${mode}`}>
+              <IconButton
+                icon={(p) => (
+                  <MaterialCommunityIcons
+                    name={
+                      mode === 'light' ? 'white-balance-sunny' : mode === 'dark' ? 'weather-night' : 'theme-light-dark'
+                    }
+                    size={p.size}
+                    color={p.color}
+                  />
+                )}
+                size={20}
+                onPress={() => setShowThemeMenu(true)}
+                iconColor={theme.colors.onSurfaceVariant}
+                style={styles.outlineNone}
+              />
+            </Tooltip>
+          }
+        >
+          <Menu.Item
+            onPress={() => {
+              setMode('light');
+              setShowThemeMenu(false);
+            }}
+            title="Light"
+            leadingIcon="white-balance-sunny"
           />
-        </Tooltip>
+          <Menu.Item
+            onPress={() => {
+              setMode('dark');
+              setShowThemeMenu(false);
+            }}
+            title="Dark"
+            leadingIcon="weather-night"
+          />
+          <Menu.Item
+            onPress={() => {
+              setMode('system');
+              setShowThemeMenu(false);
+            }}
+            title="System"
+            leadingIcon="theme-light-dark"
+          />
+        </Menu>
         <Tooltip title="Logout">
           <IconButton
             icon={(p) => <MaterialCommunityIcons name="logout" size={p.size} color={p.color} />}
             size={20}
             onPress={onLogout}
-            iconColor={theme.colors.error}
+            iconColor={theme.colors.secondary}
+            style={styles.outlineNone}
           />
         </Tooltip>
       </View>
@@ -108,7 +146,7 @@ const makeStyles = (theme: MD3Theme) =>
   StyleSheet.create({
     container: {
       width: RAIL_WIDTH,
-      backgroundColor: theme.colors.elevation.level2,
+      backgroundColor: theme.colors.elevation.level3,
       borderRightWidth: 1,
       borderRightColor: theme.colors.outlineVariant,
       alignItems: 'center',
@@ -136,6 +174,12 @@ const makeStyles = (theme: MD3Theme) =>
       width: 40,
       height: 40,
       borderRadius: 8,
+      ...Platform.select({
+        web: {
+          outlineStyle: 'none',
+        } as any,
+        default: {},
+      }),
     },
     railIconActive: {
       backgroundColor: theme.colors.primaryContainer,
@@ -146,5 +190,13 @@ const makeStyles = (theme: MD3Theme) =>
       borderTopColor: theme.colors.outlineVariant,
       paddingTop: 8,
       gap: 4,
+    },
+    outlineNone: {
+      ...Platform.select({
+        web: {
+          outlineStyle: 'none',
+        } as any,
+        default: {},
+      }),
     },
   });

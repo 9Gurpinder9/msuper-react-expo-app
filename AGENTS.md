@@ -8,9 +8,9 @@ These instructions help AI agents work productively in this monorepo (frontend: 
 - **Obtain Approval:** Do NOT start coding or making file edits for features until the user reviews the plan and explicitly confirms/approves to proceed.
 - **No Auto-Commits:** Do NOT commit or push any changes to GitHub by default. Only perform a commit and push when the user explicitly/manually requests you to "commit and push to github".
 - **Environment Autonomy:** For minor diagnostic commands or non-destructive terminal tasks, run them without manual confirmation if allowed by the sandbox. Ask only if blocked or destructive.
-- **Mandatory Post-Edit Typecheck:** After completing any set of file edits that touch `.ts` or `.tsx` files, you **MUST** run a TypeScript typecheck before considering the task done. Use the following command scoped to the relevant workspace:
-  - **Frontend** (Expo/React Native): `npx tsc --noEmit --skipLibCheck` run from the `frontend/` directory.
-  - **Backend** (Express/TypeScript): `npm run build` or `npx tsc --noEmit` run from the `backend/` directory.
+- **Mandatory Post-Edit Typecheck:** After completing any set of file edits that touch `.ts` or `.tsx` files, you **MUST** automatically detect which files you modified and run a targeted typecheck command to check only those files:
+  - **Frontend** (Expo/React Native): `npx tsc --noEmit --skipLibCheck --project frontend/tsconfig.json <space-separated paths of edited files>`
+  - **Backend** (Express/TypeScript): `npx tsc --noEmit --skipLibCheck --project backend/tsconfig.json <space-separated paths of edited files>`
   - Fix **all** reported type errors in the edited files before finishing. Do not leave the task in a broken typecheck state.
 
 

@@ -1,25 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, FlatList, Pressable, Keyboard } from 'react-native';
+import { View, StyleSheet, ScrollView, FlatList, Keyboard } from 'react-native';
 import {
   Text,
   Button,
-  TextInput,
-  Switch,
-  FAB,
   Searchbar,
+  FAB,
   useTheme,
   Avatar,
   Appbar,
   ActivityIndicator,
   MD3Theme,
-  Portal,
+  Menu,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 import TopAppBar from '@super-admin/components/TopAppBar';
-import TopSlideDialog from '@super-admin/components/TopSlideDialog';
 import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { API_BASE_URL } from '@config';
@@ -38,7 +35,7 @@ export default function FeaturesRegistry() {
   const theme = useTheme();
   const styles = makeStyles(theme);
   const router = useRouter();
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
   const [features, setFeatures] = useState<FeatureItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,18 +49,9 @@ export default function FeaturesRegistry() {
 
   // Layout and Search Toggle states
   const [viewMode, setViewMode] = useState<'table' | 'list'>('list');
+  const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchRef = useRef<React.ComponentRef<typeof Searchbar>>(null);
-
-  // Dialog state
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [description, setDescription] = useState('');
-  const [isActive, setIsActive] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; displayName?: string }>({});
 
   const fetchFeatures = async (query = '', pageNum = 1, isLoadMore = false) => {
     if (pageNum === 1) {
@@ -111,9 +99,11 @@ export default function FeaturesRegistry() {
     fetchFeatures(search, page + 1, true);
   };
 
-  useEffect(() => {
-    fetchFeatures(search, 1, false);
-  }, [search]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchFeatures(search, 1, false);
+    }, [search])
+  );
 
   useEffect(() => {
     if (searchExpanded) {
@@ -124,74 +114,11 @@ export default function FeaturesRegistry() {
   }, [searchExpanded]);
 
   const handleOpenAdd = () => {
-    setEditId(null);
-    setName('');
-    setDisplayName('');
-    setDescription('');
-    setIsActive(true);
-    setFieldErrors({});
-    setDialogVisible(true);
+    router.push('/super-admin/features/add-feature');
   };
 
   const handleOpenEdit = (item: FeatureItem) => {
-    setEditId(item.id);
-    setName(item.name);
-    setDisplayName(item.display_name);
-    setDescription(item.description || '');
-    setIsActive(item.is_active);
-    setFieldErrors({});
-    setDialogVisible(true);
-  };
-
-  const handleSave = async () => {
-    const errors: typeof fieldErrors = {};
-    if (!name.trim() || name.trim().length < 2) {
-      errors.name = 'Feature Name must be at least 2 characters.';
-    }
-    if (!displayName.trim() || displayName.trim().length < 2) {
-      errors.displayName = 'Display Name must be at least 2 characters.';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-    setFieldErrors({});
-    setSaving(true);
-
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const url = editId
-        ? `${API_BASE_URL}/super-admin/features/${editId}`
-        : `${API_BASE_URL}/super-admin/features`;
-      const method = editId ? 'PUT' : 'POST';
-
-      const response = await fetchJson(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          display_name: displayName.trim(),
-          description: description.trim() || null,
-          is_active: isActive,
-        }),
-      });
-
-      if (response.ok) {
-        showSuccess(editId ? 'Feature updated successfully' : 'Feature registered successfully');
-        setDialogVisible(false);
-        fetchFeatures(search, 1, false);
-      } else {
-        showError(response.data?.message || 'Error occurred during save');
-      }
-    } catch {
-      showError('Network error occurred during save');
-    } finally {
-      setSaving(false);
-    }
+    router.push(`/super-admin/features/edit-feature?featureId=${item.id}`);
   };
 
   function renderTableHeader() {
@@ -309,14 +236,37 @@ export default function FeaturesRegistry() {
           <>
             <Appbar.Action
               icon="magnify"
-              color={theme.colors.onPrimary}
+              color={theme.colors.primary}
               onPress={() => setSearchExpanded(!searchExpanded)}
             />
-            <Appbar.Action
-              icon={viewMode === 'table' ? 'format-list-bulleted' : 'table-large'}
-              color={theme.colors.onPrimary}
-              onPress={() => setViewMode(viewMode === 'table' ? 'list' : 'table')}
-            />
+            <Menu
+              visible={layoutMenuOpen}
+              onDismiss={() => setLayoutMenuOpen(false)}
+              anchor={
+                <Appbar.Action
+                  icon={viewMode === 'table' ? 'table-large' : 'format-list-bulleted'}
+                  color={theme.colors.primary}
+                  onPress={() => setLayoutMenuOpen(true)}
+                />
+              }
+            >
+              <Menu.Item
+                leadingIcon="format-list-bulleted"
+                title="List"
+                onPress={() => {
+                  setViewMode('list');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+              <Menu.Item
+                leadingIcon="table-large"
+                title="Table"
+                onPress={() => {
+                  setViewMode('table');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+            </Menu>
           </>
         }
       />
@@ -345,8 +295,8 @@ export default function FeaturesRegistry() {
         <AppLoader message="Loading features..." icon="database-sync-outline" />
       ) : viewMode === 'table' ? (
         <View style={{ flex: 1, padding: 16 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View style={[styles.tableContainer, { width: 780 }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ minWidth: '100%' }}>
+            <View style={styles.tableContainer}>
               {renderTableHeader()}
               <FlatList
                 data={features}
@@ -359,7 +309,7 @@ export default function FeaturesRegistry() {
                   ) : null
                 }
                 ListEmptyComponent={
-                  <View style={[styles.emptyContainer, { width: 780 }]}>
+                  <View style={styles.emptyContainer}>
                     <MaterialCommunityIcons name="earth-off" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                     <Text variant="bodyLarge" style={styles.emptyText}>
                       No features registered yet.
@@ -403,106 +353,6 @@ export default function FeaturesRegistry() {
         color={theme.colors.onSecondary}
         onPress={handleOpenAdd}
       />
-
-      {/* Features Add/Edit Dialog */}
-      <TopSlideDialog
-        visible={dialogVisible}
-        onDismiss={() => setDialogVisible(false)}
-        title={editId ? 'Update Feature Details' : 'Register New Feature'}
-        actions={
-          <View style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-            <Button
-              onPress={handleSave}
-              disabled={saving}
-              mode="contained"
-              buttonColor={theme.colors.secondary}
-              textColor={theme.colors.onSecondary}
-              style={{ borderRadius: 8, alignSelf: 'center', minWidth: 140 }}
-            >
-              {editId ? 'Update' : 'Save'}
-            </Button>
-            <Button
-              onPress={() => setDialogVisible(false)}
-              disabled={saving}
-              mode="text"
-              textColor={theme.colors.onSurfaceVariant + 'B3'}
-              style={{ alignSelf: 'flex-end', marginTop: 4 }}
-            >
-              Close
-            </Button>
-          </View>
-        }
-      >
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            System Code Name
-          </Text>
-          <TextInput
-            value={name}
-            onChangeText={(v) => { setName(v); if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined })); }}
-            mode="outlined"
-            placeholder="e.g. billing_module"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.name ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.name ? theme.colors.error : theme.colors.primary}
-            autoCapitalize="none"
-          />
-          {fieldErrors.name ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.name}</Text>
-          ) : null}
-        </View>
-
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>
-            <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>* </Text>
-            Display Name
-          </Text>
-          <TextInput
-            value={displayName}
-            onChangeText={(v) => { setDisplayName(v); if (fieldErrors.displayName) setFieldErrors((prev) => ({ ...prev, displayName: undefined })); }}
-            mode="outlined"
-            placeholder="e.g. Billing Module"
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={fieldErrors.displayName ? theme.colors.error : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B')}
-            activeOutlineColor={fieldErrors.displayName ? theme.colors.error : theme.colors.primary}
-          />
-          {fieldErrors.displayName ? (
-            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 2 }}>{fieldErrors.displayName}</Text>
-          ) : null}
-        </View>
-
-        <View style={{ gap: 4 }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Description</Text>
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            mode="outlined"
-            placeholder="Provide brief details..."
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            textColor={theme.colors.onSurface}
-            outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
-            multiline
-            numberOfLines={2}
-          />
-        </View>
-
-        <View style={{ gap: 4, alignItems: 'flex-start' }}>
-          <Text variant="bodyMedium" style={{ fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Enable/Disable</Text>
-          <Switch value={isActive} onValueChange={setIsActive} color={theme.colors.primary} />
-        </View>
-      </TopSlideDialog>
-
-      {/* Centralized saving overlay */}
-      {saving && (
-        <Portal>
-          <View style={[StyleSheet.absoluteFillObject, { zIndex: 9999, backgroundColor: theme.dark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)', justifyContent: 'center', alignItems: 'center' }]}>
-            <AppLoader message={editId ? 'Updating feature details...' : 'Registering new feature...'} icon="database-sync-outline" transparent />
-          </View>
-        </Portal>
-      )}
     </View>
   );
 }
@@ -541,7 +391,7 @@ const makeStyles = (theme: MD3Theme) =>
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outline,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
@@ -583,8 +433,9 @@ const makeStyles = (theme: MD3Theme) =>
       borderColor: theme.colors.outline,
       borderRadius: 12,
       overflow: 'hidden',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       flex: 1,
+      minWidth: 780,
     },
     tableHeader: {
       flexDirection: 'row',
@@ -653,8 +504,8 @@ const makeStyles = (theme: MD3Theme) =>
     // Width definitions for columns matching 780 total width
     cellId: { width: 50 },
     cellName: { width: 180 },
-    cellDisplayName: { width: 180 },
-    cellDescription: { width: 160 },
+    cellDisplayName: { width: 180, flexGrow: 1 },
+    cellDescription: { width: 160, flexGrow: 1 },
     cellStatus: { width: 100 },
     cellAction: { width: 110 },
   });

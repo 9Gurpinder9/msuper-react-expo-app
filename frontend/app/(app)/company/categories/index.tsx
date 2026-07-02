@@ -164,12 +164,12 @@ export default function CompanyCategories() {
           <>
             <Appbar.Action
               icon="magnify"
-              color={theme.colors.onPrimary}
+              color={theme.colors.primary}
               onPress={toggleSearch}
             />
             <Appbar.Action
               icon={viewMode === 'table' ? 'format-list-bulleted' : 'table-large'}
-              color={theme.colors.onPrimary}
+              color={theme.colors.primary}
               onPress={() => setViewMode(viewMode === 'table' ? 'list' : 'table')}
             />
           </>
@@ -326,7 +326,7 @@ const makeStyles = (theme: AppTheme) => {
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outline,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: isDark ? theme.colors.surface : '#FFFFFF',
       overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
@@ -342,7 +342,7 @@ const makeStyles = (theme: AppTheme) => {
       borderColor: theme.colors.outline,
       borderRadius: 12,
       overflow: 'hidden',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: isDark ? theme.colors.surface : '#FFFFFF',
       flex: 1,
     },
     tableHeader: {

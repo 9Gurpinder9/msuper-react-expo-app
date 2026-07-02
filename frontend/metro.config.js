@@ -33,8 +33,11 @@ config.resolver.extraNodeModules = {
   'pretty-format/build/index.js': path.resolve(projectRoot, 'polyfills/pretty-format/index.js'),
 };
 
-// Avoid duplicate React by resolving modules only from this workspace's node_modules
-config.resolver.nodeModulesPaths = [path.resolve(projectRoot, 'node_modules')];
+// Avoid duplicate React by resolving modules from this workspace or hoisted monorepo node_modules
+config.resolver.nodeModulesPaths = [
+  path.resolve(projectRoot, 'node_modules'),
+  path.resolve(monorepoRoot, 'node_modules'),
+];
 
 // Keep resolver simple and avoid breaking package resolution on web.
 // We rely on extraNodeModules mapping above; do not override resolveRequest.

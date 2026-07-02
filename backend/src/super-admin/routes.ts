@@ -61,13 +61,19 @@ import {
     createCompany,
     updateCompany,
     toggleCompanyStatus,
-    sendCompanyVerification,
-    verifyCompanyEmail
 } from './controllers/company.controller';
 import {
     getCompanyFeatures,
     updateCompanyFeatures
 } from './controllers/companyFeature.controller';
+import {
+    getCompanyUsers,
+    createCompanyUser,
+    updateCompanyUser,
+    toggleUserStatus,
+    sendUserVerification,
+    verifyUserEmail
+} from './controllers/user.controller';
 import { validate } from '../middleware/validate';
 import {
     loginSchema,
@@ -103,7 +109,6 @@ import {
     updateCompanySchema,
     toggleCompanyStatusSchema,
     updateCompanyFeaturesSchema,
-    verifyCompanyEmailSchema
 } from './schemas';
 
 const router = Router();
@@ -166,10 +171,15 @@ router.get('/companies', authenticate, getCompanies);
 router.post('/companies', authenticate, validate(createCompanySchema), createCompany);
 router.put('/companies/:id', authenticate, validate(updateCompanySchema), updateCompany);
 router.patch('/companies/:id/status', authenticate, validate(toggleCompanyStatusSchema), toggleCompanyStatus);
-router.post('/companies/:id/send-verification', authenticate, sendCompanyVerification);
-router.post('/companies/:id/verify-email', authenticate, validate(verifyCompanyEmailSchema), verifyCompanyEmail);
 router.get('/companies/:companyId/features', authenticate, getCompanyFeatures);
 router.post('/companies/:companyId/features', authenticate, validate(updateCompanyFeaturesSchema), updateCompanyFeatures);
 
-export default router;
+// Users CRUD
+router.get('/users', authenticate, getCompanyUsers);
+router.post('/users', authenticate, createCompanyUser);
+router.put('/users/:id', authenticate, updateCompanyUser);
+router.patch('/users/:id/status', authenticate, toggleUserStatus);
+router.post('/users/:id/send-verification', authenticate, sendUserVerification);
+router.post('/users/:id/verify-email', authenticate, verifyUserEmail);
 
+export default router;

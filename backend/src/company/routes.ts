@@ -28,6 +28,7 @@ import {
 } from './controllers/categories.controller';
 
 import { getMenuPermissionsHandler } from './controllers/menuPermissions.controller';
+import { getCompanyProfileHandler, updateCompanyProfileHandler } from './controllers/profile.controller';
 
 // Auth schemas
 import {
@@ -40,6 +41,7 @@ import {
   updateBookmarkSchema,
   createCategorySchema,
   updateCategorySchema,
+  updateCompanyProfileSchema,
 } from './schemas';
 
 const router = Router();
@@ -57,6 +59,9 @@ router.use(authenticateCompany);
 
 router.get('/features', getMenuPermissionsHandler);
 
+router.get('/profile', getCompanyProfileHandler);
+router.put('/profile', validate(updateCompanyProfileSchema), updateCompanyProfileHandler);
+
 router.get('/bookmarks', listBookmarksHandler);
 router.post('/bookmarks', validate(createBookmarkSchema), createBookmarkHandler);
 router.put('/bookmarks/:id', validate(updateBookmarkSchema), updateBookmarkHandler);
@@ -66,5 +71,21 @@ router.post('/bookmarks/:id/refresh-meta', refreshBookmarkMetaHandler);
 router.get('/categories', listCategoriesHandler);
 router.post('/categories', validate(createCategorySchema), createCategoryHandler);
 router.put('/categories/:id', validate(updateCategorySchema), updateCategoryHandler);
+
+// --- Protected Attendance Routes ---
+import {
+  getPunchStatusHandler,
+  punchInHandler,
+  punchOutHandler,
+  getAttendanceHistoryHandler,
+  getMonthlyReportHandler
+} from './controllers/attendance.controller';
+import { punchInSchema, punchOutSchema } from './schemas';
+
+router.get('/attendance/status', getPunchStatusHandler);
+router.post('/attendance/punch-in', validate(punchInSchema), punchInHandler);
+router.post('/attendance/punch-out', validate(punchOutSchema), punchOutHandler);
+router.get('/attendance/history', getAttendanceHistoryHandler);
+router.get('/attendance/report', getMonthlyReportHandler);
 
 export default router;

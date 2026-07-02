@@ -10,6 +10,7 @@ import {
   FAB,
   Searchbar,
   ActivityIndicator,
+  Menu,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -50,6 +51,7 @@ export default function SubscriptionPlansRegistry() {
 
   // Layout and Search Toggle states
   const [viewMode, setViewMode] = useState<'table' | 'list'>('list');
+  const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchRef = useRef<React.ComponentRef<typeof Searchbar>>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -156,11 +158,34 @@ export default function SubscriptionPlansRegistry() {
               onPress={() => setSearchExpanded(!searchExpanded)}
               theme={theme}
             />
-            <AppbarActionIcon
-              icon={viewMode === 'list' ? 'table-large' : 'format-list-bulleted'}
-              onPress={() => setViewMode(viewMode === 'list' ? 'table' : 'list')}
-              theme={theme}
-            />
+            <Menu
+              visible={layoutMenuOpen}
+              onDismiss={() => setLayoutMenuOpen(false)}
+              anchor={
+                <AppbarActionIcon
+                  icon={viewMode === 'table' ? 'table-large' : 'format-list-bulleted'}
+                  onPress={() => setLayoutMenuOpen(true)}
+                  theme={theme}
+                />
+              }
+            >
+              <Menu.Item
+                leadingIcon="format-list-bulleted"
+                title="List"
+                onPress={() => {
+                  setViewMode('list');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+              <Menu.Item
+                leadingIcon="table-large"
+                title="Table"
+                onPress={() => {
+                  setViewMode('table');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+            </Menu>
           </View>
         }
       />
@@ -189,8 +214,8 @@ export default function SubscriptionPlansRegistry() {
         <AppLoader message="Loading plans..." icon="database-sync-outline" />
       ) : viewMode === 'table' ? (
         <View style={{ flex: 1, padding: 16 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View style={[styles.tableContainer, { width: 900 }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ minWidth: '100%' }}>
+            <View style={styles.tableContainer}>
               {renderTableHeader()}
               <FlatList
                 ref={listRef}
@@ -206,7 +231,7 @@ export default function SubscriptionPlansRegistry() {
                   ) : null
                 }
                 ListEmptyComponent={
-                  <View style={[styles.emptyContainer, { width: 900 }]}>
+                  <View style={styles.emptyContainer}>
                     <MaterialCommunityIcons name="card-bulleted-off-outline" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                     <Text variant="bodyLarge" style={styles.emptyText}>
                       No plans registered yet.
@@ -393,7 +418,7 @@ function AppbarActionIcon({ icon, onPress, theme }: { icon: string; onPress: () 
         },
       ]}
     >
-      <MaterialCommunityIcons name={icon as any} size={24} color={theme.colors.onPrimary} />
+      <MaterialCommunityIcons name={icon as any} size={24} color={theme.colors.primary} />
     </Pressable>
   );
 }
@@ -430,12 +455,14 @@ const makeStyles = (theme: MD3Theme) =>
     },
     // Table styling
     tableContainer: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outlineVariant,
       overflow: 'hidden',
       marginBottom: 20,
+      minWidth: 900,
+      flex: 1,
     },
     tableHeader: {
       flexDirection: 'row',
@@ -470,7 +497,7 @@ const makeStyles = (theme: MD3Theme) =>
       fontSize: 13,
     },
     cellId: { width: 50 },
-    cellName: { width: 180 },
+    cellName: { width: 180, flexGrow: 1 },
     cellPrice: { width: 120 },
     cellAmc: { width: 120 },
     cellDuration: { width: 120 },
@@ -494,7 +521,7 @@ const makeStyles = (theme: MD3Theme) =>
     listCard: {
       flex: 1,
       margin: 16,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outlineVariant,

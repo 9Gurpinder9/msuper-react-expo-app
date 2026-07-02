@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Appbar, useTheme } from 'react-native-paper';
+import { useDrawer } from '../context/DrawerContext';
 
 type Props = {
   title: string;
@@ -16,15 +17,24 @@ export default function TopAppBar({
   actions,
 }: Props) {
   const theme = useTheme();
+  const showMenu = false; // Disable hamburger menu in top app bar
+
   return (
     <Appbar.Header
       mode="small"
       style={{
-        backgroundColor: theme.colors.surface,
+        backgroundColor: theme.colors.background,
         borderBottomWidth: 1,
-        borderBottomColor: theme.colors.outlineVariant,
+        borderBottomColor: theme.dark ? '#334155' : '#94A3B8',
       }}
     >
+      {showMenu && (
+        <Appbar.Action
+          icon="menu"
+          color={theme.colors.primary}
+          onPress={toggleDrawer}
+        />
+      )}
       {showBack && (
         <Appbar.BackAction
           color={theme.colors.primary}

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   Pressable,
   useWindowDimensions,
   ScrollView,
+  Platform,
 } from 'react-native';
 import {
   Text,
@@ -13,14 +14,14 @@ import {
   Surface,
   useTheme,
   MD3Theme,
-  Tooltip,
 } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useThemeMode } from '@theme';
 import type { NavSection } from '@super-admin/sidebarNavItems';
-import { getIconColor } from '@super-admin/sidebarNavItems';
+
+import { useDrawer } from '../context/DrawerContext';
 
 type Props = {
   open: boolean;
@@ -35,10 +36,16 @@ type Props = {
 
 export default function SidebarDrawer({ open, onClose, currentRoute, navSections, headerTitle, headerIcon, headerSubtitle = '', onLogout }: Props) {
   const theme = useTheme();
-  const styles = makeStyles(theme);
+  const [isHoveredScroll, setIsHoveredScroll] = useState(false);
+  const styles = makeStyles(theme, isHoveredScroll);
   const { mode, setMode } = useThemeMode();
+  const { toggleDrawer } = useDrawer();
   const router = useRouter();
   const { width } = useWindowDimensions();
+
+  const [hoveredPath, setHoveredPath] = useState<string | null>(null);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [hoveredToggle, setHoveredToggle] = useState(false);
 
   const drawerWidth = Math.min(320, Math.max(260, Math.floor(width * 0.75)));
   const drawerX = useRef(new Animated.Value(0)).current;
@@ -68,6 +75,10 @@ export default function SidebarDrawer({ open, onClose, currentRoute, navSections
     }
   };
 
+  const activeColor = theme.colors.primary;
+  const inactiveColor = theme.dark ? 'rgba(255,255,255,0.6)' : 'rgba(15,23,42,0.65)';
+  const borderColor = theme.dark ? '#334155' : '#94A3B8';
+
   return (
     <>
       {open && (
@@ -84,7 +95,7 @@ export default function SidebarDrawer({ open, onClose, currentRoute, navSections
       <Animated.View
         style={[
           styles.drawer,
-          { width: drawerWidth, transform: [{ translateX: tx }] },
+          { width: drawerWidth, transform: [{ translateX: tx }], borderRightColor: borderColor },
         ]}
       >
         <Surface elevation={0} style={StyleSheet.absoluteFill}>
@@ -110,31 +121,41 @@ export default function SidebarDrawer({ open, onClose, currentRoute, navSections
             style={styles.scrollContainer}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={true}
+            persistentScrollbar={false}
+            onHoverIn={() => setIsHoveredScroll(true)}
+            onHoverOut={() => setIsHoveredScroll(false)}
           >
-            {navSections.map((section) => (
+            {navSections.map((section, si) => (
               <View key={section.title}>
+                {si === 0 && <View style={styles.navTopGap} />}
                 <Text style={styles.sectionHeader}>{section.title}</Text>
                 {section.items.map((item) => {
                   const isActive = currentRoute === item.path;
+                  const isHovered = hoveredPath === item.path;
+                  const itemColor = isActive ? activeColor : inactiveColor;
                   return (
                     <Pressable
                       key={item.path}
                       onPress={() => navigateTo(item.path)}
+                      onHoverIn={() => setHoveredPath(item.path)}
+                      onHoverOut={() => setHoveredPath((p) => (p === item.path ? null : p))}
                       style={({ pressed }) => [
                         styles.navItem,
                         isActive && styles.navItemActive,
+                        isHovered && styles.navItemHovered,
                         pressed && !isActive && styles.navItemPressed,
                       ]}
                     >
                       <MaterialCommunityIcons
                         name={item.icon as any}
-                        size={18}
-                        color={isActive ? theme.colors.onPrimary : getIconColor(item.colorKey, theme.dark)}
+                        size={20}
+                        color={itemColor}
                         style={styles.navIcon}
                       />
                       <Text
                         style={[
                           styles.navLabel,
+                          { color: itemColor },
                           isActive && styles.navLabelActive,
                         ]}
                       >
@@ -143,11 +164,11 @@ export default function SidebarDrawer({ open, onClose, currentRoute, navSections
                     </Pressable>
                   );
                 })}
-                <View style={styles.divider} />
+                {si < navSections.length - 1 && <View style={styles.dividerDark} />}
               </View>
             ))}
 
-            <View style={styles.footerSection}>
+            <View style={[styles.footerSection, { borderTopColor: borderColor }]}>
               <Pressable
                 onPress={() => {
                   onClose();
@@ -158,62 +179,122 @@ export default function SidebarDrawer({ open, onClose, currentRoute, navSections
                   pressed && styles.logoutBtnPressed,
                 ]}
               >
-                <MaterialCommunityIcons name="logout" size={16} color={theme.colors.secondary} style={{ opacity: 0.7 }} />
+                <MaterialCommunityIcons name="logout" size={18} color={theme.dark ? 'rgba(255,255,255,0.65)' : 'rgba(15,23,42,0.7)'} />
                 <Text style={styles.logoutLabel}>Logout</Text>
               </Pressable>
 
-              <View style={styles.themeCard}>
-                <Tooltip title="Light Mode">
-                  <IconButton
-                    icon="white-balance-sunny"
-                    size={16}
-                    onPress={() => setMode('light')}
-                    iconColor={mode === 'light' ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                    style={[styles.themeBtn, mode === 'light' && styles.themeBtnActive]}
+              <View style={styles.themeContainer}>
+                <Pressable
+                  onPress={() => setShowThemeMenu(!showThemeMenu)}
+                  style={({ pressed }) => [
+                    styles.themeBtn,
+                    pressed && styles.themeBtnPressed,
+                  ]}
+                >
+                  <MaterialCommunityIcons
+                    name={
+                      mode === 'light'
+                        ? 'white-balance-sunny'
+                        : mode === 'dark'
+                        ? 'weather-night'
+                        : 'theme-light-dark'
+                    }
+                    size={18}
+                    color={theme.colors.primary}
                   />
-                </Tooltip>
-                <Tooltip title="Dark Mode">
-                  <IconButton
-                    icon="weather-night"
-                    size={16}
-                    onPress={() => setMode('dark')}
-                    iconColor={mode === 'dark' ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                    style={[styles.themeBtn, mode === 'dark' && styles.themeBtnActive]}
-                  />
-                </Tooltip>
-                <Tooltip title="System Mode">
-                  <IconButton
-                    icon="theme-light-dark"
-                    size={16}
-                    onPress={() => setMode('system')}
-                    iconColor={mode === 'system' ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                    style={[styles.themeBtn, mode === 'system' && styles.themeBtnActive]}
-                  />
-                </Tooltip>
-                <Text style={styles.versionText}>
-                  v{Constants.expoConfig?.version || '1.0.0'}
+                  <Text style={[styles.themeLabel, { color: theme.colors.primary }]}>
+                    {mode === 'light' ? 'Light' : mode === 'dark' ? 'Dark' : 'System'}
+                  </Text>
+                </Pressable>
+
+                {showThemeMenu && (
+                  <View style={[styles.themeDropdownIconOnly, { borderColor: borderColor }]}>
+                    <Pressable
+                      onPress={() => {
+                        setMode('light');
+                        setShowThemeMenu(false);
+                      }}
+                      style={[styles.dropdownItem, mode === 'light' && styles.dropdownItemActive]}
+                    >
+                      <MaterialCommunityIcons name="white-balance-sunny" size={16} color={mode === 'light' ? theme.colors.primary : theme.colors.onSurfaceVariant} />
+                      <Text style={[styles.dropdownLabel, mode === 'light' && styles.dropdownLabelActive]}>Light</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        setMode('dark');
+                        setShowThemeMenu(false);
+                      }}
+                      style={[styles.dropdownItem, mode === 'dark' && styles.dropdownItemActive]}
+                    >
+                      <MaterialCommunityIcons name="weather-night" size={16} color={mode === 'dark' ? theme.colors.primary : theme.colors.onSurfaceVariant} />
+                      <Text style={[styles.dropdownLabel, mode === 'dark' && styles.dropdownLabelActive]}>Dark</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        setMode('system');
+                        setShowThemeMenu(false);
+                      }}
+                      style={[styles.dropdownItem, mode === 'system' && styles.dropdownItemActive]}
+                    >
+                      <MaterialCommunityIcons name="theme-light-dark" size={16} color={mode === 'system' ? theme.colors.primary : theme.colors.onSurfaceVariant} />
+                      <Text style={[styles.dropdownLabel, mode === 'system' && styles.dropdownLabelActive]}>System</Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                <Text style={styles.versionTextCent}>
+                  Version: {Constants.expoConfig?.version || '1.0.0'}
                 </Text>
               </View>
             </View>
           </ScrollView>
         </Surface>
+
+        <Pressable
+          onPress={toggleDrawer}
+          onHoverIn={() => setHoveredToggle(true)}
+          onHoverOut={() => setHoveredToggle(false)}
+          style={[
+            styles.floatingBtnZone,
+            {
+              left: drawerWidth - 14,
+              top: (Constants.statusBarHeight || 0) + 56 - 25,
+            },
+          ]}
+          accessibilityLabel={open ? 'Close drawer' : 'Open drawer'}
+        >
+          <View
+            style={[
+              styles.floatingBtn,
+              {
+                backgroundColor: theme.dark ? 'rgba(30, 41, 59, 0.8)' : 'rgba(255, 255, 255, 0.85)',
+                borderColor: borderColor,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name={open ? 'chevron-left' : 'chevron-right'}
+              size={18}
+              color={theme.colors.primary}
+            />
+          </View>
+        </Pressable>
       </Animated.View>
     </>
   );
 }
 
-const makeStyles = (theme: MD3Theme) =>
+const makeStyles = (theme: MD3Theme, isHoveredScroll: boolean) =>
   StyleSheet.create({
     drawer: {
       position: 'absolute',
       top: 0,
       bottom: 0,
       left: 0,
-      backgroundColor: theme.colors.elevation.level2,
+      backgroundColor: theme.colors.surfaceVariant,
       zIndex: 1000,
       elevation: 4,
       borderRightWidth: 1,
-      borderRightColor: theme.colors.outlineVariant,
     },
     overlay: {
       ...StyleSheet.absoluteFillObject,
@@ -228,10 +309,9 @@ const makeStyles = (theme: MD3Theme) =>
       flexDirection: 'row',
       alignItems: 'flex-start',
       justifyContent: 'space-between',
-      padding: 16,
-      paddingBottom: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.outlineVariant,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 0,
     },
     headerLeft: {
       flexDirection: 'row',
@@ -240,10 +320,16 @@ const makeStyles = (theme: MD3Theme) =>
       gap: 12,
     },
     iconBox: {
-      width: 44,
-      height: 44,
+      width: 40,
+      height: 40,
       borderRadius: 8,
       backgroundColor: theme.colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    menuIconContainer: {
+      width: 40,
+      height: 40,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -252,42 +338,56 @@ const makeStyles = (theme: MD3Theme) =>
       flexShrink: 1,
     },
     headerTitle: {
-      fontSize: 18,
-      fontWeight: '700',
+      fontSize: 20,
+      fontWeight: '600',
       color: theme.colors.primary,
+      lineHeight: 28,
     },
     headerSubtitle: {
       fontSize: 12,
+      lineHeight: 16,
       color: theme.colors.onSurfaceVariant,
       marginTop: 1,
     },
     scrollContainer: {
       flex: 1,
+      ...Platform.select({
+        web: {
+          scrollbarWidth: isHoveredScroll ? 'thin' : 'none',
+          scrollbarColor: isHoveredScroll
+            ? (theme.dark ? 'rgba(255,255,255,0.15) transparent' : 'rgba(15,23,42,0.1) transparent')
+            : 'transparent transparent',
+        }
+      } as any)
     },
     scrollContent: {
-      paddingVertical: 12,
-      paddingHorizontal: 12,
+      paddingTop: 8,
+      paddingHorizontal: 16,
+    },
+    navTopGap: {
+      height: 16,
     },
     sectionHeader: {
       fontSize: 12,
       fontWeight: '700',
       letterSpacing: 1,
-      color: theme.colors.outline,
+      color: theme.dark ? 'rgba(255,255,255,0.4)' : 'rgba(15,23,42,0.45)',
       textTransform: 'uppercase',
       marginBottom: 8,
-      marginTop: 8,
     },
     navItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
       borderRadius: 8,
-      marginBottom: 2,
-      gap: 12,
+      gap: 16,
     },
     navItemActive: {
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.dark ? 'rgba(129,140,248,0.08)' : 'rgba(0,70,255,0.04)',
+    },
+    navItemHovered: {
+      backgroundColor: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)',
     },
     navItemPressed: {
       backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
@@ -297,62 +397,135 @@ const makeStyles = (theme: MD3Theme) =>
       textAlign: 'center',
     },
     navLabel: {
-      fontSize: 14,
-      fontWeight: '500',
-      color: theme.colors.onSurfaceVariant,
+      fontSize: 15,
+      fontWeight: '600',
     },
     navLabelActive: {
       fontWeight: '700',
-      color: theme.colors.onPrimary,
     },
-    divider: {
+    dividerDark: {
       height: 1,
-      backgroundColor: theme.colors.outlineVariant,
+      backgroundColor: theme.dark ? '#334155' : '#94A3B8',
       marginVertical: 10,
     },
     footerSection: {
-      paddingTop: 8,
+      borderTopWidth: 1,
+      paddingTop: 16,
+      paddingBottom: 12,
+      position: 'relative',
     },
     logoutBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
+      gap: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
       borderRadius: 8,
-      marginBottom: 12,
+      marginBottom: 0,
+      opacity: 0.8,
+      ...Platform.select({
+        web: {
+          outlineStyle: 'none',
+        } as any,
+        default: {},
+      }),
     },
     logoutBtnPressed: {
       backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
     },
     logoutLabel: {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: '600',
-      color: theme.colors.secondary,
+      color: theme.dark ? 'rgba(255,255,255,0.65)' : 'rgba(15,23,42,0.7)',
     },
-    themeCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.elevation.level1,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: theme.colors.outlineVariant,
-      padding: 2,
-      justifyContent: 'center',
+    themeContainer: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      marginTop: 0,
+      gap: 0,
     },
     themeBtn: {
-      margin: 0,
-      width: 32,
-      height: 32,
-      borderRadius: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 8,
+      marginBottom: 0,
+      ...Platform.select({
+        web: {
+          outlineStyle: 'none',
+        } as any,
+        default: {},
+      }),
     },
-    themeBtnActive: {
-      backgroundColor: theme.colors.surfaceVariant,
+    themeBtnPressed: {
+      backgroundColor: theme.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
     },
-    versionText: {
+    themeLabel: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.primary,
+    },
+    themeDropdownIconOnly: {
+      position: 'absolute',
+      bottom: 45,
+      left: 16,
+      width: 140,
+      backgroundColor: theme.colors.elevation.level3,
+      borderRadius: 8,
+      borderWidth: 1,
+      overflow: 'hidden',
+      paddingVertical: 4,
+      zIndex: 1010,
+      elevation: 5,
+    },
+    dropdownItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      gap: 10,
+    },
+    dropdownItemActive: {
+      backgroundColor: theme.dark ? 'rgba(129,140,248,0.1)' : 'rgba(0,70,255,0.06)',
+    },
+    dropdownLabel: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+    },
+    dropdownLabelActive: {
+      fontWeight: '600',
+      color: theme.colors.primary,
+    },
+    versionTextCent: {
       fontSize: 11,
+      lineHeight: 16,
       color: theme.colors.onSurfaceVariant,
       opacity: 0.5,
-      marginLeft: 4,
+      textAlign: 'center',
+      marginTop: 6,
+    },
+    floatingBtnZone: {
+      position: 'absolute',
+      top: 120,
+      width: 28,
+      height: 50,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1100,
+    },
+    floatingBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      borderWidth: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 1.41,
+      elevation: 2,
     },
   });

@@ -118,7 +118,7 @@ function DatePickerModal({
       padding: 24,
     },
     card: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 20,
       padding: 20,
       width: '100%',
@@ -250,7 +250,7 @@ function SelectionModal({
     },
     card: {
       width: '100%', maxWidth: 360,
-      backgroundColor: theme.colors.surface, borderRadius: 20, padding: 16,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF', borderRadius: 20, padding: 16,
     },
     modalTitle: { fontWeight: '800', color: theme.colors.onSurface, textAlign: 'center', marginBottom: 8 },
     searchWrapper: {
@@ -405,6 +405,12 @@ export default function AddCompanyPage() {
   const [address1, setAddress1] = useState('');
   const [address2, setAddress2] = useState('');
   const [printName, setPrintName] = useState('');
+
+  // Password fields
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Dates
   const [validityDateISO, setValidityDateISO] = useState(todayISO());
@@ -568,7 +574,17 @@ export default function AddCompanyPage() {
     if (!selectedState) errors.state = 'State selection is required.';
     if (!selectedCity) errors.city = 'City selection is required.';
     if (!selectedCategory) errors.category = 'Category selection is required.';
-    if (!selectedPlan) errors.plan = 'Subscription plan selection is required.';
+    if (!password.trim()) {
+      errors.password = 'Password is required to create the default ADMIN user.';
+    } else {
+      const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordPattern.test(password)) {
+        errors.password = 'Must be at least 8 characters and contain uppercase, lowercase, number, and special character.';
+      }
+    }
+    if (password && confirmPassword && password !== confirmPassword) {
+      errors.confirm_password = 'Passwords do not match.';
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -605,6 +621,8 @@ export default function AddCompanyPage() {
           validity_date: validityDateISO,
           expiry_date: expiryDateISO || validityDateISO,
           is_active: true,
+          password: password.trim(),
+          confirm_password: confirmPassword.trim(),
         }),
       });
 
@@ -829,6 +847,42 @@ export default function AddCompanyPage() {
           </Field>
         </Surface>
 
+        {/* ── Password Settings ──────────────────────────────────────── */}
+        <Surface style={styles.card} elevation={1}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>Password Settings</Text>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4, opacity: 0.8 }}>
+            Set a password for the default ADMIN user of this company. (Must be at least 8 characters, containing uppercase, lowercase, number, and special character).
+          </Text>
+
+          <Field label="New Password" required error={!!fieldErrors.password} hint={fieldErrors.password}>
+            <TextInput
+              value={password}
+              onChangeText={(v) => { setPassword(v); clearErr('password'); }}
+              secureTextEntry={!showPassword}
+              mode="outlined"
+              placeholder="Enter new password"
+              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+              outlineColor={fieldErrors.password ? theme.colors.error : outlineColor(theme)}
+              right={<TextInput.Icon icon={showPassword ? 'eye-off' : 'eye'} onPress={() => setShowPassword(!showPassword)} />}
+              testID="new-password-input"
+            />
+          </Field>
+
+          <Field label="Confirm Password" required error={!!fieldErrors.confirm_password} hint={fieldErrors.confirm_password}>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={(v) => { setConfirmPassword(v); clearErr('confirm_password'); }}
+              secureTextEntry={!showConfirmPassword}
+              mode="outlined"
+              placeholder="Confirm new password"
+              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+              outlineColor={fieldErrors.confirm_password ? theme.colors.error : outlineColor(theme)}
+              right={<TextInput.Icon icon={showConfirmPassword ? 'eye-off' : 'eye'} onPress={() => setShowConfirmPassword(!showConfirmPassword)} />}
+              testID="confirm-password-input"
+            />
+          </Field>
+        </Surface>
+
         <Button
           mode="contained"
           onPress={handleSave}
@@ -973,7 +1027,7 @@ const makeStyles = (theme: MD3Theme) =>
     container: { flex: 1 },
     scrollContent: { padding: 16, gap: 16, paddingBottom: 60 },
     card: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outlineVariant,

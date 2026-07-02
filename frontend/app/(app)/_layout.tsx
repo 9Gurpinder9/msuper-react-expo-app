@@ -5,7 +5,7 @@ import { View } from "react-native";
 import { useTheme } from "react-native-paper";
 import AppLoader from "@components/AppLoader";
 import { DrawerProvider, useDrawer } from "../../src/super-admin/context/DrawerContext";
-import ResponsiveSidebarLayout from "@components/ResponsiveSidebarLayout";
+import ResponsiveSidebarLayout from "../../src/super-admin/components/ResponsiveSidebarLayout";
 import FloatingAssistantMenu from "../../src/super-admin/components/FloatingAssistantMenu";
 import { SUPER_ADMIN_NAV_ITEMS } from "../../src/super-admin/sidebarNavItems";
 import { useToast } from "@utils/toast";
@@ -33,11 +33,13 @@ function SuperAdminContent() {
       <ResponsiveSidebarLayout
         showSidebar={isSuperAdmin}
         navSections={SUPER_ADMIN_NAV_ITEMS}
-        headerTitle="Management Console"
+        headerTitle="Super Admin"
         headerIcon="shield-account"
-        headerSubtitle="Enterprise Admin"
+        headerSubtitle=""
         currentRoute={currentRoute}
         onLogout={handleLogout}
+        floatCollapseButton={true}
+        animatedMode={true}
       >
         <Stack
           screenOptions={{

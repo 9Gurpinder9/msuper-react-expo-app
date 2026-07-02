@@ -285,32 +285,24 @@ export default function AddRolePage() {
               : `Total menus: ${features.length}`}
           </Text>
 
-          {/* Row 3: Right-aligned search field */}
           <View style={styles.searchRow}>
-            <Searchbar
+            <PaperTextInput
               placeholder="Filter menus..."
               onChangeText={setSearchQuery}
               value={searchQuery}
-              style={[
-                styles.searchbar,
-                {
-                  borderColor: searchFocused
-                    ? theme.colors.primary
-                    : (theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'),
-                  borderWidth: 1,
-                  justifyContent: 'center',
-                }
-              ]}
-              inputStyle={{ minHeight: 0, paddingVertical: 0, alignSelf: 'center' }}
-              iconColor={theme.colors.onSurfaceVariant}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
+              mode="outlined"
+              dense
+              left={<PaperTextInput.Icon icon="magnify" />}
+              outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
+              activeOutlineColor={theme.colors.primary}
+              style={styles.searchbar}
+              testID="filter-menus-search"
             />
           </View>
 
           {/* Table Container wrapping horizontal scroll */}
-          <ScrollView horizontal={true} showsHorizontalScrollIndicator={true} style={{ flex: 1 }}>
-            <View style={{ width: 640 }}>
+          <ScrollView horizontal={true} showsHorizontalScrollIndicator={true} style={{ flex: 1 }} contentContainerStyle={{ minWidth: '100%' }}>
+            <View style={{ flex: 1, minWidth: 640 }}>
               {/* Fixed Table Header */}
               <View style={styles.tableHeader}>
                 <View style={styles.headerColMenu}>
@@ -459,7 +451,7 @@ const makeStyles = (theme: MD3Theme) =>
       paddingBottom: 100,
     },
     card: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outlineVariant,
@@ -496,7 +488,7 @@ const makeStyles = (theme: MD3Theme) =>
     },
     searchRow: {
       flexDirection: 'row',
-      justifyContent: 'flex-end',
+      justifyContent: 'flex-start',
       alignItems: 'center',
       width: '100%',
       marginTop: 8,
@@ -531,7 +523,7 @@ const makeStyles = (theme: MD3Theme) =>
       borderColor: theme.colors.outline,
       borderBottomLeftRadius: 8,
       borderBottomRightRadius: 8,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       height: 320,
       overflow: 'hidden',
     },
@@ -557,6 +549,7 @@ const makeStyles = (theme: MD3Theme) =>
     },
     headerColMenu: {
       width: 180,
+      flexGrow: 1,
       paddingHorizontal: 12,
       justifyContent: 'center',
       borderRightWidth: 1,

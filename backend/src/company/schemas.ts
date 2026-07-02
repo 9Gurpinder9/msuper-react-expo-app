@@ -62,4 +62,23 @@ export const companyResetPasswordConfirmSchema = Joi.object({
   resetToken: Joi.string().required(),
   newPassword: Joi.string().min(6).required(),
 });
+export const updateCompanyProfileSchema = Joi.object({
+  mobile2: Joi.string().allow('', null).max(15).optional(),
+  gst_no: Joi.string().allow('', null).max(15).optional(),
+  print_name: Joi.string().allow('', null).max(100).optional(),
+});
+
+export const punchInSchema = Joi.object({
+  latitude: Joi.number().required(),
+  longitude: Joi.number().required(),
+  photo: Joi.string().required(), // expect base64 string or image data string
+  locationAddress: Joi.string().allow('', null).optional(),
+});
+
+export const punchOutSchema = Joi.object({
+  latitude: Joi.number().required(),
+  longitude: Joi.number().required(),
+  photo: Joi.string().required(), // expect base64 string or image data string
+  locationAddress: Joi.string().allow('', null).optional(),
+});
 

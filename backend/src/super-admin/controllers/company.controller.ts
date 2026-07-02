@@ -3,9 +3,6 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import supabase from '../../database/supabaseClient';
 import logger from '../../utils/logger';
-import redis from '../../database/redisClient';
-import { generateNumericOtp } from '../../utils/otpGenerator';
-import { sendOtpEmail, sendCompanyVerificationEmail } from '../../utils/emailSender';
 
 export async function getCompanies(req: Request, res: Response, next: NextFunction) {
   try {
@@ -31,20 +28,12 @@ export async function getCompanies(req: Request, res: Response, next: NextFuncti
       return res.status(500).json({ ok: false, message: 'Failed to fetch companies' });
     }
 
-    const sanitizedData = (data || []).map((company: any) => {
-      const { password, ...rest } = company;
-      return {
-        ...rest,
-        has_password: !!password,
-      };
-    });
-
     const total = count ?? 0;
     const hasMore = offset + limit < total;
 
     return res.status(200).json({
       ok: true,
-      data: sanitizedData,
+      data: data || [],
       pagination: {
         page,
         limit,
@@ -81,8 +70,21 @@ export async function createCompany(req: Request, res: Response, next: NextFunct
       });
     }
 
-    // 2. Insert company details
-    const { data, error } = await supabase
+    // 2. Fetch the role ID for ADMIN
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('id')
+      .eq('name', 'ADMIN')
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (roleError || !roleData) {
+      logger.error('Failed to fetch ADMIN role for new company default user', { error: roleError });
+      return res.status(500).json({ ok: false, message: 'Default role initialization failed' });
+    }
+
+    // 3. Insert company details
+    const { data: companyData, error: companyError } = await supabase
       .from('companies')
       .insert({
         owner_name: body.owner_name.trim(),
@@ -110,12 +112,45 @@ export async function createCompany(req: Request, res: Response, next: NextFunct
       .select('*')
       .single();
 
-    if (error) {
-      logger.error('Failed to create company', { error });
+    if (companyError || !companyData) {
+      logger.error('Failed to create company', { error: companyError });
       return res.status(500).json({ ok: false, message: 'Failed to create company' });
     }
 
-    return res.status(201).json({ ok: true, data, message: 'Company created successfully' });
+    // 4. Create first default user (ADMIN role) in users table
+    const userPayload: any = {
+      company_id: companyData.id,
+      role_id: roleData.id,
+      email: companyData.email,
+      name: companyData.owner_name,
+      mobile: companyData.mobile1,
+      country_id: companyData.country_id,
+      country_name: companyData.country_name,
+      state_id: companyData.state_id,
+      state_name: companyData.state_name,
+      city_id: companyData.city_id,
+      city_name: companyData.city_name,
+      address: companyData.address1,
+      is_active: true,
+      email_verified: false,
+    };
+
+    if (body.password) {
+      userPayload.password = await bcrypt.hash(body.password, 10);
+    }
+
+    const { error: userError } = await supabase
+      .from('users')
+      .insert(userPayload);
+
+    if (userError) {
+      logger.error('Failed to create default ADMIN user for new company', { error: userError });
+      // Delete the created company to maintain database consistency
+      await supabase.from('companies').delete().eq('id', companyData.id);
+      return res.status(500).json({ ok: false, message: 'Failed to create default company user' });
+    }
+
+    return res.status(201).json({ ok: true, data: companyData, message: 'Company created successfully' });
   } catch (error) {
     next(error);
   }
@@ -126,10 +161,10 @@ export async function updateCompany(req: Request, res: Response, next: NextFunct
     const { id } = req.params;
     const body = req.body;
 
-    // Fetch current company record to detect email change
+    // Fetch current company record to verify existence
     const { data: currentCompany, error: currentError } = await supabase
       .from('companies')
-      .select('email, password')
+      .select('email')
       .eq('id', id)
       .single();
 
@@ -137,8 +172,6 @@ export async function updateCompany(req: Request, res: Response, next: NextFunct
       logger.error('Failed to find company for update', { error: currentError });
       return res.status(404).json({ ok: false, message: 'Company not found' });
     }
-
-    const emailChanged = currentCompany.email.toLowerCase() !== body.email.trim().toLowerCase();
 
     // 1. Check for duplicates excluding current company ID
     const { data: existing, error: checkError } = await supabase
@@ -162,12 +195,7 @@ export async function updateCompany(req: Request, res: Response, next: NextFunct
       });
     }
 
-    // If email changed, invalidate verification OTP from Redis
-    if (emailChanged) {
-      await redis.del(`company:verify:${id}`);
-    }
-
-    // 2. Update company details
+    // 2. Update company details (excluding passwords and email verifications)
     const updatePayload: any = {
       owner_name: body.owner_name.trim(),
       name: body.name.trim(),
@@ -192,18 +220,6 @@ export async function updateCompany(req: Request, res: Response, next: NextFunct
       is_active: body.is_active ?? true,
       updated_at: new Date().toISOString(),
     };
-
-    if (emailChanged) {
-      updatePayload.email_verified = false;
-      updatePayload.verification_sent_at = null;
-    }
-
-    if (body.password) {
-      if (currentCompany.password) {
-        return res.status(400).json({ ok: false, message: 'Password is already set and cannot be modified.' });
-      }
-      updatePayload.password = await bcrypt.hash(body.password, 10);
-    }
 
     const { data, error } = await supabase
       .from('companies')
@@ -244,103 +260,6 @@ export async function toggleCompanyStatus(req: Request, res: Response, next: Nex
     }
 
     return res.status(200).json({ ok: true, data, message: 'Status updated successfully' });
-  } catch (error) {
-    next(error);
-  }
-}
-
-export async function sendCompanyVerification(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { id } = req.params;
-
-    // Fetch company details
-    const { data: company, error: fetchErr } = await supabase
-      .from('companies')
-      .select('id, name, owner_name, email, verification_sent_at')
-      .eq('id', id)
-      .single();
-
-    if (fetchErr || !company) {
-      return res.status(404).json({ ok: false, message: 'Company not found' });
-    }
-
-    const email = company.email;
-    const cooldownKey = `company:verify:cooldown:${id}`;
-
-    // Enforce 30s cooldown
-    const cooling = await redis.get(cooldownKey);
-    if (cooling) {
-      const ttl = await redis.ttl(cooldownKey);
-      return res.status(429).json({
-        ok: false,
-        message: ttl && ttl > 0 ? `Please wait ${ttl} seconds before requesting a new OTP.` : 'Please wait before requesting a new OTP.'
-      });
-    }
-
-    const otp = generateNumericOtp();
-
-    // Send email containing OTP and company details
-    try {
-      await sendCompanyVerificationEmail(email, otp, company.name, company.owner_name);
-    } catch (mailErr: any) {
-      logger.error(`Failed to send company verification email: ${mailErr.message}`);
-      // In non-prod, log the OTP and continue for diagnostic purposes
-      if (process.env.NODE_ENV !== 'production') {
-        logger.info(`DEV ONLY: Company Verification OTP for ${email} is ${otp}`);
-      } else {
-        return res.status(500).json({ ok: false, message: 'Could not send verification email. Please try again later.' });
-      }
-    }
-
-    // Set Redis OTP (15 min TTL) and cooldown (30s)
-    await redis.set(`company:verify:${id}`, otp, { EX: 60 * 15 });
-    await redis.set(cooldownKey, '1', { EX: 30 });
-
-    // Update verification_sent_at timestamp in database
-    await supabase
-      .from('companies')
-      .update({ verification_sent_at: new Date().toISOString() })
-      .eq('id', id);
-
-    return res.status(200).json({ ok: true, message: 'Verification OTP sent successfully' });
-  } catch (error) {
-    next(error);
-  }
-}
-
-export async function verifyCompanyEmail(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { id } = req.params;
-    const { otp } = req.body;
-
-    const storedOtp = await redis.get(`company:verify:${id}`);
-    if (!storedOtp) {
-      return res.status(400).json({ ok: false, message: 'OTP expired or not found. Please resend verification email.' });
-    }
-
-    if (storedOtp !== otp) {
-      return res.status(401).json({ ok: false, message: 'Invalid OTP.' });
-    }
-
-    // Correct OTP: delete OTP and update status in database
-    await redis.del(`company:verify:${id}`);
-
-    const { data, error } = await supabase
-      .from('companies')
-      .update({
-        email_verified: true,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select('*')
-      .single();
-
-    if (error) {
-      logger.error('Failed to update company email verification status', { error });
-      return res.status(500).json({ ok: false, message: 'Failed to verify email in database.' });
-    }
-
-    return res.status(200).json({ ok: true, data, message: 'Email verified successfully!' });
   } catch (error) {
     next(error);
   }

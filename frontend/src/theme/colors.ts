@@ -10,78 +10,78 @@ import type { MD3Theme } from 'react-native-paper'
 // THEME 1 (Electric Corporate - Blue/Orange)
 // ==========================================
 export const lightColors: MD3Theme['colors'] = {
-  primary:              '#0046ff',
-  onPrimary:            '#ffffff',
-  primaryContainer:     '#DBEAFE',
-  onPrimaryContainer:   '#001bb7',
-  secondary:            '#ff8040',
-  onSecondary:          '#ffffff',
-  secondaryContainer:   '#FFE5D9',
+  primary: '#0046ff',
+  onPrimary: '#ffffff',
+  primaryContainer: '#DBEAFE',
+  onPrimaryContainer: '#001bb7',
+  secondary: '#ff8040',
+  onSecondary: '#ffffff',
+  secondaryContainer: '#FFE5D9',
   onSecondaryContainer: '#9A3412',
-  tertiary:             '#001bb7',
-  onTertiary:           '#ffffff',
-  tertiaryContainer:    '#E0E7FF',
-  onTertiaryContainer:  '#4338CA',
-  error:                'rgb(186, 26, 26)',
-  onError:              'rgb(255, 255, 255)',
-  errorContainer:       'rgb(255, 218, 214)',
-  onErrorContainer:     'rgb(65, 0, 2)',
-  background:           '#f5f1dc',
-  onBackground:         '#0F172A',
-  surface:              '#ffffff',
-  onSurface:            '#0F172A',
-  surfaceVariant:       '#EAE5CF',
-  onSurfaceVariant:     '#001bb7',
-  outline:              '#CBD5E1', 
-  outlineVariant:       '#E2E8F0', 
-  shadow:               'rgb(0, 0, 0)',
-  scrim:                'rgb(0, 0, 0)',
-  inverseSurface:       '#0F172A',
-  inverseOnSurface:     '#F8FAFC',
-  inversePrimary:       '#60A5FA',
+  tertiary: '#001bb7',
+  onTertiary: '#ffffff',
+  tertiaryContainer: '#E0E7FF',
+  onTertiaryContainer: '#4338CA',
+  error: 'rgb(186, 26, 26)',
+  onError: 'rgb(255, 255, 255)',
+  errorContainer: 'rgb(255, 218, 214)',
+  onErrorContainer: 'rgb(65, 0, 2)',
+  background: '#FEFAE5',
+  onBackground: '#0F172A',
+  surface: '#FEFAE5',
+  onSurface: '#0F172A',
+  surfaceVariant: '#F2EED9',
+  onSurfaceVariant: '#001bb7',
+  outline: '#CBD5E1',
+  outlineVariant: '#E2E8F0',
+  shadow: 'rgb(0, 0, 0)',
+  scrim: 'rgb(0, 0, 0)',
+  inverseSurface: '#0F172A',
+  inverseOnSurface: '#F8FAFC',
+  inversePrimary: '#60A5FA',
   elevation: {
     level0: 'transparent',
-    level1: '#ffffff',
-    level2: '#FAF9F0',
-    level3: '#F4F2E4',
+    level1: '#FEFAE5',
+    level2: '#F8F4DF',
+    level3: '#F2EED9',
     level4: '#EAE5CF',
     level5: '#DED8BA',
   },
-  surfaceDisabled:      'rgba(15, 23, 42, 0.12)',
-  onSurfaceDisabled:    'rgba(15, 23, 42, 0.38)',
-  backdrop:             'rgba(15, 23, 42, 0.35)',
+  surfaceDisabled: 'rgba(15, 23, 42, 0.12)',
+  onSurfaceDisabled: 'rgba(15, 23, 42, 0.38)',
+  backdrop: 'rgba(15, 23, 42, 0.35)',
 }
 
 export const darkColors: MD3Theme['colors'] = {
-  primary:              '#818CF8', // Softer, calmer indigo
-  onPrimary:            '#1E1B4B',
-  primaryContainer:     '#2A285C', // Muted deep dark indigo container
-  onPrimaryContainer:   '#E0E7FF', // Soft ice blue/lavender text
-  secondary:            '#FB923C', // Calm warm desaturated orange
-  onSecondary:          '#431407',
-  secondaryContainer:   '#5F2514', // Warm desaturated dark rust
+  primary: '#818CF8', // Softer, calmer indigo
+  onPrimary: '#1E1B4B',
+  primaryContainer: '#2A285C', // Muted deep dark indigo container
+  onPrimaryContainer: '#E0E7FF', // Soft ice blue/lavender text
+  secondary: '#FB923C', // Calm warm desaturated orange
+  onSecondary: '#431407',
+  secondaryContainer: '#5F2514', // Warm desaturated dark rust
   onSecondaryContainer: '#FFEDD5', // Soft warm cream text
-  tertiary:             '#38BDF8', // Calm sky blue
-  onTertiary:           '#082F49',
-  tertiaryContainer:    '#0C4A6E',
-  onTertiaryContainer:  '#E0F2FE',
-  error:                'rgb(255, 180, 171)',
-  onError:              'rgb(105, 0, 5)',
-  errorContainer:       'rgb(147, 0, 10)',
-  onErrorContainer:     'rgb(255, 180, 171)',
-  background:           '#0B0C16', // Slightly warmer dark base
-  onBackground:         '#E2E8F0',
-  surface:              '#121324', // Warm dark card surface
-  onSurface:            '#F8FAFC',
-  surfaceVariant:       '#1E1F3B',
-  onSurfaceVariant:     '#94A3B8',
-  outline:              '#475569',
-  outlineVariant:       '#334155',
-  shadow:               'rgb(0, 0, 0)',
-  scrim:                'rgb(0, 0, 0)',
-  inverseSurface:       '#F8FAFC',
-  inverseOnSurface:     '#0F172A',
-  inversePrimary:       '#818CF8',
+  tertiary: '#38BDF8', // Calm sky blue
+  onTertiary: '#082F49',
+  tertiaryContainer: '#0C4A6E',
+  onTertiaryContainer: '#E0F2FE',
+  error: 'rgb(255, 180, 171)',
+  onError: 'rgb(105, 0, 5)',
+  errorContainer: 'rgb(147, 0, 10)',
+  onErrorContainer: 'rgb(255, 180, 171)',
+  background: '#0B0C16', // Slightly warmer dark base
+  onBackground: '#E2E8F0',
+  surface: '#121324', // Warm dark card surface
+  onSurface: '#F8FAFC',
+  surfaceVariant: '#1E1F3B',
+  onSurfaceVariant: '#94A3B8',
+  outline: '#475569',
+  outlineVariant: '#334155',
+  shadow: 'rgb(0, 0, 0)',
+  scrim: 'rgb(0, 0, 0)',
+  inverseSurface: '#F8FAFC',
+  inverseOnSurface: '#0F172A',
+  inversePrimary: '#818CF8',
   elevation: {
     level0: 'transparent',
     level1: '#121324',
@@ -90,9 +90,9 @@ export const darkColors: MD3Theme['colors'] = {
     level4: '#222342',
     level5: '#27294D',
   },
-  surfaceDisabled:      'rgba(248, 250, 252, 0.12)',
-  onSurfaceDisabled:    'rgba(248, 250, 252, 0.38)',
-  backdrop:             'rgba(15, 23, 42, 0.65)',
+  surfaceDisabled: 'rgba(248, 250, 252, 0.12)',
+  onSurfaceDisabled: 'rgba(248, 250, 252, 0.38)',
+  backdrop: 'rgba(15, 23, 42, 0.65)',
 }
 
 /*

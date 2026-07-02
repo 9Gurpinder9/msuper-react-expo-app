@@ -113,7 +113,7 @@ function DatePickerModal({
 
   const s = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-    card: { backgroundColor: theme.colors.surface, borderRadius: 20, padding: 20, width: '100%', maxWidth: 340 },
+    card: { backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF', borderRadius: 20, padding: 20, width: '100%', maxWidth: 340 },
     title: { fontWeight: '800', color: theme.colors.onSurface, textAlign: 'center', marginBottom: 16, fontSize: 16 },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
     fieldLabel: { color: theme.colors.onSurfaceVariant, fontWeight: '700', fontSize: 12, width: 60 },
@@ -205,7 +205,7 @@ function SelectionModal({
 
   const s = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-    card: { width: '100%', maxWidth: 360, backgroundColor: theme.colors.surface, borderRadius: 20, padding: 16 },
+    card: { width: '100%', maxWidth: 360, backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF', borderRadius: 20, padding: 16 },
     modalTitle: { fontWeight: '800', color: theme.colors.onSurface, textAlign: 'center', marginBottom: 8 },
     searchWrapper: {
       flexDirection: 'row', alignItems: 'center',
@@ -349,13 +349,6 @@ export default function EditCompanyPage() {
   const [createdAt, setCreatedAt] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
-  // Password fields
-  const [hasPassword, setHasPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   // Dates
   const [validityDateISO, setValidityDateISO] = useState(todayISO());
   const [expiryDateISO, setExpiryDateISO] = useState('');
@@ -413,7 +406,6 @@ export default function EditCompanyPage() {
             setIsActive(matched.is_active ?? true);
             setCreatedAt(matched.created_at || null);
             setUpdatedAt(matched.updated_at || null);
-            setHasPassword(matched.has_password ?? false);
 
             // Parse dates
             if (matched.validity_date) setValidityDateISO(matched.validity_date.split('T')[0]);
@@ -543,22 +535,6 @@ export default function EditCompanyPage() {
     if (!selectedCategory) errors.category = 'Category selection is required.';
     if (!selectedPlan) errors.plan = 'Subscription plan selection is required.';
 
-    if (!hasPassword && (newPassword || confirmPassword)) {
-      if (!newPassword.trim()) {
-        errors.password = 'Password is required when setting a password.';
-      }
-      if (!confirmPassword.trim()) {
-        errors.confirm_password = 'Confirm password is required.';
-      }
-      const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-      if (newPassword && !passwordPattern.test(newPassword)) {
-        errors.password = 'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character.';
-      }
-      if (newPassword && confirmPassword && newPassword !== confirmPassword) {
-        errors.confirm_password = 'Passwords do not match.';
-      }
-    }
-
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       showError('Please fill out the highlighted fields.');
@@ -594,8 +570,6 @@ export default function EditCompanyPage() {
           validity_date: validityDateISO,
           expiry_date: expiryDateISO || validityDateISO,
           is_active: isActive,
-          password: (!hasPassword && newPassword) ? newPassword.trim() : undefined,
-          confirm_password: (!hasPassword && confirmPassword) ? confirmPassword.trim() : undefined,
         }),
       });
 
@@ -841,50 +815,6 @@ export default function EditCompanyPage() {
             </FieldRow>
           </Surface>
 
-          {/* ── Password Settings ──────────────────────────────────────── */}
-          <Surface style={styles.card} elevation={1}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>Password Settings</Text>
-            {hasPassword ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
-                <Text style={{ color: theme.colors.primary, fontWeight: '700', fontSize: 14 }}>✓ Password is set</Text>
-              </View>
-            ) : (
-              <>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4, opacity: 0.8 }}>
-                  Set a password for the registered company. (Must be at least 8 characters, containing uppercase, lowercase, number, and special character).
-                </Text>
-
-                <FieldRow label="New Password" error={!!fieldErrors.password} hint={fieldErrors.password} theme={theme}>
-                  <TextInput
-                    value={newPassword}
-                    onChangeText={(v) => { setNewPassword(v); clearErr('password'); }}
-                    secureTextEntry={!showNewPassword}
-                    mode="outlined"
-                    placeholder="Enter new password"
-                    placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-                    outlineColor={fieldErrors.password ? theme.colors.error : oc(theme)}
-                    right={<TextInput.Icon icon={showNewPassword ? 'eye-off' : 'eye'} onPress={() => setShowNewPassword(!showNewPassword)} />}
-                    testID="new-password-input"
-                  />
-                </FieldRow>
-
-                <FieldRow label="Confirm Password" error={!!fieldErrors.confirm_password} hint={fieldErrors.confirm_password} theme={theme}>
-                  <TextInput
-                    value={confirmPassword}
-                    onChangeText={(v) => { setConfirmPassword(v); clearErr('confirm_password'); }}
-                    secureTextEntry={!showConfirmPassword}
-                    mode="outlined"
-                    placeholder="Confirm new password"
-                    placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-                    outlineColor={fieldErrors.confirm_password ? theme.colors.error : oc(theme)}
-                    right={<TextInput.Icon icon={showConfirmPassword ? 'eye-off' : 'eye'} onPress={() => setShowConfirmPassword(!showConfirmPassword)} />}
-                    testID="confirm-password-input"
-                  />
-                </FieldRow>
-              </>
-            )}
-          </Surface>
-
           <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 8 }}>
             <Button
               mode="contained"
@@ -900,6 +830,25 @@ export default function EditCompanyPage() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Users floating action button, placed right below/above the menu permissions FAB */}
+      <FAB
+        icon="account-multiple-outline"
+        label="Users"
+        onPress={() => router.push(`/super-admin/companies/company-users?companyId=${companyId}`)}
+        color={theme.colors.secondary}
+        style={[
+          styles.usersFab,
+          {
+            backgroundColor: 'transparent',
+            elevation: 0,
+            shadowColor: 'transparent',
+            shadowOpacity: 0,
+            shadowOffset: { width: 0, height: 0 },
+          },
+        ]}
+        testID="company-users-fab"
+      />
 
       {/* ── Custom Date Picker Modal ────────────────────────────────────── */}
       <DatePickerModal
@@ -995,7 +944,7 @@ const makeStyles = (theme: MD3Theme) =>
     container: { flex: 1 },
     scrollContent: { padding: 16, gap: 16, paddingBottom: 60 },
     card: {
-      backgroundColor: theme.colors.surface, borderRadius: 12,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF', borderRadius: 12,
       borderWidth: 1, borderColor: theme.colors.outlineVariant, padding: 16, gap: 14,
     },
     sectionTitle: { fontWeight: '800', color: theme.colors.onSurface, letterSpacing: -0.2 },
@@ -1003,6 +952,13 @@ const makeStyles = (theme: MD3Theme) =>
     menuPermissionsFab: {
       position: 'absolute',
       top: 110,
+      right: 16,
+      borderRadius: 12,
+      zIndex: 99,
+    },
+    usersFab: {
+      position: 'absolute',
+      top: 170,
       right: 16,
       borderRadius: 12,
       zIndex: 99,

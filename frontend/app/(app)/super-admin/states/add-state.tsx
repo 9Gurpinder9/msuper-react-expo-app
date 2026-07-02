@@ -324,7 +324,7 @@ const makeStyles = (theme: MD3Theme) =>
       padding: 16,
     },
     formContainer: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       padding: 20,
       borderWidth: 1,
@@ -363,7 +363,7 @@ const makeStyles = (theme: MD3Theme) =>
       alignSelf: 'center',
     },
     dialog: {
-      backgroundColor: theme.colors.elevation.level3,
+      backgroundColor: theme.dark ? theme.colors.elevation.level3 : '#FFFFFF',
       borderRadius: 16,
       position: 'absolute',
       top: 40,

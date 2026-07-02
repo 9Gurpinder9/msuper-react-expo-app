@@ -169,13 +169,18 @@ export default function CompanyForgotPassword() {
                 <Text variant="bodyMedium" style={styles.cardHint}>
                   Enter your registered company email to receive a 6-digit OTP.
                 </Text>
+                <Text style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  Email Address
+                </Text>
                 <TextInput
-                  label="Email Address"
+                  placeholder="company@domain.com"
+                  placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
                   value={email}
                   onChangeText={setEmail}
                   mode="outlined"
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
-                  activeOutlineColor={theme.colors.primary}
+                  outlineColor={emailErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                  activeOutlineColor={emailErr ? theme.colors.error : theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
                   error={!!emailErr}
@@ -209,8 +214,8 @@ export default function CompanyForgotPassword() {
                   disabled={loading}
                   style={styles.button}
                   contentStyle={styles.buttonContent}
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
+                  buttonColor={theme.colors.secondary}
+                  textColor={theme.colors.onSecondary}
                   icon="send-outline"
                 >
                   Send OTP Code
@@ -300,4 +305,15 @@ const makeStyles = (theme: MD3Theme) =>
     helperText: { marginBottom: 4, marginTop: 2 },
     button: { marginTop: 16, borderRadius: 12 },
     buttonContent: { height: 50 },
+    fieldLabel: {
+      color: theme.colors.onSurface,
+      fontWeight: '700',
+      fontSize: 14,
+      marginBottom: 8,
+      marginTop: 12,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
   });

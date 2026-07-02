@@ -214,19 +214,21 @@ export default function CompanyMenuPermissions() {
           <Divider style={{ marginVertical: 4 }} />
 
           {/* Search Bar */}
-          <PaperTextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search menu name..."
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            mode="outlined"
-            dense
-            left={<PaperTextInput.Icon icon="magnify" />}
-            outlineColor={theme.dark ? 'rgba(255,255,255,0.3)' : '#CBD5E1'}
-            activeOutlineColor={theme.colors.primary}
-            style={styles.searchbar}
-            testID="menu-permissions-search"
-          />
+          <View style={styles.searchRow}>
+            <PaperTextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search menu name..."
+              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+              mode="outlined"
+              dense
+              left={<PaperTextInput.Icon icon="magnify" />}
+              outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
+              activeOutlineColor={theme.colors.primary}
+              style={styles.searchbar}
+              testID="menu-permissions-search"
+            />
+          </View>
 
           {/* Table View of Menus matching index.tsx styles */}
           <View style={styles.tableContainer}>
@@ -304,7 +306,7 @@ const makeStyles = (theme: MD3Theme) =>
     container: { flex: 1 },
     scrollContent: { padding: 16, gap: 16, paddingBottom: 60 },
     card: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outlineVariant,
@@ -312,17 +314,29 @@ const makeStyles = (theme: MD3Theme) =>
       gap: 14,
     },
     sectionTitle: { fontWeight: '800', color: theme.colors.onSurface, letterSpacing: -0.2, marginBottom: 4 },
-    detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    detailRow: { flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', gap: 8 },
     detailLabel: { fontWeight: '600', color: theme.colors.onSurfaceVariant, fontSize: 13 },
     detailValue: { fontWeight: '700', color: theme.colors.onSurface, fontSize: 14 },
-    searchbar: { backgroundColor: theme.colors.surface, height: 40 },
+    searchRow: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      width: '100%',
+      marginTop: 8,
+    },
+    searchbar: {
+      width: 220,
+      height: 38,
+      borderRadius: 8,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
+    },
     saveBtn: { borderRadius: 8, alignSelf: 'center', minWidth: 140, marginTop: 8 },
     tableContainer: {
       borderWidth: 1,
       borderColor: theme.colors.outline,
       borderRadius: 12,
       overflow: 'hidden',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       marginTop: 8,
     },
     tableHeader: {

@@ -12,8 +12,8 @@ const authenticateCompany: RequestHandler = (req, res, next): void => {
     const token = authHeader.split(' ')[1];
     try {
         const payload = verifyJwt(token);
-        if (payload.role !== 'COMPANY') {
-            logger.warn(`Role mismatch in company auth middleware. Expected COMPANY, got ${payload.role}`);
+        if (payload.role === 'SUPER_ADMIN' || !payload.userId) {
+            logger.warn(`Access denied in company auth middleware for role: ${payload.role}`);
             res.status(403).json({ success: false, message: 'Forbidden: access denied.' });
             return;
         }

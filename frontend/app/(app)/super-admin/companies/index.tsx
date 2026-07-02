@@ -61,19 +61,12 @@ export default function CompaniesRegistry() {
 
   // Layout and Search Toggle states
   const [viewMode, setViewMode] = useState<'table' | 'list'>('list');
+  const [layoutMenuOpen, setLayoutMenuOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
   const searchRef = useRef<React.ComponentRef<typeof Searchbar>>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const listRef = useRef<FlatList>(null);
   const [activeMenuCompanyId, setActiveMenuCompanyId] = useState<string | null>(null);
-
-  // Email Verification Modal States
-  const [verifyModalVisible, setVerifyModalVisible] = useState(false);
-  const [verifyCompanyId, setVerifyCompanyId] = useState<string | null>(null);
-  const [verifyCompanyName, setVerifyCompanyName] = useState('');
-  const [otp, setOtp] = useState('');
-  const [verifying, setVerifying] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
 
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -152,60 +145,6 @@ export default function CompaniesRegistry() {
     router.push(`/super-admin/companies/edit-company?companyId=${item.id}`);
   };
 
-  const handleSendVerification = async (companyId: string, companyName: string) => {
-    setSendingOtp(true);
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const response = await fetchJson(`${API_BASE_URL}/super-admin/companies/${companyId}/send-verification`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        showSuccess('Verification OTP sent successfully!');
-        setVerifyCompanyId(companyId);
-        setVerifyCompanyName(companyName);
-        setOtp('');
-        setVerifyModalVisible(true);
-      } else {
-        showError(response.data?.message || 'Failed to send verification email.');
-      }
-    } catch {
-      showError('Network error occurred.');
-    } finally {
-      setSendingOtp(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (otp.trim().length !== 6) {
-      showError('OTP must be exactly 6 digits.');
-      return;
-    }
-    setVerifying(true);
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const response = await fetchJson(`${API_BASE_URL}/super-admin/companies/${verifyCompanyId}/verify-email`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ otp: otp.trim() })
-      });
-      if (response.ok) {
-        showSuccess('Email verified successfully!');
-        setVerifyModalVisible(false);
-        fetchCompanies(search, 1, false);
-      } else {
-        showError(response.data?.message || 'Invalid OTP.');
-      }
-    } catch {
-      showError('Network error occurred.');
-    } finally {
-      setVerifying(false);
-    }
-  };
-
   return (
     <View style={styles.wrapper}>
       <TopAppBar
@@ -216,16 +155,39 @@ export default function CompaniesRegistry() {
           <>
             <Appbar.Action
               icon="magnify"
-              color={theme.colors.onPrimary}
+              color={theme.colors.primary}
               onPress={() => setSearchExpanded(!searchExpanded)}
               testID="search-toggle-button"
               accessibilityLabel="search-toggle-button"
             />
-            <Appbar.Action
-              icon={viewMode === 'table' ? 'format-list-bulleted' : 'table-large'}
-              color={theme.colors.onPrimary}
-              onPress={() => setViewMode(viewMode === 'table' ? 'list' : 'table')}
-            />
+            <Menu
+              visible={layoutMenuOpen}
+              onDismiss={() => setLayoutMenuOpen(false)}
+              anchor={
+                <Appbar.Action
+                  icon={viewMode === 'table' ? 'table-large' : 'format-list-bulleted'}
+                  color={theme.colors.primary}
+                  onPress={() => setLayoutMenuOpen(true)}
+                />
+              }
+            >
+              <Menu.Item
+                leadingIcon="format-list-bulleted"
+                title="List"
+                onPress={() => {
+                  setViewMode('list');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+              <Menu.Item
+                leadingIcon="table-large"
+                title="Table"
+                onPress={() => {
+                  setViewMode('table');
+                  setLayoutMenuOpen(false);
+                }}
+              />
+            </Menu>
           </>
         }
       />
@@ -255,8 +217,8 @@ export default function CompaniesRegistry() {
         <AppLoader message="Loading companies..." icon="database-sync-outline" />
       ) : viewMode === 'table' ? (
         <View style={{ flex: 1, padding: 16 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-            <View style={[styles.tableContainer, { width: 1020 }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ minWidth: '100%' }}>
+            <View style={styles.tableContainer}>
               {renderTableHeader()}
               <FlatList
                 ref={listRef}
@@ -272,7 +234,7 @@ export default function CompaniesRegistry() {
                   ) : null
                 }
                 ListEmptyComponent={
-                  <View style={[styles.emptyContainer, { width: 1020 }]}>
+                  <View style={styles.emptyContainer}>
                     <MaterialCommunityIcons name="office-building" size={48} color={theme.colors.onSurfaceVariant} style={{ opacity: 0.6 }} />
                     <Text variant="bodyLarge" style={styles.emptyText}>
                       No companies registered yet.
@@ -332,91 +294,6 @@ export default function CompaniesRegistry() {
         onPress={handleOpenAdd}
         testID="add-company-fab"
       />
-
-      {/* Verification Dialog */}
-      <Portal>
-        <Modal
-          visible={verifyModalVisible}
-          onDismiss={() => { if (!verifying) setVerifyModalVisible(false); }}
-          contentContainerStyle={{
-            position: 'absolute',
-            top: 40,
-            left: '50%',
-            transform: [{ translateX: -180 }],
-            width: 360,
-            backgroundColor: theme.colors.surface,
-            borderRadius: 20,
-            padding: 24,
-            elevation: 5
-          }}
-          testID="verification-dialog"
-        >
-          <Text variant="titleLarge" style={{ fontWeight: '800', textAlign: 'center', marginBottom: 12, color: theme.colors.onSurface }}>
-            Email Verification
-          </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginBottom: 20 }}>
-            Enter the 6-digit OTP sent to the registered email address of <Text style={{ fontWeight: 'bold' }}>{verifyCompanyName}</Text>
-          </Text>
-
-          <TextInput
-            label="Verification OTP"
-            value={otp}
-            onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, ''))}
-            keyboardType="number-pad"
-            maxLength={6}
-            mode="outlined"
-            placeholder="XXXXXX"
-            outlineColor={theme.dark ? 'rgba(255,255,255,0.55)' : '#64748B'}
-            placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
-            style={{ marginBottom: 24 }}
-            testID="verification-otp-input"
-          />
-
-          <View style={{ flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-            <Button
-              mode="contained"
-              onPress={handleVerifyOtp}
-              disabled={verifying}
-              buttonColor={theme.colors.secondary}
-              textColor={theme.colors.onSecondary}
-              style={{ minWidth: 140, borderRadius: 8 }}
-              testID="confirm-verification-button"
-            >
-              Verify OTP
-            </Button>
-            <Button
-              mode="text"
-              onPress={() => handleSendVerification(verifyCompanyId!, verifyCompanyName)}
-              disabled={verifying}
-              textColor={theme.colors.primary}
-              testID="resend-verification-button"
-            >
-              Resend OTP
-            </Button>
-            <Button
-              mode="outlined"
-              onPress={() => setVerifyModalVisible(false)}
-              disabled={verifying}
-              style={{ minWidth: 140, borderRadius: 8, borderColor: theme.colors.outline }}
-              textColor={theme.colors.onSurfaceVariant}
-              testID="close-verification-dialog"
-            >
-              Cancel
-            </Button>
-          </View>
-        </Modal>
-      </Portal>
-
-      {sendingOtp && (
-        <Portal>
-          <AppLoader message="Sending verification OTP..." icon="email-outline" transparent />
-        </Portal>
-      )}
-      {verifying && (
-        <Portal>
-          <AppLoader message="Verifying OTP..." icon="shield-check-outline" transparent />
-        </Portal>
-      )}
     </View>
   );
 
@@ -440,9 +317,6 @@ export default function CompaniesRegistry() {
         </View>
         <View style={[styles.headerCell, styles.cellStatus]}>
           <Text style={styles.headerText}>Status</Text>
-        </View>
-        <View style={[styles.headerCell, styles.cellEmailVerify]}>
-          <Text style={styles.headerText}>Email Verified</Text>
         </View>
         <View style={[styles.headerCell, styles.cellAction, { borderRightWidth: 0, alignItems: 'center' }]}>
           <Text style={styles.headerText}>Action</Text>
@@ -474,11 +348,6 @@ export default function CompaniesRegistry() {
             {item.is_active ? 'ACTIVE' : 'DISABLED'}
           </Text>
         </View>
-        <View style={[styles.tableCell, styles.cellEmailVerify]}>
-          <Text style={[styles.statusText, { color: item.email_verified ? theme.colors.primary : theme.colors.error }]}>
-            {item.email_verified ? 'VERIFIED' : 'UNVERIFIED'}
-          </Text>
-        </View>
         <View style={[styles.tableCell, styles.cellAction, { borderRightWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }]}>
           <Button
             mode={theme.dark ? 'contained-tonal' : 'outlined'}
@@ -502,6 +371,17 @@ export default function CompaniesRegistry() {
             testID={`menu-permissions-company-button-${index}`}
           >
             Menus
+          </Button>
+
+          <Button
+            mode="outlined"
+            compact
+            onPress={() => router.push(`/super-admin/companies/company-users?companyId=${item.id}`)}
+            style={[styles.editBtn, { borderColor: theme.colors.tertiary || theme.colors.primary }]}
+            labelStyle={[styles.editBtnLabel, { color: theme.colors.tertiary || theme.colors.primary }]}
+            testID={`users-company-button-${index}`}
+          >
+            Users
           </Button>
         </View>
       </View>
@@ -532,9 +412,6 @@ export default function CompaniesRegistry() {
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 2, alignItems: 'center' }}>
             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
               Status: <Text style={{ fontWeight: '700', color: item.is_active ? theme.colors.primary : theme.colors.error }}>{item.is_active ? 'ACTIVE' : 'DISABLED'}</Text>
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              Email Verify: <Text style={{ fontWeight: '700', color: item.email_verified ? theme.colors.primary : theme.colors.error }}>{item.email_verified ? 'VERIFIED' : 'UNVERIFIED'}</Text>
             </Text>
           </View>
         </View>
@@ -571,17 +448,15 @@ export default function CompaniesRegistry() {
               }}
               testID={`edit-permissions-item-${index}`}
             />
-            {!item.email_verified && (
-              <Menu.Item
-                leadingIcon="email-check-outline"
-                title="Verify Email"
-                onPress={() => {
-                  setActiveMenuCompanyId(null);
-                  handleSendVerification(item.id, item.name);
-                }}
-                testID={`verify-email-item-${index}`}
-              />
-            )}
+            <Menu.Item
+              leadingIcon="account-multiple-outline"
+              title="Company Users"
+              onPress={() => {
+                setActiveMenuCompanyId(null);
+                router.push(`/super-admin/companies/company-users?companyId=${item.id}`);
+              }}
+              testID={`company-users-item-${index}`}
+            />
           </Menu>
         </View>
       </View>
@@ -625,7 +500,7 @@ const makeStyles = (theme: MD3Theme) =>
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.outline,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
@@ -642,8 +517,9 @@ const makeStyles = (theme: MD3Theme) =>
       borderColor: theme.colors.outline,
       borderRadius: 12,
       overflow: 'hidden',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       flex: 1,
+      minWidth: 1020,
     },
     tableHeader: {
       flexDirection: 'row',
@@ -688,12 +564,14 @@ const makeStyles = (theme: MD3Theme) =>
     },
     cellCompany: {
       width: 170,
+      flexGrow: 1,
     },
     cellOwner: {
       width: 120,
     },
     cellEmail: {
       width: 170,
+      flexGrow: 1,
     },
     cellCategory: {
       width: 120,
@@ -701,11 +579,8 @@ const makeStyles = (theme: MD3Theme) =>
     cellStatus: {
       width: 110,
     },
-    cellEmailVerify: {
-      width: 120,
-    },
     cellAction: {
-      width: 160,
+      width: 220,
     },
     companyName: {
       fontSize: 14,

@@ -247,8 +247,13 @@ export default function CompanyResetOtp() {
                 <Text style={styles.cardHint}>
                   Enter the 6-digit OTP sent to {email}.
                 </Text>
+                <Text style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  OTP Verification Code
+                </Text>
                 <TextInput
-                  label="OTP Code"
+                  placeholder="Enter 6-digit code"
+                  placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
                   value={otp}
                   onChangeText={setOtp}
                   mode="outlined"
@@ -260,7 +265,7 @@ export default function CompanyResetOtp() {
                   editable={!loading && !resending}
                   textContentType="oneTimeCode"
                   autoComplete="one-time-code"
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
+                  outlineColor={isDark ? 'rgba(255,255,255,0.55)' : '#64748B'}
                   activeOutlineColor={theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
@@ -316,8 +321,8 @@ export default function CompanyResetOtp() {
                   disabled={loading}
                   style={styles.button}
                   contentStyle={styles.buttonContent}
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
+                  buttonColor={theme.colors.secondary}
+                  textColor={theme.colors.onSecondary}
                   icon={
                     verified
                       ? ({ size, color }) => (
@@ -435,4 +440,15 @@ const makeStyles = (theme: MD3Theme) =>
     resendProgress: { height: 4, borderRadius: 2 },
     button: { marginTop: 12, borderRadius: 12 },
     buttonContent: { height: 50 },
+    fieldLabel: {
+      color: theme.colors.onSurface,
+      fontWeight: '700',
+      fontSize: 14,
+      marginBottom: 8,
+      marginTop: 12,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
   });

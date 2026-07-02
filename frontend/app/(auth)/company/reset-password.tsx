@@ -197,8 +197,12 @@ export default function CompanyResetPassword() {
                 <Text variant="bodyMedium" style={styles.cardHint}>
                   Use a strong password with uppercase, lowercase, number, and symbol.
                 </Text>
+                <Text style={styles.fieldLabel}>
+                  Email Address
+                </Text>
                 <TextInput
-                  label="Email"
+                  placeholder="company@domain.com"
+                  placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
                   value={email}
                   mode="outlined"
                   editable={false}
@@ -214,8 +218,14 @@ export default function CompanyResetPassword() {
                   contentStyle={styles.inputContent}
                   outlineStyle={styles.inputOutline}
                 />
+
+                <Text style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  New Password
+                </Text>
                 <TextInput
-                  label="New Password"
+                  placeholder="••••••••"
+                  placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
                   value={newPassword}
                   onChangeText={setNewPassword}
                   mode="outlined"
@@ -224,8 +234,8 @@ export default function CompanyResetPassword() {
                   textContentType="newPassword"
                   autoComplete="new-password"
                   returnKeyType="next"
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
-                  activeOutlineColor={theme.colors.primary}
+                  outlineColor={newPasswordErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                  activeOutlineColor={newPasswordErr ? theme.colors.error : theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
                   left={
@@ -256,12 +266,16 @@ export default function CompanyResetPassword() {
                   outlineStyle={styles.inputOutline}
                 />
                 {!!newPasswordErr && (
-                  <HelperText type="error" style={styles.helperText}>
-                    {newPasswordErr}
-                  </HelperText>
+                  <Text variant="bodySmall" style={styles.errorText}>{newPasswordErr}</Text>
                 )}
+
+                <Text style={styles.fieldLabel}>
+                  <Text style={styles.requiredAsterisk}>* </Text>
+                  Confirm Password
+                </Text>
                 <TextInput
-                  label="Confirm Password"
+                  placeholder="••••••••"
+                  placeholderTextColor={isDark ? '#64748B' : '#94A3B8'}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   mode="outlined"
@@ -271,8 +285,8 @@ export default function CompanyResetPassword() {
                   autoComplete="password"
                   returnKeyType="done"
                   onSubmitEditing={handleResetPassword}
-                  outlineColor={isDark ? '#334155' : '#E2E8F0'}
-                  activeOutlineColor={theme.colors.primary}
+                  outlineColor={confirmPasswordErr ? theme.colors.error : (isDark ? 'rgba(255,255,255,0.55)' : '#64748B')}
+                  activeOutlineColor={confirmPasswordErr ? theme.colors.error : theme.colors.primary}
                   cursorColor={theme.colors.primary}
                   selectionColor={theme.colors.primary}
                   left={
@@ -315,8 +329,8 @@ export default function CompanyResetPassword() {
                   disabled={loading}
                   style={styles.button}
                   contentStyle={styles.buttonContent}
-                  buttonColor={theme.colors.primary}
-                  textColor={theme.colors.onPrimary}
+                  buttonColor={theme.colors.secondary}
+                  textColor={theme.colors.onSecondary}
                   icon={({ size, color }) => (
                     <MaterialCommunityIcons name="check-circle" size={size} color={color} />
                   )}
@@ -408,4 +422,22 @@ const makeStyles = (theme: MD3Theme) =>
     helperText: { marginBottom: 4, marginTop: 2 },
     button: { marginTop: 16, borderRadius: 12 },
     buttonContent: { height: 50 },
+    fieldLabel: {
+      color: theme.colors.onSurface,
+      fontWeight: '700',
+      fontSize: 14,
+      marginBottom: 8,
+      marginTop: 12,
+    },
+    requiredAsterisk: {
+      color: theme.colors.error,
+      fontWeight: 'bold',
+    },
+    errorText: {
+      color: theme.colors.error,
+      fontSize: 12,
+      marginTop: 2,
+      marginBottom: 4,
+      paddingHorizontal: 2,
+    },
   });

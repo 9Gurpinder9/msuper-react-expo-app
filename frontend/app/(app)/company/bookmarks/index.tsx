@@ -212,8 +212,14 @@ export default function CompanyBookmarks() {
             <Appbar.Action
               accessibilityLabel="Toggle search"
               icon="magnify"
-              color={theme.colors.onPrimary}
+              color={theme.colors.primary}
               onPress={toggleSearch}
+            />
+            <Appbar.Action
+              accessibilityLabel="Manage Categories"
+              icon="folder-cog-outline"
+              color={theme.colors.primary}
+              onPress={() => router.push('/company/bookmark-categories')}
             />
             <Menu
               visible={layoutMenuOpen}
@@ -221,15 +227,15 @@ export default function CompanyBookmarks() {
               anchor={
                 <Appbar.Action
                   accessibilityLabel="Switch layout view"
-                  icon="view-dashboard-outline"
-                  color={theme.colors.onPrimary}
+                  icon={viewMode === 'table' ? 'format-list-bulleted' : 'table-large'}
+                  color={theme.colors.primary}
                   onPress={() => setLayoutMenuOpen(true)}
                 />
               }
               contentStyle={styles.menuContent}
             >
               <Menu.Item
-                leadingIcon="view-grid-outline"
+                leadingIcon="format-list-bulleted"
                 title="Card"
                 onPress={() => {
                   setViewMode('card');
@@ -237,7 +243,7 @@ export default function CompanyBookmarks() {
                 }}
               />
               <Menu.Item
-                leadingIcon="table"
+                leadingIcon="table-large"
                 title="Table"
                 onPress={() => {
                   setViewMode('table');
@@ -302,7 +308,6 @@ export default function CompanyBookmarks() {
           );
         })}
       </View>
-
       {viewMode === 'table' ? (
         <View style={{ flex: 1, paddingHorizontal: 16, paddingBottom: 16 }}>
           <View style={styles.tableContainer}>
@@ -569,7 +574,7 @@ function BookmarkCard({
       style={[
         stylesCard.card,
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
           overflow: 'hidden',
           borderWidth: 1,
           borderColor: 'transparent',
@@ -779,7 +784,7 @@ const makeStyles = (theme: AppTheme) => {
       borderColor: theme.colors.outline,
       borderRadius: 12,
       overflow: 'hidden',
-      backgroundColor: theme.colors.surface,
+      backgroundColor: isDark ? theme.colors.surface : '#FFFFFF',
     },
     tableHeaderRow: {
       flexDirection: 'row',

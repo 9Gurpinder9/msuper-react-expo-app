@@ -1,27 +1,188 @@
-[2026-05-29 16:07:39] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:40] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:40] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:41] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:41] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:41] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:42] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:42] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:43] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:43] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:43] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:44] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:44] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:07:45] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:08:06] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:08:06] WARN: JWT verification failed: jwt expired
-[2026-05-29 16:27:09] ERROR: Failed to fetch countries {"error":{"code":"PGRST103","details":"An offset of 20 was requested, but there are only 2 rows.","hint":null,"message":"Requested range not satisfiable"}}
-[2026-06-01 17:17:22] WARN: JWT verification failed: jwt expired
-[2026-06-01 17:17:22] WARN: JWT verification failed: jwt expired
-[2026-06-01 17:17:22] WARN: JWT verification failed: jwt expired
-[2026-06-01 17:17:49] WARN: JWT verification failed: jwt expired
-[2026-06-01 17:17:49] WARN: JWT verification failed: jwt expired
-[2026-06-01 17:18:13] WARN: Password mismatch for email: gurpinderbrar495@gmail.com
-[2026-06-02 18:57:34] WARN: JWT verification failed: jwt expired
-[2026-06-02 18:57:34] WARN: JWT verification failed: jwt expired
-[2026-06-02 18:58:04] WARN: Password mismatch for email: gurpinderbrar495@gmail.com
-[2026-06-03 05:34:58] ERROR: Failed to fetch roles {"error":{"code":"PGRST103","details":"An offset of 20 was requested, but there are only 4 rows.","hint":null,"message":"Requested range not satisfiable"}}
+[2026-06-09 17:09:18] INFO: DEV ONLY: Company OTP for gurpinderbrar495@gmail.com is 123456
+[2026-06-09 17:10:54] INFO: DEV ONLY: Company OTP for gurpinderbrar495@gmail.com is 123456
+[2026-06-09 17:53:04] WARN: Bookmark metadata fetch failed {"url":"https://stackoverflow.com","error":"Request failed with status code 403"}
+[2026-06-09 18:46:03] WARN: JWT verification failed: jwt expired
+[2026-06-09 18:46:03] WARN: JWT verification failed: jwt expired
+[2026-06-09 18:46:03] WARN: JWT verification failed: jwt expired
+[2026-06-11 10:21:58] WARN: JWT verification failed: jwt expired
+[2026-06-11 10:21:58] WARN: JWT verification failed: jwt expired
+[2026-06-11 11:29:16] ERROR: Failed to query company features TypeError: fetch failed {"details":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:14902:13\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async getMenuPermissionsHandler (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\controllers\\menuPermissions.controller.ts:15:59)","hint":"","code":""}
+[2026-06-11 11:29:16] ERROR: Failed to query company features TypeError: fetch failed {"details":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:14902:13\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async getMenuPermissionsHandler (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\controllers\\menuPermissions.controller.ts:15:59)","hint":"","code":""}
+[2026-06-12 10:44:47] WARN: JWT verification failed: jwt expired
+[2026-06-15 10:18:11] WARN: JWT verification failed: jwt expired
+[2026-06-15 10:18:11] WARN: JWT verification failed: jwt expired
+[2026-06-15 10:18:11] WARN: JWT verification failed: jwt expired
+[2026-06-15 12:57:54] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 12:57:55] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 12:57:55] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 12:57:55] WARN: [MenuPermissions] COMPANY role not found or not active.
+[2026-06-15 12:57:55] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 12:57:55] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 12:57:55] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 12:57:55] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 12:57:55] WARN: [MenuPermissions] COMPANY role not found or not active.
+[2026-06-15 12:57:55] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 12:58:54] WARN: [MenuPermissions] COMPANY role not found or not active.
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 12:58:54] WARN: [MenuPermissions] COMPANY role not found or not active.
+[2026-06-15 12:58:54] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 13:00:48] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 13:00:49] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 13:00:49] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 13:00:49] WARN: [MenuPermissions] COMPANY role not found or not active.
+[2026-06-15 13:00:49] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 13:00:49] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 13:00:49] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 13:00:49] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 13:00:49] WARN: [MenuPermissions] COMPANY role not found or not active.
+[2026-06-15 13:00:49] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:15:54] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Fetching permissions for role name: COMPANY
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 15:15:55] WARN: [MenuPermissions] Role 'COMPANY' not found or not active.
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Fetching permissions for role name: COMPANY
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 15:15:55] WARN: [MenuPermissions] Role 'COMPANY' not found or not active.
+[2026-06-15 15:15:55] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:16:47] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 15:16:47] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:16:47] INFO: [MenuPermissions] Fetching permissions for role name: COMPANY
+[2026-06-15 15:16:47] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 15:16:47] WARN: [MenuPermissions] Role 'COMPANY' not found or not active.
+[2026-06-15 15:16:47] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:16:47] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 15:16:48] INFO: [MenuPermissions] Company-level allowed features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:16:48] INFO: [MenuPermissions] Fetching permissions for role name: COMPANY
+[2026-06-15 15:16:48] INFO: [MenuPermissions] Found COMPANY role ID: undefined
+[2026-06-15 15:16:48] WARN: [MenuPermissions] Role 'COMPANY' not found or not active.
+[2026-06-15 15:16:48] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:24:14] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 15:24:14] INFO: [MenuPermissions] Checking permissions for role name: COMPANY
+[2026-06-15 15:24:14] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 15:24:14] INFO: [MenuPermissions] Fetching features for companyId: 14
+[2026-06-15 15:24:15] INFO: [MenuPermissions] Checking permissions for role name: COMPANY
+[2026-06-15 15:24:15] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 16:26:00] ERROR: Failed to create default ADMIN user for new company {"error":{"code":"PGRST204","details":null,"hint":null,"message":"Could not find the 'email_verified' column of 'users' in the schema cache"}}
+[2026-06-15 16:30:53] WARN: Invalid company user login attempt for email: test@gmail.com
+[2026-06-15 16:31:20] WARN: Unverified user login attempt for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:09:13] WARN: Unverified user login attempt for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:10:13] WARN: Company user password mismatch for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:10:21] WARN: Company user password mismatch for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:16:16] WARN: Company user password mismatch for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:16:21] WARN: Company user password mismatch for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:16:23] WARN: Company user password mismatch for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:18:05] WARN: Company user password mismatch for email: gurpinderbrar495@gmail.com
+[2026-06-15 17:27:34] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-06-15 17:27:39] WARN: Role mismatch in company auth middleware. Expected COMPANY, got ADMIN
+[2026-06-15 17:27:39] WARN: Role mismatch in company auth middleware. Expected COMPANY, got ADMIN
+[2026-06-15 17:41:10] WARN: Role mismatch in company auth middleware. Expected COMPANY, got ADMIN
+[2026-06-15 17:41:10] WARN: Role mismatch in company auth middleware. Expected COMPANY, got ADMIN
+[2026-06-15 17:55:14] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-06-15 17:55:18] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 17:55:18] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 17:55:18] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 17:55:18] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 17:55:18] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 17:55:18] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 17:57:08] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 17:57:09] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 17:57:09] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 17:58:15] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 17:58:15] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 17:58:16] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 17:59:17] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 17:59:17] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 17:59:17] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 18:06:54] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 18:06:54] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 18:06:54] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 18:06:54] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 18:06:54] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 18:06:54] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 18:06:59] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 18:06:59] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 18:06:59] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-15 18:06:59] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-15 18:06:59] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-15 18:06:59] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:27:32] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:27:35] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:27:36] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:27:36] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:27:36] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:27:37] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:27:46] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:27:46] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:27:47] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:27:47] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:27:48] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:27:49] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:40:50] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:40:51] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:40:52] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:54:29] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:54:29] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:54:30] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:54:32] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:54:33] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:54:33] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 06:54:38] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 06:54:39] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 06:54:39] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 07:21:15] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 07:21:16] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 07:21:17] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 10:24:25] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 10:24:26] ERROR: Failed to query company details for permissions version check column companies.permissions_version does not exist {"code":"42703","details":null,"hint":null}
+[2026-06-16 10:24:26] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 10:24:26] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 10:24:26] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 10:24:26] ERROR: Failed to query company details for permissions version check column companies.permissions_version does not exist {"code":"42703","details":null,"hint":null}
+[2026-06-16 10:24:26] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 10:24:27] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 10:26:30] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-06-16 10:26:37] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 10:26:37] ERROR: Failed to query company details for permissions version check column companies.permissions_version does not exist {"code":"42703","details":null,"hint":null}
+[2026-06-16 10:26:38] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 10:26:38] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 10:26:38] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 10:26:38] ERROR: Failed to query company details for permissions version check column companies.permissions_version does not exist {"code":"42703","details":null,"hint":null}
+[2026-06-16 10:26:38] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 10:26:38] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 10:31:40] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-06-16 10:31:46] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 10:31:46] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 10:31:46] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 10:31:46] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-16 10:31:46] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-16 10:31:46] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"inventory","display_name":"Inventory"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-16 10:38:01] WARN: JWT verification failed: jwt expired
+[2026-06-16 10:38:01] WARN: JWT verification failed: jwt expired
+[2026-06-16 15:28:01] WARN: sendOtpTelegram failed for gurpinderbrar495@gmail.com: Request failed with status code 504
+[2026-06-16 15:48:56] INFO: Telegram OTP send success. Chat ID: 722666233, Status: 200, Data: {"ok":true,"result":{"message_id":207,"from":{"id":8071080888,"is_bot":true,"first_name":"M Super App","username":"MSuperAppBot"},"chat":{"id":722666233,"first_name":"GuRpiNdeR","username":"this_is_gurpinder","type":"private"},"date":1781605135,"text":"🔐 Mukti Super Login OTP\n\nUse the following OTP to log in:\n\n176140\n\nThis OTP is valid for 10 minutes. Do not share it with anyone.","entities":[{"offset":3,"length":21,"type":"bold"},{"offset":60,"length":6,"type":"bold"},{"offset":68,"length":62,"type":"italic"}]}}
+[2026-06-16 15:51:09] ERROR: Telegram OTP send failed. Chat ID: 722666233, Message: Error, Status: undefined, Data: undefined
+[2026-06-16 15:51:09] WARN: sendOtpTelegram failed for gurpinderbrar495@gmail.com: Error
+[2026-06-16 15:53:22] ERROR: Telegram OTP send failed. Chat ID: 722666233, Message: connect ETIMEDOUT 149.154.166.110:443, Status: undefined, Data: undefined
+[2026-06-16 15:53:22] WARN: sendOtpTelegram failed for gurpinderbrar495@gmail.com: connect ETIMEDOUT 149.154.166.110:443
+[2026-06-16 16:07:05] ERROR: Telegram OTP send failed. Chat ID: 722666233, Message: connect ETIMEDOUT 149.154.166.110:443, Status: undefined, Data: undefined
+[2026-06-16 16:07:05] WARN: sendOtpTelegram failed for gurpinderbrar495@gmail.com: connect ETIMEDOUT 149.154.166.110:443
+[2026-06-17 16:37:39] WARN: JWT verification failed: jwt expired
+[2026-06-17 16:37:39] WARN: JWT verification failed: jwt expired
+[2026-06-17 16:37:39] WARN: JWT verification failed: jwt expired
+[2026-06-17 16:37:39] WARN: JWT verification failed: jwt expired
+[2026-06-17 16:37:45] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-17 16:37:47] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-17 16:37:47] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-17 16:37:47] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-17 16:49:29] ERROR: Telegram OTP send failed. Chat ID: 722666233, Message: connect ETIMEDOUT 149.154.166.110:443, Status: undefined, Data: undefined
+[2026-06-17 16:49:29] WARN: sendOtpTelegram failed for gurpinderbrar495@gmail.com: connect ETIMEDOUT 149.154.166.110:443

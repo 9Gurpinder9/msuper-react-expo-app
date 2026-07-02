@@ -344,9 +344,6 @@ export const createCompanySchema = Joi.object({
     'date.min': 'Expiry Date must be after or equal to Validity Date.',
   }),
   is_active: Joi.boolean().default(true),
-});
-
-export const updateCompanySchema = createCompanySchema.keys({
   password: Joi.string()
     .trim()
     .min(8)
@@ -364,6 +361,8 @@ export const updateCompanySchema = createCompanySchema.keys({
       'any.only': 'Passwords do not match.',
     }),
 });
+
+export const updateCompanySchema = createCompanySchema;
 
 export const toggleCompanyStatusSchema = Joi.object({
   is_active: Joi.boolean().required(),

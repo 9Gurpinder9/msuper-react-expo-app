@@ -239,20 +239,8 @@ function EntryCardView({ card, index, reveal, onPress, theme }: CardViewProps) {
     </Animated.View>
   );
 }
-
-const headingFont = Platform.select({
-  ios: 'Avenir Next',
-  android: 'serif',
-  web: '"Cormorant Garamond", "Times New Roman", serif',
-  default: 'serif',
-});
-
-const bodyFont = Platform.select({
-  ios: 'Avenir',
-  android: 'sans-serif-condensed',
-  web: '"DM Sans", "Trebuchet MS", sans-serif',
-  default: 'sans-serif',
-});
+const headingFont = 'Inter_600SemiBold';
+const bodyFont = 'Inter_400Regular';
 
 const styles = StyleSheet.create({
   page: {

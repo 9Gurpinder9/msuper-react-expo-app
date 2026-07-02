@@ -127,7 +127,7 @@ const makeStyles = (theme: MD3Theme) =>
       zIndex: 1001,
     },
     dialogCard: {
-      backgroundColor: theme.colors.elevation.level3,
+      backgroundColor: theme.dark ? theme.colors.elevation.level3 : '#FFFFFF',
       borderRadius: 16,
       paddingTop: 20,
       paddingBottom: 16,

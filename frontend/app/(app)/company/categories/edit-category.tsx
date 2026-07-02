@@ -131,7 +131,7 @@ const makeStyles = (theme: any) =>
       padding: 16,
     },
     formContainer: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderRadius: 12,
       padding: 20,
       borderWidth: 1,

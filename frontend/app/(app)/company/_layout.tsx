@@ -5,7 +5,7 @@ import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppLoader from '@components/AppLoader';
 import { DrawerProvider } from '../../../src/super-admin/context/DrawerContext';
-import ResponsiveSidebarLayout from '@components/ResponsiveSidebarLayout';
+import CompanySidebarLayout from '@company/components/CompanySidebarLayout';
 import { useCompanyNavItems } from '../../../src/company/hooks/useCompanyNavItems';
 import { useToast } from '@utils/toast';
 
@@ -19,7 +19,7 @@ function CompanyAppContent() {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.multiRemove(['companyToken', 'companyEmail']);
+      await AsyncStorage.multiRemove(['companyToken', 'companyEmail', 'company_permissions_cache']);
       showSuccess('Logged out');
       router.replace('/company/login');
     } catch {}
@@ -27,10 +27,10 @@ function CompanyAppContent() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ResponsiveSidebarLayout
+      <CompanySidebarLayout
         navSections={navSections}
         headerTitle="Control Panel"
-        headerIcon="apps"
+        headerIcon="view-grid"
         headerSubtitle="Enterprise Admin"
         currentRoute={currentRoute}
         onLogout={handleLogout}
@@ -43,7 +43,7 @@ function CompanyAppContent() {
             contentStyle: { backgroundColor: theme.colors.background },
           }}
         />
-      </ResponsiveSidebarLayout>
+      </CompanySidebarLayout>
     </View>
   );
 }

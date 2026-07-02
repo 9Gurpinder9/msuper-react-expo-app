@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon --watch src --exec ts-node src/server.ts",
+    "dev": "kill-port 4000 && nodemon --watch src --exec ts-node src/server.ts",
     "build": "tsc",
+    "typecheck": "tsc --noEmit --skipLibCheck",
     "start": "node dist/server.js"
   },
   "keywords": [],
@@ -38,6 +39,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^22.15.30",
     "@types/nodemailer": "^6.4.17",
+    "kill-port": "^2.0.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, Animated, Pressable, useWindowDimensions, ScrollView } from 'react-native';
+import { View, StyleSheet, Animated, Pressable, useWindowDimensions, ScrollView, Platform } from 'react-native';
 import {
   Text,
   ActivityIndicator,
@@ -45,36 +45,7 @@ export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const authErrorShown = useRef(false);
 
-  // Diagnostics states
-  const [apiHealth, setApiHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
-  const [dbHealth, setDbHealth] = useState<'checking' | 'healthy' | 'down'>('checking');
 
-  const fetchDiagnostics = async () => {
-    // Check API Health
-    try {
-      const apiRes = await fetch(`${API_BASE_URL}/healthz`);
-      if (apiRes.ok) {
-        setApiHealth('healthy');
-      } else {
-        setApiHealth('down');
-      }
-    } catch {
-      setApiHealth('down');
-    }
-
-    // Check Database Health
-    try {
-      const dbRes = await fetch(`${API_BASE_URL}/test-database`);
-      if (dbRes.ok) {
-        const dbData = await dbRes.json();
-        setDbHealth(dbData.connected && dbData.querySucceeded ? 'healthy' : 'down');
-      } else {
-        setDbHealth('down');
-      }
-    } catch {
-      setDbHealth('down');
-    }
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +69,6 @@ export default function Dashboard() {
           showError(body.message || 'Failed to load');
         } else {
           setData(body.data);
-          await fetchDiagnostics();
         }
       } catch {
         showError('Network error');
@@ -109,7 +79,8 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [router, showError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const widgets: Widget[] = useMemo(
     () => [
@@ -121,42 +92,6 @@ export default function Dashboard() {
         color: theme.colors.secondary,
         to: '/super-admin/companies',
         category: 'core',
-      },
-      {
-        key: 'company-categories',
-        title: 'Company Categories',
-        subtitle: 'Manage categories of companies',
-        icon: 'shape-outline',
-        color: theme.colors.primary,
-        to: '/super-admin/company-categories',
-        category: 'core',
-      },
-      {
-        key: 'countries',
-        title: 'Countries Registry',
-        subtitle: 'Manage administrative countries',
-        icon: 'earth',
-        color: theme.colors.primary,
-        to: '/super-admin/countries',
-        category: 'registries',
-      },
-      {
-        key: 'states',
-        title: 'States Registry',
-        subtitle: 'Manage administrative states',
-        icon: 'map-outline',
-        color: theme.colors.primary,
-        to: '/super-admin/states',
-        category: 'registries',
-      },
-      {
-        key: 'cities',
-        title: 'Cities Directory',
-        subtitle: 'Manage municipalities and districts',
-        icon: 'city-variant-outline',
-        color: theme.colors.secondary,
-        to: '/super-admin/cities',
-        category: 'registries',
       },
       {
         key: 'subscription-plans',
@@ -231,15 +166,12 @@ export default function Dashboard() {
                   ]}
                 >
                   <Card.Content style={styles.widgetContent}>
-                    {/* Hover state indicator stripe */}
-                    {isHovered && <View style={styles.hoverIndicator} />}
-                    
                     <View style={styles.widgetMeta}>
                       <View style={styles.widgetHeaderRow}>
                         <MaterialCommunityIcons
                           name={w.icon as any}
                           size={22}
-                          color={isHovered ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                          color={theme.colors.onSurfaceVariant}
                         />
                         <Text style={styles.widgetTitle}>
                           {w.title}
@@ -271,10 +203,6 @@ export default function Dashboard() {
       <TopAppBar title="System Console" />
 
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.welcomeText}>
-          System Control Panel
-        </Text>
-        
         {renderCategorySection('Core Management', coreWidgets)}
         {renderCategorySection('Administrative Registries', registryWidgets)}
       </ScrollView>
@@ -421,13 +349,33 @@ const makeStyles = (theme: MD3Theme) =>
     },
     widget: {
       borderRadius: 14,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.dark ? theme.colors.surface : '#FFFFFF',
       borderColor: theme.colors.outlineVariant,
       borderWidth: 1,
       overflow: 'hidden',
+      // Web transitions
+      ...(Platform.OS === 'web'
+        ? ({
+            transitionProperty: 'transform, box-shadow, border-color, shadow-opacity',
+            transitionDuration: '300ms',
+            transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+          } as any)
+        : {}),
+      // Base shadow
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0,
+      shadowRadius: 0,
+      elevation: 0,
     },
     widgetHover: {
-      borderColor: theme.colors.primary,
+      transform: [{ scale: 1.02 }],
+      borderColor: theme.colors.outlineVariant,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: theme.dark ? 0.35 : 0.12,
+      shadowRadius: 16,
+      elevation: 6,
     },
     widgetContent: {
       flexDirection: 'row',
@@ -435,14 +383,6 @@ const makeStyles = (theme: MD3Theme) =>
       justifyContent: 'space-between',
       padding: 16,
       position: 'relative',
-    },
-    hoverIndicator: {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: 4,
-      backgroundColor: theme.colors.primary,
     },
     widgetMeta: {
       flex: 1,
