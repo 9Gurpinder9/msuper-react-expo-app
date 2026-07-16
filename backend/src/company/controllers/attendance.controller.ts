@@ -125,7 +125,7 @@ export const getAttendanceHistoryHandler: RequestHandler = async (req, res, next
        return;
     }
 
-    const record = await getAttendanceHistory(
+    const records = await getAttendanceHistory(
       Number(companyId),
       Number(userId),
       typeof date === 'string' ? date : undefined
@@ -133,7 +133,7 @@ export const getAttendanceHistoryHandler: RequestHandler = async (req, res, next
 
     res.json({
       success: true,
-      data: record ? [record] : [],
+      data: records || [],
     });
   } catch (err: any) {
     logger.error('Failed to retrieve history', err);

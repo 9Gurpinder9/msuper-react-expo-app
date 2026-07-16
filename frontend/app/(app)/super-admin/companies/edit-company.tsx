@@ -24,6 +24,7 @@ import {
   Surface,
   Divider,
   FAB,
+  TouchableRipple,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -258,13 +259,14 @@ function SelectionModal({
                 style={{ maxHeight: 300 }}
                 keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
-                  <Pressable
-                    style={({ pressed }) => [s.optionItem, pressed && { backgroundColor: theme.colors.surfaceVariant }]}
+                  <TouchableRipple
                     onPress={() => { onSelect(item); onDismiss(); }}
+                    style={s.optionItem}
+                    rippleColor={theme.colors.secondaryContainer}
                     testID={`select-option-${item.id}`}
                   >
                     <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>{item.name}</Text>
-                  </Pressable>
+                  </TouchableRipple>
                 )}
                 ListEmptyComponent={
                   <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 20 }}>
@@ -346,6 +348,7 @@ export default function EditCompanyPage() {
   const [address2, setAddress2] = useState('');
   const [printName, setPrintName] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [maxUsers, setMaxUsers] = useState('5');
   const [createdAt, setCreatedAt] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
@@ -404,6 +407,7 @@ export default function EditCompanyPage() {
             setAddress2(matched.address2 || '');
             setPrintName(matched.print_name || '');
             setIsActive(matched.is_active ?? true);
+            setMaxUsers(String(matched.max_users ?? 5));
             setCreatedAt(matched.created_at || null);
             setUpdatedAt(matched.updated_at || null);
 
@@ -534,6 +538,9 @@ export default function EditCompanyPage() {
     if (!selectedCity) errors.city = 'City selection is required.';
     if (!selectedCategory) errors.category = 'Category selection is required.';
     if (!selectedPlan) errors.plan = 'Subscription plan selection is required.';
+    if (!maxUsers.trim() || parseInt(maxUsers, 10) <= 0) {
+      errors.max_users = 'Max allowed users must be a positive integer.';
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -570,6 +577,7 @@ export default function EditCompanyPage() {
           validity_date: validityDateISO,
           expiry_date: expiryDateISO || validityDateISO,
           is_active: isActive,
+          max_users: parseInt(maxUsers, 10) || 5,
         }),
       });
 
@@ -769,6 +777,20 @@ export default function EditCompanyPage() {
                   testID="expiry-date-input"
                 />
               </View>
+            </FieldRow>
+
+            {/* Max Allowed Users */}
+            <FieldRow label="Max Allowed Users" required error={!!fieldErrors.max_users} theme={theme}>
+              <TextInput
+                value={maxUsers}
+                onChangeText={(v) => { setMaxUsers(v.replace(/[^0-9]/g, '')); clearErr('max_users'); }}
+                mode="outlined"
+                keyboardType="numeric"
+                placeholder="e.g. 5"
+                placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+                outlineColor={fieldErrors.max_users ? theme.colors.error : oc(theme)}
+                testID="company-max-users-input"
+              />
             </FieldRow>
 
             {/* Status Toggle */}

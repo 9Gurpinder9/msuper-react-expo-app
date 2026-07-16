@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "kill-port 4000 && nodemon --watch src --exec ts-node src/server.ts",
+    "dev": "kill-port 4000 && cross-env NODE_OPTIONS=\"--experimental-websocket\" nodemon --watch src --exec ts-node src/server.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "start": "node dist/server.js"
+    "start": "cross-env NODE_OPTIONS=\"--experimental-websocket\" node dist/server.js"
   },
   "keywords": [],
   "author": "",

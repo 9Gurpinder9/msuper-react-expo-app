@@ -22,9 +22,7 @@ CREATE TABLE IF NOT EXISTS public.attendances (
     total_minutes INTEGER DEFAULT 0,
     
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    UNIQUE (user_id, attendance_date)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexing for reporting performance
@@ -36,6 +34,7 @@ CREATE TABLE IF NOT EXISTS public.attendance_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id BIGINT NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
     user_id BIGINT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    attendance_id UUID REFERENCES public.attendances(id) ON DELETE CASCADE,
     log_type VARCHAR(20) NOT NULL, -- 'PUNCH_IN', 'PUNCH_OUT'
     punch_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     latitude NUMERIC NOT NULL,

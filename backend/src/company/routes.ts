@@ -12,6 +12,22 @@ import {
   companyResetPasswordConfirmHandler
 } from './controllers/auth.controller';
 
+// User management controllers
+import {
+  getCompanyRolesHandler,
+  getCompanyUsersHandler,
+  createCompanyUserHandler,
+  updateCompanyUserHandler,
+  toggleUserStatusHandler,
+  sendUserVerificationHandler,
+  verifyUserEmailHandler
+} from './controllers/user.controller';
+
+// Location controllers
+import { getCountries } from '../super-admin/controllers/country.controller';
+import { getStates } from '../super-admin/controllers/state.controller';
+import { getCities } from '../super-admin/controllers/city.controller';
+
 // Bookmarks / Categories controllers
 import {
   listBookmarksHandler,
@@ -42,6 +58,10 @@ import {
   createCategorySchema,
   updateCategorySchema,
   updateCompanyProfileSchema,
+  companyCreateUserSchema,
+  companyUpdateUserSchema,
+  toggleUserStatusSchema,
+  verifyUserEmailSchema,
 } from './schemas';
 
 const router = Router();
@@ -87,5 +107,19 @@ router.post('/attendance/punch-in', validate(punchInSchema), punchInHandler);
 router.post('/attendance/punch-out', validate(punchOutSchema), punchOutHandler);
 router.get('/attendance/history', getAttendanceHistoryHandler);
 router.get('/attendance/report', getMonthlyReportHandler);
+
+// --- Protected User Management Routes (Restricted to ADMIN role in controller) ---
+router.get('/roles', getCompanyRolesHandler);
+router.get('/users', getCompanyUsersHandler);
+router.post('/users', validate(companyCreateUserSchema), createCompanyUserHandler);
+router.put('/users/:id', validate(companyUpdateUserSchema), updateCompanyUserHandler);
+router.patch('/users/:id/status', validate(toggleUserStatusSchema), toggleUserStatusHandler);
+router.post('/users/:id/send-verification', sendUserVerificationHandler);
+router.post('/users/:id/verify-email', validate(verifyUserEmailSchema), verifyUserEmailHandler);
+
+// --- Protected Location Lookup Routes (Read-only for selector forms) ---
+router.get('/countries', getCountries);
+router.get('/states', getStates);
+router.get('/cities', getCities);
 
 export default router;

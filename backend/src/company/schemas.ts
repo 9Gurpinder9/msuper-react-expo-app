@@ -82,3 +82,41 @@ export const punchOutSchema = Joi.object({
   locationAddress: Joi.string().allow('', null).optional(),
 });
 
+export const companyCreateUserSchema = Joi.object({
+  name: Joi.string().trim().min(2).max(100).required().messages({ 'string.empty': 'Name is required.' }),
+  email: Joi.string().trim().lowercase().email().required().messages({ 'string.empty': 'Email is required.', 'string.email': 'Valid email is required.' }),
+  password: Joi.string().trim().min(8).required().messages({ 'string.empty': 'Password is required.', 'string.min': 'Password must be at least 8 characters.' }),
+  mobile: Joi.string().trim().min(7).max(15).required().messages({ 'string.empty': 'Mobile number is required.' }),
+  country_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'Country is required.' }),
+  country_name: Joi.string().trim().required().messages({ 'string.empty': 'Country Name is required.' }),
+  state_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'State is required.' }),
+  state_name: Joi.string().trim().required().messages({ 'string.empty': 'State Name is required.' }),
+  city_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'City is required.' }),
+  city_name: Joi.string().trim().required().messages({ 'string.empty': 'City Name is required.' }),
+  address: Joi.string().trim().max(255).required().messages({ 'string.empty': 'Address is required.' }),
+  role_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'Role is required.' }),
+});
+
+export const companyUpdateUserSchema = Joi.object({
+  name: Joi.string().trim().min(2).max(100).required().messages({ 'string.empty': 'Name is required.' }),
+  email: Joi.string().trim().lowercase().email().required().messages({ 'string.empty': 'Email is required.', 'string.email': 'Valid email is required.' }),
+  password: Joi.string().trim().min(8).optional().allow('', null).messages({ 'string.min': 'Password must be at least 8 characters.' }),
+  mobile: Joi.string().trim().min(7).max(15).required().messages({ 'string.empty': 'Mobile number is required.' }),
+  country_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'Country is required.' }),
+  country_name: Joi.string().trim().required().messages({ 'string.empty': 'Country Name is required.' }),
+  state_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'State is required.' }),
+  state_name: Joi.string().trim().required().messages({ 'string.empty': 'State Name is required.' }),
+  city_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'City is required.' }),
+  city_name: Joi.string().trim().required().messages({ 'string.empty': 'City Name is required.' }),
+  address: Joi.string().trim().max(255).required().messages({ 'string.empty': 'Address is required.' }),
+  role_id: Joi.alternatives().try(Joi.number(), Joi.string()).required().messages({ 'any.required': 'Role is required.' }),
+});
+
+export const toggleUserStatusSchema = Joi.object({
+  is_active: Joi.boolean().required(),
+});
+
+export const verifyUserEmailSchema = Joi.object({
+  otp: Joi.string().trim().length(6).required().messages({ 'string.empty': 'OTP is required.', 'string.length': 'OTP must be exactly 6 characters.' }),
+});
+

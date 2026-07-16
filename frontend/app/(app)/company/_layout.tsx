@@ -4,8 +4,9 @@ import { View } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppLoader from '@components/AppLoader';
-import { DrawerProvider } from '../../../src/super-admin/context/DrawerContext';
+import { DrawerProvider, useDrawer } from '../../../src/super-admin/context/DrawerContext';
 import CompanySidebarLayout from '@company/components/CompanySidebarLayout';
+import FloatingAssistantMenu from '../../../src/super-admin/components/FloatingAssistantMenu';
 import { useCompanyNavItems } from '../../../src/company/hooks/useCompanyNavItems';
 import { useToast } from '@utils/toast';
 
@@ -14,6 +15,7 @@ function CompanyAppContent() {
   const router = useRouter();
   const segments = useSegments();
   const { showSuccess } = useToast();
+  const { mode } = useDrawer();
   const currentRoute = '/' + segments.filter((s) => s !== '(app)').join('/');
   const { navSections } = useCompanyNavItems();
 
@@ -44,6 +46,7 @@ function CompanyAppContent() {
           }}
         />
       </CompanySidebarLayout>
+      {mode === 'overlay' && <FloatingAssistantMenu />}
     </View>
   );
 }

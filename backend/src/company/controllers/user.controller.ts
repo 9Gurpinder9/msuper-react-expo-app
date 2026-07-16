@@ -1,24 +1,47 @@
-// backend/src/super-admin/controllers/user.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import supabase from '../../database/supabaseClient';
 import logger from '../../utils/logger';
 import redis from '../../database/redisClient';
 import { generateNumericOtp } from '../../utils/otpGenerator';
-import { sendOtpEmail, sendUserVerificationEmail } from '../../utils/emailSender';
+import { sendUserVerificationEmail } from '../../utils/emailSender';
 
-export async function getCompanyUsers(req: Request, res: Response, next: NextFunction) {
+// Middleware-like role validation helper
+function verifyAdminRole(req: Request, res: Response): boolean {
+  const role = (req as any).user?.role;
+  if (role?.toUpperCase() !== 'ADMIN') {
+    res.status(403).json({ success: false, message: 'Forbidden: Admin access only.' });
+    return false;
+  }
+  return true;
+}
+
+export async function getCompanyRolesHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const { companyId } = req.query;
+    if (!verifyAdminRole(req, res)) return;
+    const { data, error } = await supabase
+      .from('roles')
+      .select('id, name')
+      .eq('is_active', true);
+    if (error) {
+      logger.error('Failed to fetch roles on company side', { error });
+      return res.status(500).json({ ok: false, message: 'Failed to fetch roles.' });
+    }
+    return res.status(200).json({ ok: true, data });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getCompanyUsersHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!verifyAdminRole(req, res)) return;
+
+    const companyId = (req as any).user.id; // companyId is stored in req.user.id for company workspace sessions
     const page = parseInt(req.query.page as string, 10) || 1;
     const limit = parseInt(req.query.limit as string, 10) || 20;
     const offset = (page - 1) * limit;
 
-    if (!companyId) {
-      return res.status(400).json({ ok: false, message: 'Company ID is required' });
-    }
-
-    // Query users joining roles table
     let query = supabase
       .from('users')
       .select('*, roles(id, name)', { count: 'exact' })
@@ -33,7 +56,6 @@ export async function getCompanyUsers(req: Request, res: Response, next: NextFun
       return res.status(500).json({ ok: false, message: 'Failed to fetch users' });
     }
 
-    // Map data to clean user structures
     const sanitizedData = (data || []).map((u: any) => {
       const { password, roles, ...rest } = u;
       return {
@@ -61,37 +83,23 @@ export async function getCompanyUsers(req: Request, res: Response, next: NextFun
   }
 }
 
-export async function createCompanyUser(req: Request, res: Response, next: NextFunction) {
+export async function createCompanyUserHandler(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!verifyAdminRole(req, res)) return;
+
+    const companyId = (req as any).user.id;
     const body = req.body;
 
-    // 1. Check for duplicates (email must be unique per company)
-    const { data: existing, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('company_id', body.company_id)
-      .ilike('email', body.email.trim().toLowerCase())
-      .maybeSingle();
-
-    if (checkError) {
-      logger.error('Error checking duplicate user', { error: checkError });
-      return res.status(500).json({ ok: false, message: 'Database check failed' });
-    }
-
-    if (existing) {
-      return res.status(409).json({ ok: false, message: 'A user with this email already exists in this company.' });
-    }
-
-    // 1b. Check if the company has reached its allowed user limit
+    // 1. Verify company user creation limit
     const { data: company, error: companyErr } = await supabase
       .from('companies')
       .select('max_users')
-      .eq('id', body.company_id)
+      .eq('id', companyId)
       .single();
 
     if (companyErr || !company) {
       logger.error('Error checking company for user limit', { error: companyErr });
-      return res.status(400).json({ ok: false, message: 'Company not found or check failed.' });
+      return res.status(400).json({ ok: false, message: 'Company details not found or check failed.' });
     }
 
     const maxUsers = (company as any).max_users ?? 5;
@@ -99,7 +107,7 @@ export async function createCompanyUser(req: Request, res: Response, next: NextF
     const { count, error: countError } = await supabase
       .from('users')
       .select('id', { count: 'exact', head: true })
-      .eq('company_id', body.company_id);
+      .eq('company_id', companyId);
 
     if (countError) {
       logger.error('Error counting company users', { error: countError });
@@ -113,29 +121,60 @@ export async function createCompanyUser(req: Request, res: Response, next: NextF
       });
     }
 
-    // 2. Hash password if provided
+    // 2. Check for duplicate email in this company
+    const { data: existing, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('company_id', companyId)
+      .ilike('email', body.email.trim().toLowerCase())
+      .maybeSingle();
+
+    if (checkError) {
+      logger.error('Error checking duplicate user', { error: checkError });
+      return res.status(500).json({ ok: false, message: 'Database check failed' });
+    }
+
+    if (existing) {
+      return res.status(409).json({ ok: false, message: 'A user with this email already exists in this company.' });
+    }
+
+    // 2.5 Verify assigned role is not ADMIN
+    const { data: roleObj, error: roleError } = await supabase
+      .from('roles')
+      .select('name')
+      .eq('id', body.role_id)
+      .single();
+
+    if (roleError || !roleObj) {
+      logger.error('Error checking role name on user create', { error: roleError });
+      return res.status(400).json({ ok: false, message: 'Invalid role selection.' });
+    }
+
+    if (roleObj.name?.toUpperCase() === 'ADMIN') {
+      return res.status(400).json({ ok: false, message: 'Cannot assign ADMIN role to another user.' });
+    }
+
+    // 3. Hash password and build payload
+    const hashedPassword = await bcrypt.hash(body.password.trim(), 10);
     const userPayload: any = {
-      company_id: body.company_id,
+      company_id: companyId,
       role_id: body.role_id,
       email: body.email.trim().toLowerCase(),
       name: body.name.trim(),
-      mobile: body.mobile ? body.mobile.trim() : null,
+      mobile: body.mobile.trim(),
       country_id: body.country_id,
-      country_name: body.country_name ? body.country_name.trim() : null,
+      country_name: body.country_name.trim(),
       state_id: body.state_id,
-      state_name: body.state_name ? body.state_name.trim() : null,
+      state_name: body.state_name.trim(),
       city_id: body.city_id,
-      city_name: body.city_name ? body.city_name.trim() : null,
-      address: body.address ? body.address.trim() : null,
-      is_active: body.is_active ?? true,
+      city_name: body.city_name.trim(),
+      address: body.address.trim(),
+      is_active: false, // Mandatory: Inactive by default upon registration until email is verified
       email_verified: false,
+      password: hashedPassword,
     };
 
-    if (body.password) {
-      userPayload.password = await bcrypt.hash(body.password, 10);
-    }
-
-    // 3. Insert user details
+    // 4. Insert user
     const { data, error } = await supabase
       .from('users')
       .insert(userPayload)
@@ -143,7 +182,7 @@ export async function createCompanyUser(req: Request, res: Response, next: NextF
       .single();
 
     if (error || !data) {
-      logger.error('Failed to create company user', { error });
+      logger.error('Failed to create user', { error });
       return res.status(500).json({ ok: false, message: 'Failed to create user' });
     }
 
@@ -158,14 +197,18 @@ export async function createCompanyUser(req: Request, res: Response, next: NextF
   }
 }
 
-export async function updateCompanyUser(req: Request, res: Response, next: NextFunction) {
+export async function updateCompanyUserHandler(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!verifyAdminRole(req, res)) return;
+
+    const companyId = (req as any).user.id;
     const { id } = req.params;
     const body = req.body;
 
+    // Fetch user to verify they belong to this company
     const { data: currentUser, error: currentError } = await supabase
       .from('users')
-      .select('email, password')
+      .select('email, company_id')
       .eq('id', id)
       .single();
 
@@ -174,18 +217,38 @@ export async function updateCompanyUser(req: Request, res: Response, next: NextF
       return res.status(404).json({ ok: false, message: 'User not found' });
     }
 
+    if (String(currentUser.company_id) !== String(companyId)) {
+      return res.status(403).json({ ok: false, message: 'Access denied: User belongs to another company.' });
+    }
+
     const emailChanged = currentUser.email.toLowerCase() !== body.email.trim().toLowerCase();
 
-    // 1. Check duplicate email excluding current user ID
+    // 1. Check duplicate email in this company
     const { data: existing, error: checkError } = await supabase
       .from('users')
       .select('id')
-      .eq('company_id', body.company_id)
+      .eq('company_id', companyId)
       .ilike('email', body.email.trim().toLowerCase());
 
     const duplicates = (existing || []).filter((u: any) => String(u.id) !== String(id));
     if (duplicates.length > 0) {
       return res.status(409).json({ ok: false, message: 'A user with this email already exists in this company.' });
+    }
+
+    // 1.5 Verify assigned role is not ADMIN
+    const { data: roleObj, error: roleError } = await supabase
+      .from('roles')
+      .select('name')
+      .eq('id', body.role_id)
+      .single();
+
+    if (roleError || !roleObj) {
+      logger.error('Error checking role name on user update', { error: roleError });
+      return res.status(400).json({ ok: false, message: 'Invalid role selection.' });
+    }
+
+    if (roleObj.name?.toUpperCase() === 'ADMIN') {
+      return res.status(400).json({ ok: false, message: 'Cannot assign ADMIN role to another user.' });
     }
 
     if (emailChanged) {
@@ -197,25 +260,25 @@ export async function updateCompanyUser(req: Request, res: Response, next: NextF
       role_id: body.role_id,
       email: body.email.trim().toLowerCase(),
       name: body.name.trim(),
-      mobile: body.mobile ? body.mobile.trim() : null,
+      mobile: body.mobile.trim(),
       country_id: body.country_id,
-      country_name: body.country_name ? body.country_name.trim() : null,
+      country_name: body.country_name.trim(),
       state_id: body.state_id,
-      state_name: body.state_name ? body.state_name.trim() : null,
+      state_name: body.state_name.trim(),
       city_id: body.city_id,
-      city_name: body.city_name ? body.city_name.trim() : null,
-      address: body.address ? body.address.trim() : null,
-      is_active: body.is_active ?? true,
+      city_name: body.city_name.trim(),
+      address: body.address.trim(),
       updated_at: new Date().toISOString(),
     };
 
     if (emailChanged) {
       updatePayload.email_verified = false;
+      updatePayload.is_active = false; // Reset status to inactive if email changes
       updatePayload.verification_sent_at = null;
     }
 
     if (body.password) {
-      updatePayload.password = await bcrypt.hash(body.password, 10);
+      updatePayload.password = await bcrypt.hash(body.password.trim(), 10);
     }
 
     // 3. Update user
@@ -242,10 +305,27 @@ export async function updateCompanyUser(req: Request, res: Response, next: NextF
   }
 }
 
-export async function toggleUserStatus(req: Request, res: Response, next: NextFunction) {
+export async function toggleUserStatusHandler(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!verifyAdminRole(req, res)) return;
+
+    const companyId = (req as any).user.id;
     const { id } = req.params;
     const { is_active } = req.body;
+
+    const { data: user, error: checkError } = await supabase
+      .from('users')
+      .select('company_id')
+      .eq('id', id)
+      .single();
+
+    if (checkError || !user) {
+      return res.status(404).json({ ok: false, message: 'User not found' });
+    }
+
+    if (String(user.company_id) !== String(companyId)) {
+      return res.status(403).json({ ok: false, message: 'Access denied.' });
+    }
 
     const { data, error } = await supabase
       .from('users')
@@ -273,8 +353,11 @@ export async function toggleUserStatus(req: Request, res: Response, next: NextFu
   }
 }
 
-export async function sendUserVerification(req: Request, res: Response, next: NextFunction) {
+export async function sendUserVerificationHandler(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!verifyAdminRole(req, res)) return;
+
+    const companyId = (req as any).user.id;
     const { id } = req.params;
 
     const { data: user, error: fetchErr } = await supabase
@@ -285,6 +368,10 @@ export async function sendUserVerification(req: Request, res: Response, next: Ne
 
     if (fetchErr || !user) {
       return res.status(404).json({ ok: false, message: 'User not found' });
+    }
+
+    if (String(user.company_id) !== String(companyId)) {
+      return res.status(403).json({ ok: false, message: 'Access denied.' });
     }
 
     const email = user.email;
@@ -327,10 +414,27 @@ export async function sendUserVerification(req: Request, res: Response, next: Ne
   }
 }
 
-export async function verifyUserEmail(req: Request, res: Response, next: NextFunction) {
+export async function verifyUserEmailHandler(req: Request, res: Response, next: NextFunction) {
   try {
+    if (!verifyAdminRole(req, res)) return;
+
+    const companyId = (req as any).user.id;
     const { id } = req.params;
     const { otp } = req.body;
+
+    const { data: user, error: fetchErr } = await supabase
+      .from('users')
+      .select('company_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchErr || !user) {
+      return res.status(404).json({ ok: false, message: 'User not found' });
+    }
+
+    if (String(user.company_id) !== String(companyId)) {
+      return res.status(403).json({ ok: false, message: 'Access denied.' });
+    }
 
     const storedOtp = await redis.get(`user:verify:${id}`);
     if (!storedOtp) {
@@ -347,6 +451,7 @@ export async function verifyUserEmail(req: Request, res: Response, next: NextFun
       .from('users')
       .update({
         email_verified: true,
+        is_active: true, // Automatically activate user when email is verified!
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -362,7 +467,7 @@ export async function verifyUserEmail(req: Request, res: Response, next: NextFun
     return res.status(200).json({
       ok: true,
       data: { ...rest, role_name: roles?.name || 'USER', has_password: !!password },
-      message: 'Email verified successfully!',
+      message: 'Email verified and account activated successfully!',
     });
   } catch (error) {
     next(error);

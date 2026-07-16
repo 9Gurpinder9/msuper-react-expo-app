@@ -108,6 +108,7 @@ export async function createCompany(req: Request, res: Response, next: NextFunct
         validity_date: body.validity_date,
         expiry_date: body.expiry_date,
         is_active: body.is_active ?? true,
+        max_users: body.max_users ?? 5,
       })
       .select('*')
       .single();
@@ -218,6 +219,7 @@ export async function updateCompany(req: Request, res: Response, next: NextFunct
       validity_date: body.validity_date,
       expiry_date: body.expiry_date,
       is_active: body.is_active ?? true,
+      max_users: body.max_users ?? 5,
       updated_at: new Date().toISOString(),
     };
 

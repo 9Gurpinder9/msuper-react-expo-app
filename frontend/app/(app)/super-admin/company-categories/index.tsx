@@ -532,12 +532,12 @@ const makeStyles = (theme: MD3Theme) =>
     fab: {
       position: 'absolute',
       right: 24,
-      bottom: 24,
+      bottom: 80,
       borderRadius: 12,
     },
     scrollTopContainer: {
       position: 'absolute',
-      bottom: 24,
+      bottom: 80,
       left: 0,
       right: 0,
       alignItems: 'center',

@@ -1,4 +1,13 @@
-# PowerShell (this file): start backend + frontend in new windows
+# Automatically reverse port 4000 (backend API) on all connected devices
+$devices = (adb devices) | Select-String -Pattern "\bdevice\b"
+foreach ($d in $devices) {
+    $id = $d.Line.Split("`t")[0]
+    if ($id) {
+        Write-Host "Reversing port 4000 on device: $id"
+        adb -s $id reverse tcp:4000 tcp:4000
+    }
+}
+
 Start-Process -WorkingDirectory $PWD -FilePath "npm" -ArgumentList "run", "dev", "--workspace", "backend"
 Start-Process -WorkingDirectory $PWD -FilePath "npm" -ArgumentList "start", "--workspace", "frontend"
 

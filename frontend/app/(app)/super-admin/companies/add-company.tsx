@@ -22,6 +22,7 @@ import {
   Portal,
   Surface,
   Divider,
+  TouchableRipple,
 } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -311,16 +312,14 @@ function SelectionModal({
                 style={{ maxHeight: 300 }}
                 keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.optionItem,
-                      pressed && { backgroundColor: theme.colors.surfaceVariant },
-                    ]}
+                  <TouchableRipple
                     onPress={() => { onSelect(item); onDismiss(); }}
+                    style={styles.optionItem}
+                    rippleColor={theme.colors.secondaryContainer}
                     testID={`select-option-${item.id}`}
                   >
                     <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>{item.name}</Text>
-                  </Pressable>
+                  </TouchableRipple>
                 )}
                 ListEmptyComponent={
                   <Text style={styles.emptyText}>
@@ -405,6 +404,7 @@ export default function AddCompanyPage() {
   const [address1, setAddress1] = useState('');
   const [address2, setAddress2] = useState('');
   const [printName, setPrintName] = useState('');
+  const [maxUsers, setMaxUsers] = useState('5');
 
   // Password fields
   const [password, setPassword] = useState('');
@@ -585,6 +585,9 @@ export default function AddCompanyPage() {
     if (password && confirmPassword && password !== confirmPassword) {
       errors.confirm_password = 'Passwords do not match.';
     }
+    if (!maxUsers.trim() || parseInt(maxUsers, 10) <= 0) {
+      errors.max_users = 'Max allowed users must be a positive integer.';
+    }
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -621,6 +624,7 @@ export default function AddCompanyPage() {
           validity_date: validityDateISO,
           expiry_date: expiryDateISO || validityDateISO,
           is_active: true,
+          max_users: parseInt(maxUsers, 10) || 5,
           password: password.trim(),
           confirm_password: confirmPassword.trim(),
         }),
@@ -829,6 +833,20 @@ export default function AddCompanyPage() {
                 onFocus={() => handleFocus(address1InputRef)}
               />
             </View>
+          </Field>
+
+          {/* Max Allowed Users */}
+          <Field label="Max Allowed Users" required error={!!fieldErrors.max_users}>
+            <TextInput
+              value={maxUsers}
+              onChangeText={(v) => { setMaxUsers(v.replace(/[^0-9]/g, '')); clearErr('max_users'); }}
+              mode="outlined"
+              keyboardType="numeric"
+              placeholder="e.g. 5"
+              placeholderTextColor={theme.colors.onSurfaceVariant + '80'}
+              outlineColor={fieldErrors.max_users ? theme.colors.error : outlineColor(theme)}
+              testID="company-max-users-input"
+            />
           </Field>
 
           <Field label="Address Line 2">

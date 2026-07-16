@@ -5,8 +5,27 @@ import { API_BASE_URL } from '@config';
 import { fetchJson } from '@utils/network';
 import type { NavSection } from '@super-admin/sidebarNavItems';
 
+function safeBase64Decode(str: string): string {
+  const b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const clean = str.replace(/=+$/, '').replace(/-/g, '+').replace(/_/g, '/');
+  let bin = '';
+  for (let i = 0; i < clean.length; i += 4) {
+    const group = 
+      ((b64chars.indexOf(clean[i]) & 63) << 18) |
+      (((i + 1 < clean.length ? b64chars.indexOf(clean[i + 1]) : 0) & 63) << 12) |
+      (((i + 2 < clean.length ? b64chars.indexOf(clean[i + 2]) : 0) & 63) << 6) |
+      ((i + 3 < clean.length ? b64chars.indexOf(clean[i + 3]) : 0) & 63);
+    const len = Math.min(3, clean.length - i - 1);
+    for (let j = 0; j < len; j++) {
+      bin += String.fromCharCode((group >> (16 - j * 8)) & 255);
+    }
+  }
+  return bin;
+}
+
 export function useCompanyNavItems() {
   const [allowedFeatures, setAllowedFeatures] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,6 +37,20 @@ export function useCompanyNavItems() {
         if (!token) {
           if (!cancelled) { setLoading(false); }
           return;
+        }
+
+        // Parse role from token
+        try {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(safeBase64Decode(parts[1]));
+            console.log('[useCompanyNavItems] Decoded JWT payload:', payload);
+            if (!cancelled && payload?.role) {
+              setUserRole(payload.role);
+            }
+          }
+        } catch (e) {
+          console.error('[useCompanyNavItems] JWT decode error:', e);
         }
 
         // 1. Attempt to load from cache
@@ -95,10 +128,15 @@ export function useCompanyNavItems() {
 
   const navSections: NavSection[] = useMemo(() => {
     const lowerAllowed = allowedFeatures.map((f) => f.toLowerCase());
+    const isCompanyAdmin = userRole?.toUpperCase() === 'ADMIN';
+
     const sections = COMPANY_NAV_ITEMS.map((section) => ({
       ...section,
       items: section.items.filter((item) => {
         const key = item.colorKey.toLowerCase();
+        if (key === 'user-management' && !isCompanyAdmin) {
+          return false;
+        }
         return (
           key === 'dashboard' ||
           key === 'company-profile' ||
@@ -109,7 +147,7 @@ export function useCompanyNavItems() {
     }));
     console.log('[useCompanyNavItems] Computed navSections based on allowedFeatures:', sections);
     return sections;
-  }, [allowedFeatures]);
+  }, [allowedFeatures, userRole]);
 
   return { navSections, allowedFeatures, loading, error };
 }

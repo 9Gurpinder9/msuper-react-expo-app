@@ -22,6 +22,7 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  TouchableRipple,
 } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -461,15 +462,13 @@ function CategorySelectionModal({
                 style={{ maxHeight: 300 }}
                 keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
-                  <Pressable
-                    style={({ pressed }) => [
-                      modalStyles.optionItem,
-                      pressed && { backgroundColor: theme.colors.surfaceVariant },
-                    ]}
+                  <TouchableRipple
                     onPress={() => onSelect(item)}
+                    style={modalStyles.optionItem}
+                    rippleColor={theme.colors.secondaryContainer}
                   >
                     <Text variant="bodyMedium" style={{ color: theme.colors.onSurface }}>{item.name}</Text>
-                  </Pressable>
+                  </TouchableRipple>
                 )}
                 ListEmptyComponent={
                   <Text style={modalStyles.emptyText}>

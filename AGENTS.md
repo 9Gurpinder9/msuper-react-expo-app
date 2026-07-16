@@ -240,3 +240,18 @@ Start-Process -WorkingDirectory $PWD -FilePath "npm" -ArgumentList "run","dev","
 Start-Process -WorkingDirectory $PWD -FilePath "npm" -ArgumentList "start","--workspace","frontend"
 ```
 
+
+## Documentation Conventions
+
+When documenting new or existing features, adhere to the following rules:
+
+1. **Folder Organization**:
+   - Core stack or shared architectural guides belong directly under `docs/` at the root of the project.
+   - Segment admin-focused feature guides under `docs/super_admin/`.
+   - Segment company-focused feature guides under `docs/company/`.
+
+2. **Content & Style Guidelines**:
+   - **Instruction-Focused**: Write conceptual overviews, step-by-step user interaction walkthroughs, and developer guidelines on how to run or modify the feature.
+   - **No Raw Source Code Dumps**: Do NOT copy/paste long blocks of application source code into documentation files. This prevents documentation from becoming bloated and going stale when the codebase is refactored.
+
+

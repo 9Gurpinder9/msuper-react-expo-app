@@ -186,3 +186,82 @@
 [2026-06-17 16:37:47] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
 [2026-06-17 16:49:29] ERROR: Telegram OTP send failed. Chat ID: 722666233, Message: connect ETIMEDOUT 149.154.166.110:443, Status: undefined, Data: undefined
 [2026-06-17 16:49:29] WARN: sendOtpTelegram failed for gurpinderbrar495@gmail.com: connect ETIMEDOUT 149.154.166.110:443
+[2026-06-19 11:10:38] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-19 11:10:39] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-19 11:10:39] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-19 11:10:39] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-25 10:50:24] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-06-25 10:50:30] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-25 10:50:30] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-25 10:50:31] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-25 10:50:31] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-06-25 10:50:31] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-25 10:50:32] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-06-25 18:08:11] ERROR: Punch in failed Cannot punch in yet. Please wait 35 more seconds. {"stack":"Error: Cannot punch in yet. Please wait 35 more seconds.\n    at punchIn (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\services\\attendance.service.ts:103:13)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async punchInHandler (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\controllers\\attendance.controller.ts:53:20)"}
+[2026-06-27 07:34:54] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-27 07:34:54] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-27 07:34:55] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-27 07:34:55] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-29 11:28:10] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-29 11:28:10] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-29 11:28:11] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-29 11:28:11] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-29 11:46:49] INFO: Telegram OTP send success. Chat ID: 722666233, Status: 200, Data: {"ok":true,"result":{"message_id":208,"from":{"id":8071080888,"is_bot":true,"first_name":"M Super App","username":"MSuperAppBot"},"chat":{"id":722666233,"first_name":"GuRpiNdeR","username":"this_is_gurpinder","type":"private"},"date":1782713809,"text":"🔐 Mukti Super Login OTP\n\nUse the following OTP to log in:\n\n578113\n\nThis OTP is valid for 10 minutes. Do not share it with anyone.","entities":[{"offset":3,"length":21,"type":"bold"},{"offset":60,"length":6,"type":"bold"},{"offset":68,"length":62,"type":"italic"}]}}
+[2026-06-30 11:32:37] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-30 11:32:37] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-06-30 11:32:38] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-30 11:32:38] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-06-30 11:56:50] ERROR: Punch in failed Cannot punch in yet. Please wait 30 more seconds. {"stack":"Error: Cannot punch in yet. Please wait 30 more seconds.\n    at punchIn (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\services\\attendance.service.ts:103:13)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async punchInHandler (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\controllers\\attendance.controller.ts:53:20)"}
+[2026-06-30 11:57:03] ERROR: Punch in failed Cannot punch in yet. Please wait 18 more seconds. {"stack":"Error: Cannot punch in yet. Please wait 18 more seconds.\n    at punchIn (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\services\\attendance.service.ts:103:13)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async punchInHandler (F:\\AI_WORK\\React-App\\msuper-react-expo-app\\backend\\src\\company\\controllers\\attendance.controller.ts:53:20)"}
+[2026-07-01 07:46:05] ERROR: Create bookmark failed duplicate key value violates unique constraint "bookmarks_url_unique" {"code":"23505","details":"Key (url)=(https://expo.dev/blog/how-to-apply-professional-design-principles-in-ai-app-development) already exists.","hint":null}
+[2026-07-01 17:06:52] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-01 17:06:53] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-01 17:06:53] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-07-01 17:06:53] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-07-08 16:39:35] WARN: JWT verification failed: jwt expired
+[2026-07-08 16:39:56] ERROR: POST /super-admin/login - TypeError: fetch failed
+[2026-07-08 16:39:56] ERROR: POST /super-admin/login - TypeError: fetch failed
+[2026-07-08 16:40:31] ERROR: POST /super-admin/login - TypeError: fetch failed
+[2026-07-08 16:40:31] ERROR: POST /super-admin/login - TypeError: fetch failed
+[2026-07-08 16:41:52] ERROR: POST /super-admin/login - TypeError: fetch failed
+[2026-07-08 16:41:52] ERROR: POST /super-admin/login - TypeError: fetch failed
+[2026-07-08 16:43:08] WARN: Supabase reachable but query failed: TypeError: fetch failed
+[2026-07-08 16:48:08] INFO: Telegram OTP send success. Chat ID: 722666233, Status: 200, Data: {"ok":true,"result":{"message_id":209,"from":{"id":8071080888,"is_bot":true,"first_name":"M Super App","username":"MSuperAppBot"},"chat":{"id":722666233,"first_name":"GuRpiNdeR","username":"this_is_gurpinder","type":"private"},"date":1783509488,"text":"🔐 Mukti Super Login OTP\n\nUse the following OTP to log in:\n\n763431\n\nThis OTP is valid for 10 minutes. Do not share it with anyone.","entities":[{"offset":3,"length":21,"type":"bold"},{"offset":60,"length":6,"type":"bold"},{"offset":68,"length":62,"type":"italic"}]}}
+[2026-07-08 17:13:03] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 17:13:03] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-07-08 17:13:03] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 17:13:04] INFO: [MenuPermissions] Version 1 matches database. Returning notModified.
+[2026-07-08 17:38:07] ERROR: Failed to create feature {"error":{"code":"23505","details":"Key (id)=(1) already exists.","hint":null,"message":"duplicate key value violates unique constraint \"features_pkey\""}}
+[2026-07-08 17:38:32] ERROR: Failed to create feature {"error":{"code":"23505","details":"Key (id)=(2) already exists.","hint":null,"message":"duplicate key value violates unique constraint \"features_pkey\""}}
+[2026-07-08 17:39:26] ERROR: Failed to create feature {"error":{"code":"23505","details":"Key (id)=(3) already exists.","hint":null,"message":"duplicate key value violates unique constraint \"features_pkey\""}}
+[2026-07-08 17:43:43] ERROR: Failed to create feature {"error":{"code":"23505","details":"Key (id)=(1) already exists.","hint":null,"message":"duplicate key value violates unique constraint \"features_pkey\""}}
+[2026-07-08 17:51:20] ERROR: Failed to create feature {"error":{"code":"23505","details":"Key (id)=(2) already exists.","hint":null,"message":"duplicate key value violates unique constraint \"features_pkey\""}}
+[2026-07-08 17:51:27] ERROR: Failed to create feature {"error":{"code":"23505","details":"Key (id)=(3) already exists.","hint":null,"message":"duplicate key value violates unique constraint \"features_pkey\""}}
+[2026-07-08 18:00:59] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-07-08 18:01:20] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:01:21] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:01:21] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-07-08 18:01:21] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:01:22] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:01:23] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-07-08 18:02:24] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-07-08 18:02:34] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:02:35] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:02:35] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-07-08 18:02:35] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:02:36] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:02:37] INFO: [MenuPermissions] Final permitted features: [{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"}]
+[2026-07-08 18:03:42] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-07-08 18:03:44] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:03:45] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:03:46] INFO: [MenuPermissions] Final permitted features: [{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"},{"id":100,"name":"user-management","display_name":"User Management"}]
+[2026-07-08 18:03:46] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:03:47] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:03:47] INFO: [MenuPermissions] Final permitted features: [{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"},{"id":100,"name":"user-management","display_name":"User Management"}]
+[2026-07-08 18:15:26] INFO: DEV ONLY: User OTP for gurpinderbrar495@gmail.com is 123456
+[2026-07-08 18:15:28] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:15:29] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:15:30] INFO: [MenuPermissions] Final permitted features: [{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"},{"id":5,"name":"user-management","display_name":"User Management"}]
+[2026-07-08 18:15:30] INFO: [MenuPermissions] Fetching features for companyId: 34
+[2026-07-08 18:15:30] INFO: [MenuPermissions] Checking permissions for role name: ADMIN
+[2026-07-08 18:15:31] INFO: [MenuPermissions] Final permitted features: [{"id":2,"name":"Attendance","display_name":"Attendance"},{"id":4,"name":"Bookmarks","display_name":"Bookmarks"},{"id":1,"name":"invoices","display_name":"Invoices"},{"id":3,"name":"Tailor & Stiching","display_name":"Tailor & Stiching"},{"id":5,"name":"user-management","display_name":"User Management"}]

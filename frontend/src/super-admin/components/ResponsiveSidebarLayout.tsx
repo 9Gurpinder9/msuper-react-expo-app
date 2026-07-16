@@ -35,14 +35,35 @@ export default function ResponsiveSidebarLayout({
 }: Props) {
   const theme = useTheme();
   const styles = makeStyles(theme);
-  const { open, closeDrawer, mode, expanded, toggleDrawer } = useDrawer();
+  const { open, closeDrawer, mode, expanded, toggleDrawer, openDrawer } = useDrawer();
   const [hovered, setHovered] = React.useState(false);
+
+  // Track swipe touch gesture parameters
+  const touchStartX = React.useRef(0);
+
+  const handleTouchStart = (e: any) => {
+    touchStartX.current = e.nativeEvent.pageX;
+  };
+
+  const handleTouchEnd = (e: any) => {
+    const touchEndX = e.nativeEvent.pageX;
+    const deltaX = touchEndX - touchStartX.current;
+
+    // Swipe left-to-right start boundary check: X coordinate < 60px
+    if (mode === 'overlay' && touchStartX.current < 60 && deltaX > 60) {
+      openDrawer();
+    }
+  };
 
   // Determine border color for side drawer / panel
   const borderColor = theme.dark ? '#334155' : '#94A3B8';
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {showSidebar && mode === 'persistent' && (
         animatedMode ? (
           <SidebarPanel

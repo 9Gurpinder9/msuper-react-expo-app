@@ -121,8 +121,10 @@ export default function SidebarDrawer({ open, onClose, currentRoute, navSections
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={true}
             persistentScrollbar={false}
-            onHoverIn={() => setIsHoveredScroll(true)}
-            onHoverOut={() => setIsHoveredScroll(false)}
+            {...({
+              onHoverIn: () => setIsHoveredScroll(true),
+              onHoverOut: () => setIsHoveredScroll(false),
+            } as any)}
           >
             {navSections.map((section, si) => (
               <View key={section.title}>
@@ -256,7 +258,7 @@ export default function SidebarDrawer({ open, onClose, currentRoute, navSections
           style={[
             styles.floatingBtnZone,
             {
-              left: drawerWidth - 14,
+              left: Platform.OS === 'web' ? drawerWidth - 14 : drawerWidth + 4,
               top: (Constants.statusBarHeight || 0) + 56 - 25,
             },
           ]}
@@ -309,7 +311,7 @@ const makeStyles = (theme: MD3Theme, isHoveredScroll: boolean) =>
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       paddingHorizontal: 16,
-      paddingTop: 16,
+      paddingTop: Platform.OS === 'web' ? 16 : Constants.statusBarHeight + 16,
       paddingBottom: 0,
     },
     headerLeft: {

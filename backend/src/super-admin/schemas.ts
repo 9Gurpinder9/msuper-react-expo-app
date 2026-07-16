@@ -344,6 +344,7 @@ export const createCompanySchema = Joi.object({
     'date.min': 'Expiry Date must be after or equal to Validity Date.',
   }),
   is_active: Joi.boolean().default(true),
+  max_users: Joi.number().integer().min(1).default(5).optional().allow(null),
   password: Joi.string()
     .trim()
     .min(8)

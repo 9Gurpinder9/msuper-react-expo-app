@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { Appbar, useTheme, Menu, Divider } from 'react-native-paper';
+import { Appbar, useTheme, Menu, Divider, IconButton } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useToast } from '@utils/toast';
 
@@ -21,6 +21,7 @@ export default function TopAppBar({
 }: Props) {
   const theme = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
   const { showSuccess } = useToast();
   const showMenu = false; // Disable hamburger menu in top app bar
 
@@ -34,6 +35,8 @@ export default function TopAppBar({
       router.replace('/company/login');
     } catch {}
   };
+
+  const isDashboard = pathname === '/company/dashboard';
 
   return (
     <Appbar.Header
@@ -63,49 +66,59 @@ export default function TopAppBar({
         titleStyle={styles.title}
       />
       <View style={styles.actionsRow}>
-        
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <Pressable
-              onPress={() => setMenuVisible(true)}
-              style={({ pressed }) => [
-                styles.actionIcon,
-                pressed && { opacity: 0.75 },
-                { flexDirection: 'row', alignItems: 'center', gap: 4 }
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="account-circle"
-                size={28}
-                color={theme.colors.primary}
-              />
-              <MaterialCommunityIcons
-                name="chevron-down"
-                size={14}
-                color={theme.colors.primary}
-              />
-            </Pressable>
-          }
-          contentStyle={styles.dropdownContent}
-        >
-          <Menu.Item
-            leadingIcon="office-building-outline"
-            title="Company Profile"
-            onPress={() => {
-              setMenuVisible(false);
-              router.push('/company/profile');
-            }}
+        {isDashboard ? (
+          <Menu
+            visible={menuVisible}
+            onDismiss={() => setMenuVisible(false)}
+            anchor={
+              <Pressable
+                onPress={() => setMenuVisible(true)}
+                style={({ pressed }) => [
+                  styles.actionIcon,
+                  pressed && { opacity: 0.75 },
+                  { flexDirection: 'row', alignItems: 'center', gap: 4 }
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="account-circle"
+                  size={28}
+                  color={theme.colors.primary}
+                />
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={14}
+                  color={theme.colors.primary}
+                />
+              </Pressable>
+            }
+            contentStyle={styles.dropdownContent}
+          >
+            <Menu.Item
+              leadingIcon="office-building-outline"
+              title="Company Profile"
+              onPress={() => {
+                setMenuVisible(false);
+                router.push('/company/profile');
+              }}
+            />
+            <Divider style={{ marginVertical: 4 }} />
+            <Menu.Item
+              leadingIcon="logout"
+              title="Logout"
+              titleStyle={{ color: theme.colors.error }}
+              onPress={handleLogout}
+            />
+          </Menu>
+        ) : (
+          <IconButton
+            icon="home-outline"
+            iconColor={theme.colors.primary}
+            size={24}
+            onPress={() => router.push('/company/dashboard')}
+            accessibilityLabel="Go to Dashboard"
+            style={{ margin: 0 }}
           />
-          <Divider style={{ marginVertical: 4 }} />
-          <Menu.Item
-            leadingIcon="logout"
-            title="Logout"
-            titleStyle={{ color: theme.colors.error }}
-            onPress={handleLogout}
-          />
-        </Menu>
+        )}
       </View>
       {actions}
     </Appbar.Header>

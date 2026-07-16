@@ -13,6 +13,7 @@ export const COMPANY_NAV_ITEMS: NavSection[] = [
     title: 'SETTINGS',
     items: [
       { label: 'Company Profile', icon: 'office-building-outline', path: '/company/profile', colorKey: 'company-profile' },
+      { label: 'User Management', icon: 'account-multiple-outline', path: '/company/users', colorKey: 'user-management' },
     ],
   },
 ];

@@ -67,14 +67,18 @@ export async function getTodayPunchStatus(companyId: number, userId: number) {
     .eq('company_id', companyId)
     .eq('user_id', userId)
     .eq('attendance_date', todayStr)
-    .maybeSingle();
+    .order('punch_in_time', { ascending: false });
 
   if (error) {
     logger.error('Failed to fetch today punch status', { error, userId });
     throw error;
   }
 
-  return data;
+  if (!data || data.length === 0) return null;
+
+  // Return the active shift (where punch_out_time is null) if one exists, otherwise the latest completed shift
+  const activeShift = data.find((r) => !r.punch_out_time);
+  return activeShift || data[0];
 }
 
 /**
@@ -83,10 +87,21 @@ export async function getTodayPunchStatus(companyId: number, userId: number) {
 export async function punchIn(payload: PunchPayload) {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // 1. Verify user hasn't already punched in for today
+  // 1. Verify user hasn't already punched in for today and not punched out
   const existing = await getTodayPunchStatus(payload.companyId, payload.userId);
-  if (existing) {
-    throw new Error('Already punched in for today.');
+  if (existing && !existing.punch_out_time) {
+    throw new Error('Already punched in. You must punch out first.');
+  }
+
+  // 1.2 Enforce 1-minute minimum cooldown between shifts (from last punch-out to new punch-in)
+  if (existing && existing.punch_out_time) {
+    const lastPunchOut = new Date(existing.punch_out_time);
+    const nowTime = new Date();
+    const diffMs = nowTime.getTime() - lastPunchOut.getTime();
+    if (diffMs < 60 * 1000) {
+      const secondsLeft = Math.ceil((60 * 1000 - diffMs) / 1000);
+      throw new Error(`Cannot punch in yet. Please wait ${secondsLeft} more seconds.`);
+    }
   }
 
   // 2. Upload photo to Supabase storage
@@ -97,7 +112,7 @@ export async function punchIn(payload: PunchPayload) {
 
   const now = new Date().toISOString();
 
-  // 4. Save to attendances table
+  // Insert a new shift record for today
   const { data: attendance, error: attError } = await supabase
     .from('attendances')
     .insert([
@@ -126,6 +141,7 @@ export async function punchIn(payload: PunchPayload) {
     {
       company_id: payload.companyId,
       user_id: payload.userId,
+      attendance_id: attendance.id,
       log_type: 'PUNCH_IN',
       punch_time: now,
       latitude: payload.latitude,
@@ -150,11 +166,18 @@ export async function punchOut(payload: PunchPayload) {
 
   // 1. Verify user is currently punched in for today
   const existing = await getTodayPunchStatus(payload.companyId, payload.userId);
-  if (!existing) {
+  if (!existing || existing.punch_out_time) {
     throw new Error('Cannot punch out. You must punch in first.');
   }
-  if (existing.punch_out_time) {
-    throw new Error('Already punched out for today.');
+
+  const punchInTime = new Date(existing.punch_in_time);
+  const punchOutTime = new Date();
+
+  // Enforce 1-minute minimum shift duration cooldown
+  const diffMs = punchOutTime.getTime() - punchInTime.getTime();
+  if (diffMs < 60 * 1000) {
+    const secondsLeft = Math.ceil((60 * 1000 - diffMs) / 1000);
+    throw new Error(`Cannot punch out yet. Please wait ${secondsLeft} more seconds.`);
   }
 
   // 2. Upload photo to Supabase storage
@@ -163,11 +186,6 @@ export async function punchOut(payload: PunchPayload) {
   // 3. Resolve address or fallback
   const address = payload.locationAddress || `Lat: ${payload.latitude}, Lng: ${payload.longitude}`;
 
-  const punchInTime = new Date(existing.punch_in_time);
-  const punchOutTime = new Date();
-
-  // Calculate difference in minutes
-  const diffMs = punchOutTime.getTime() - punchInTime.getTime();
   const totalMinutes = Math.max(0, Math.floor(diffMs / (1000 * 60)));
 
   // 4. Update attendance table
@@ -196,6 +214,7 @@ export async function punchOut(payload: PunchPayload) {
     {
       company_id: payload.companyId,
       user_id: payload.userId,
+      attendance_id: existing.id,
       log_type: 'PUNCH_OUT',
       punch_time: punchOutTime.toISOString(),
       latitude: payload.latitude,
@@ -224,7 +243,7 @@ export async function getAttendanceHistory(companyId: number, userId: number, da
     .eq('company_id', companyId)
     .eq('user_id', userId)
     .eq('attendance_date', targetDate)
-    .maybeSingle();
+    .order('punch_in_time', { ascending: false });
 
   if (error) throw error;
   return data;

@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "entryPoint": "node_modules/expo/AppEntry.js",
     "plugins": [
       "expo-router"
     ],

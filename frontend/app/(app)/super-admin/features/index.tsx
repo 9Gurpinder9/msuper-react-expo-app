@@ -496,9 +496,8 @@ const makeStyles = (theme: MD3Theme) =>
     },
     fab: {
       position: 'absolute',
-      margin: 16,
-      right: 0,
-      bottom: 0,
+      right: 16,
+      bottom: 80,
       borderRadius: 12,
     },
     // Width definitions for columns matching 780 total width
