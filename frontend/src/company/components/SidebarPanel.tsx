@@ -111,7 +111,7 @@ export default function SidebarPanel({
         </View>
       </View>
 
-      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true} persistentScrollbar={false} onHoverIn={() => setIsHoveredScroll(true)} onHoverOut={() => setIsHoveredScroll(false)}>
+      <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true} persistentScrollbar={false}>
         {navSections.map((section, si) => (
           <View key={section.title}>
             {si === 0 && <View style={styles.navTopGap} />}

@@ -229,10 +229,6 @@ const makeStyles = (theme: MD3Theme) =>
       borderColor: theme.colors.outlineVariant,
       borderWidth: 1,
       overflow: 'hidden',
-      // Web transitions
-      transitionProperty: 'transform, box-shadow, border-color, shadow-opacity',
-      transitionDuration: '300ms',
-      transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
       // Base shadow
       shadowColor: '#000000',
       shadowOffset: { width: 0, height: 0 },

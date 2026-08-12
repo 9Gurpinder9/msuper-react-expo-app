@@ -21,7 +21,7 @@ import AppLoader from '@components/AppLoader';
 import { useToast } from '@utils/toast';
 import { fetchJson } from '@utils/network';
 import { API_BASE_URL } from '@config';
-import type { AppTheme } from '../../../../src/theme/types';
+import type { AppTheme } from '../../../src/theme/types';
 
 function decodeJwt(token: string) {
   try {

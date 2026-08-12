@@ -63,7 +63,7 @@
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-svg": "^15.15.5",
+    "react-native-svg": "^15.11.2",
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
     "tesseract.js": "^5.0.4"
@@ -79,6 +79,7 @@
     "eslint": "^9.32.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "expo-mcp": "^0.2.4",
     "expo-module-scripts": "^4.1.9",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.4",
@@ -91,5 +92,19 @@
       "git add"
     ]
   },
-  "overrides": {}
+  "overrides": {},
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "@react-native-ml-kit/face-detection",
+          "react-native-mlkit-ocr",
+          "@react-native-community/masked-view",
+          "cross-env",
+          "dotenv",
+          "tesseract.js"
+        ]
+      }
+    }
+  }
 }

@@ -8,10 +8,10 @@ const monorepoRoot = path.resolve(projectRoot, '..');
 const config = getDefaultConfig(projectRoot);
 const { resolve: metroResolve } = require('metro-resolver');
 
-// --- existing customizations ---
-config.watchFolders = [path.resolve(projectRoot, 'src')];
-// Include monorepo root so Expo's AppEntry (../../App) can resolve the repo-level App.tsx
-config.watchFolders = [projectRoot, monorepoRoot, path.resolve(projectRoot, 'src')];
+// Preserve Expo default watchFolders while including monorepo root
+config.watchFolders = Array.from(
+  new Set([...(config.watchFolders || []), projectRoot, monorepoRoot, path.resolve(projectRoot, 'src')])
+);
 config.resolver = config.resolver || {};
 config.resolver.extraNodeModules = {
   ...(config.resolver.extraNodeModules || {}),

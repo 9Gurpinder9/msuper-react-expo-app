@@ -2,7 +2,6 @@
 import React from 'react';
 import {
   FlatList,
-  Image,
   Keyboard,
   Platform,
   Pressable,
@@ -12,6 +11,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import {
   IconButton,
   Menu,
@@ -603,7 +603,7 @@ function BookmarkCard({
 
         <View style={{ position: 'relative', marginBottom: 12 }}>
           {previewUrl ? (
-            <Image source={{ uri: previewUrl }} style={stylesCard.preview} resizeMode="cover" />
+            <Image source={{ uri: previewUrl }} style={stylesCard.preview} contentFit="cover" transition={200} />
           ) : (
             <View style={[stylesCard.preview, stylesCard.previewFallback]}>
               <MaterialCommunityIcons name="web" size={24} color={theme.colors.onSurfaceVariant} />

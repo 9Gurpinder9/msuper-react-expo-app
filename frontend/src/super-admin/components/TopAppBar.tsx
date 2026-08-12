@@ -28,13 +28,6 @@ export default function TopAppBar({
         borderBottomColor: theme.dark ? '#334155' : '#94A3B8',
       }}
     >
-      {showMenu && (
-        <Appbar.Action
-          icon="menu"
-          color={theme.colors.primary}
-          onPress={toggleDrawer}
-        />
-      )}
       {showBack && (
         <Appbar.BackAction
           color={theme.colors.primary}
