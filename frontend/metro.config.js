@@ -28,6 +28,7 @@ config.resolver.extraNodeModules = {
   '@config': path.resolve(projectRoot, 'config'),
   '@theme': path.resolve(projectRoot, 'src/theme'),
   '@utils': path.resolve(projectRoot, 'src/utils'),
+  'expo-router': path.resolve(projectRoot, 'node_modules/expo-router'),
   // Force pretty-format to our CJS-friendly shim to avoid undefined .default on web overlays
   'pretty-format': path.resolve(projectRoot, 'polyfills/pretty-format/index.js'),
   'pretty-format/build/index.js': path.resolve(projectRoot, 'polyfills/pretty-format/index.js'),
@@ -126,7 +127,7 @@ config.symbolicator.customizeFrame = async (frame) => {
     ) {
       return { collapse: true };
     }
-  } catch {}
+  } catch { }
   return {};
 };
 config.symbolicator.customizeStack = async (stack /*, extraData */) => {
