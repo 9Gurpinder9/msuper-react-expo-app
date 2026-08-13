@@ -8,8 +8,16 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
+def resolveEntryFile() {
+    def f1 = file("../../node_modules/expo-router/entry.js")
+    if (f1.exists()) return f1
+    def f2 = file("../../../node_modules/expo-router/entry.js")
+    if (f2.exists()) return f2
+    return f1
+}
+
 react {
-    entryFile = file("node_modules/expo-router/entry.js")
+    entryFile = resolveEntryFile()
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
     hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
     codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
