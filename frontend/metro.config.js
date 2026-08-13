@@ -13,22 +13,30 @@ config.watchFolders = Array.from(
   new Set([...(config.watchFolders || []), projectRoot, monorepoRoot, path.resolve(projectRoot, 'src')])
 );
 config.resolver = config.resolver || {};
+function resolveModule(name) {
+  const local = path.resolve(projectRoot, 'node_modules', name);
+  if (fs.existsSync(local)) return local;
+  const hoisted = path.resolve(monorepoRoot, 'node_modules', name);
+  if (fs.existsSync(hoisted)) return hoisted;
+  return local;
+}
+
 config.resolver.extraNodeModules = {
   ...(config.resolver.extraNodeModules || {}),
-  // Ensure single React across the app to avoid version mismatches
-  react: path.resolve(projectRoot, 'node_modules/react'),
-  'react-dom': path.resolve(projectRoot, 'node_modules/react-dom'),
-  'react-native-web': path.resolve(projectRoot, 'node_modules/react-native-web'),
+  // Ensure single React & key libraries across the app to avoid version mismatches
+  react: resolveModule('react'),
+  'react-dom': resolveModule('react-dom'),
+  'react-native-web': resolveModule('react-native-web'),
   // Ensure React runtimes resolve from the same React copy (avoid root hoisted React 19)
-  'react/jsx-runtime': path.resolve(projectRoot, 'node_modules/react/jsx-runtime.js'),
-  'react/jsx-dev-runtime': path.resolve(projectRoot, 'node_modules/react/jsx-dev-runtime.js'),
-  scheduler: path.resolve(projectRoot, 'node_modules/scheduler'),
+  'react/jsx-runtime': resolveModule('react/jsx-runtime.js'),
+  'react/jsx-dev-runtime': resolveModule('react/jsx-dev-runtime.js'),
+  scheduler: resolveModule('scheduler'),
+  'expo-router': resolveModule('expo-router'),
   // Project aliases
   '@super-admin': path.resolve(projectRoot, 'src/super-admin'),
   '@config': path.resolve(projectRoot, 'config'),
   '@theme': path.resolve(projectRoot, 'src/theme'),
   '@utils': path.resolve(projectRoot, 'src/utils'),
-  'expo-router': path.resolve(projectRoot, 'node_modules/expo-router'),
   // Force pretty-format to our CJS-friendly shim to avoid undefined .default on web overlays
   'pretty-format': path.resolve(projectRoot, 'polyfills/pretty-format/index.js'),
   'pretty-format/build/index.js': path.resolve(projectRoot, 'polyfills/pretty-format/index.js'),
