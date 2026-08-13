@@ -80,8 +80,9 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+project.buildDir = file("C:/tmp/ms-build")
+
 android {
-    buildStagingDirectory = file("C:/tmp/cxx")
     ndkVersion rootProject.ext.ndkVersion
 
     buildToolsVersion rootProject.ext.buildToolsVersion
